@@ -196,10 +196,10 @@ user.id
 setLoading(false);
 
 alert(
-"Club rejoint"
+"✅ Club rejoint"
 );
 
-window.location.reload();
+window.location.href="/";
 
 }
 
