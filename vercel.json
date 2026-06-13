@@ -1,8 +1,16 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/join/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/player/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/match/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
