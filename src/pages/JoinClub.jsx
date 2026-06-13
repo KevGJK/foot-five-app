@@ -105,28 +105,29 @@ return;
 
 }
 
-const {
+const { error } =
+await supabase
+.from("club_members")
+.upsert(
+{
+club_id:club.id,
+profile_id:user.id,
+role:"player"
+},
+{
+onConflict:"club_id,profile_id"
+}
+);
 
-error
+if(error){
+
+setLoading(false);
+
+alert(error.message);
+
+return;
 
 }
-=
-await supabase
-
-.from("club_members")
-
-.insert({
-
-club_id:
-club.id,
-
-profile_id:
-user.id,
-
-role:
-"player"
-
-});
 
 if(error){
 
