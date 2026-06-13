@@ -5,6 +5,7 @@ import { supabase } from "./lib/supabase";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MatchVote from "./pages/MatchVote";
+import JoinClub from "./pages/JoinClub";
 
 export default function App(){
 
@@ -79,6 +80,30 @@ path.startsWith(
 return(
 
 <MatchVote/>
+
+);
+
+}
+
+if(
+
+path.startsWith(
+"/join/"
+)
+
+){
+
+return(
+
+<JoinClub
+
+goHome={()=>{
+
+window.location="/";
+
+}}
+
+ />
 
 );
 
