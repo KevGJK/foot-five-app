@@ -248,8 +248,9 @@ async function invite(){
 
 const link=
 
-`https://https://foot-five-app.vercel.app/join/${inviteCode}`;
+`${window.location.origin}/join/${inviteCode}`;
 
+console.log(link);
 
 const text=
 
