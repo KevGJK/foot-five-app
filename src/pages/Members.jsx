@@ -248,7 +248,7 @@ async function invite(){
 
 const link=
 
-`${window.location.origin}/join/${inviteCode}`;
+`https://five-app.vercel.app/join/${inviteCode}`;
 
 console.log(link);
 
