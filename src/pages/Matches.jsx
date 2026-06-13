@@ -12,7 +12,7 @@ const [guestLevel,setGuestLevel]=useState({});
 const [reload,setReload]=useState(false);
 
 const [teams,setTeams]=useState({});
-
+const [expanded,setExpanded]=useState(null);
 const [scoreWhite,setScoreWhite]=useState({});
 const [scoreBlack,setScoreBlack]=useState({});
 
@@ -713,6 +713,14 @@ if(
 rows.length
 ){
 
+const {
+
+error
+
+}
+
+=
+
 await supabase
 
 .from(
@@ -722,6 +730,22 @@ await supabase
 .insert(
 rows
 );
+
+if(
+error
+){
+
+console.log(
+error
+);
+
+alert(
+error.message
+);
+
+return;
+
+}
 
 }
 
@@ -823,6 +847,113 @@ matchId);
 
 alert(
 "Résultat enregistré"
+);
+
+setReload(
+v=>!v
+);
+
+}
+
+function myResult(match){
+
+const me=
+
+match.attendances?.find(
+
+a=>
+
+a.profile_id
+
+===
+
+user?.id
+
+);
+
+if(
+!me
+){
+
+return "⚪ Non joué";
+
+}
+
+if(
+
+me.team
+
+===
+
+match.winner
+
+){
+
+return "🟢 Victoire";
+
+}
+
+return "🔴 Défaite";
+
+}
+
+async function reopenMatch(matchId){
+
+if(
+
+clubRole
+
+!==
+
+"owner"
+
+){
+
+return;
+
+}
+
+const ok=
+
+window.confirm(
+
+`⚠️ Réouvrir ce match ?
+
+Le classement et les statistiques
+pourront changer.`
+
+);
+
+if(
+!ok
+){
+
+return;
+
+}
+
+await supabase
+
+.from(
+"matches"
+)
+
+.update({
+
+winner:null,
+
+score_white:null,
+
+score_black:null
+
+})
+
+.eq(
+"id",
+matchId);
+
+alert(
+"Match réouvert"
 );
 
 setReload(
@@ -937,6 +1068,55 @@ window.open(
 
 }
 
+const activeMatches=
+
+matches
+
+.filter(
+m=>
+!m.winner
+)
+
+.sort(
+
+(a,b)=>
+
+new Date(
+a.match_date
+)
+
+-
+
+new Date(
+b.match_date
+)
+
+);
+
+const finishedMatches=
+
+matches
+
+.filter(
+m=>
+m.winner
+)
+
+.sort(
+
+(a,b)=>
+
+new Date(
+b.match_date
+)
+
+-
+
+new Date(
+a.match_date
+)
+
+);
 
 return(
 
@@ -954,7 +1134,7 @@ padding:30
 
 {
 
-matches.map(
+activeMatches.map(
 
 (m)=>(
 
@@ -1014,7 +1194,12 @@ m.attendances||[]
 
 </p>
 
+
 <button
+
+disabled={
+!!m.winner
+}
 
 onClick={()=>
 
@@ -1032,6 +1217,10 @@ m.id,
 </button>
 
 <button
+
+disabled={
+!!m.winner
+}
 
 style={{
 marginLeft:10
@@ -1159,6 +1348,10 @@ value={k}
 
 <button
 
+disabled={
+!!m.winner
+}
+
 onClick={()=>
 
 addGuest(
@@ -1263,6 +1456,10 @@ marginBottom:10
 >
 
 <button
+
+disabled={
+!!m.winner
+}
 
 onClick={async()=>{
 
@@ -1597,6 +1794,10 @@ marginBottom:10
 
 <button
 
+disabled={
+!!m.winner
+}
+
 onClick={()=>
 
 saveResult(
@@ -1611,11 +1812,14 @@ m.id
 
 </button>
 
+
 {
 
 m.winner
 
 &&
+
+<div>
 
 <p>
 
@@ -1633,12 +1837,209 @@ m.score_black
 
 </p>
 
+{
+
+clubRole==="owner"
+
+&&
+
+<button
+
+onClick={()=>
+
+reopenMatch(
+m.id
+)
+
+}
+
+>
+
+🔓 Réouvrir le match
+
+</button>
+
+}
+
+</div>
+
 }
 
 </>
 
 }
 
+</div>
+
+)
+
+)
+
+}
+
+<hr/>
+
+<h2>
+
+🏁 Matchs terminés
+
+</h2>
+
+{
+
+finishedMatches.map(
+
+(m)=>(
+
+<div
+
+key={m.id}
+
+style={{
+
+padding:12,
+
+marginBottom:10,
+
+border:"1px solid #ddd",
+
+borderRadius:10,
+
+background:"#f7f7f7",
+
+cursor:"pointer"
+
+}}
+
+onClick={()=>
+
+setExpanded(
+
+expanded===m.id
+
+?
+
+null
+
+:
+
+m.id
+
+)
+
+}
+
+>
+
+<div>
+
+{
+
+expanded===m.id
+
+?
+
+"▾"
+
+:
+
+"▸"
+
+}
+
+&nbsp;
+
+{m.title}
+
+<div
+style={{
+fontSize:14
+}}
+>
+
+{
+myResult(
+m
+)
+}
+
+</div>
+
+—
+
+{
+
+new Date(
+m.match_date
+)
+
+.toLocaleDateString()
+
+}
+
+</div>
+
+{
+
+expanded===m.id
+
+&&
+
+<div
+style={{
+marginTop:10
+}}
+>
+
+<p>
+
+⚪
+
+{
+m.score_white
+}
+
+—
+
+⚫
+
+{
+m.score_black
+}
+
+</p>
+
+<p>
+
+🏆
+
+{
+
+m.winner==="white"
+
+?
+
+"Victoire BLANC"
+
+:
+
+m.winner==="black"
+
+?
+
+"Victoire FONCÉ"
+
+:
+
+"Match nul"
+
+}
+
+</p>
+
+</div>
+
+}
 
 </div>
 

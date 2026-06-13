@@ -1,11 +1,64 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-export default function JoinClub(){
+export default function JoinClub({
+
+goHome
+
+}){
 
 const [code,setCode]=useState("");
 
+const [loading,setLoading]=useState(false);
+
+useEffect(()=>{
+
+const parts=
+
+window.location.pathname
+
+.split("/");
+
+if(
+
+parts[1]==="join"
+
+&&
+
+parts[2]
+
+){
+
+setCode(
+parts[2]
+);
+
+}
+
+},[]);
+
+useEffect(()=>{
+
+if(
+
+code
+
+){
+
+join();
+
+}
+
+},[code]);
+
 async function join(){
+
+if(
+loading
+)
+return;
+
+setLoading(true);
 
 const {
 data:{user}
@@ -13,8 +66,13 @@ data:{user}
 =
 await supabase.auth.getUser();
 
-if(!user)
+if(!user){
+
+setLoading(false);
+
 return;
+
+}
 
 const {
 
@@ -36,6 +94,8 @@ code
 .single();
 
 if(!club){
+
+setLoading(false);
 
 alert(
 "Code invalide"
@@ -70,6 +130,8 @@ role:
 
 if(error){
 
+setLoading(false);
+
 alert(
 error.message
 );
@@ -77,6 +139,60 @@ error.message
 return;
 
 }
+
+const {
+
+data:profile
+
+}
+
+=
+
+await supabase
+
+.from(
+"profiles"
+)
+
+.select(
+"active_club_id"
+)
+
+.eq(
+"id",
+user.id
+)
+
+.single();
+
+if(
+
+!profile?.active_club_id
+
+){
+
+await supabase
+
+.from(
+"profiles"
+)
+
+.update({
+
+active_club_id:
+club.id
+
+})
+
+.eq(
+"id",
+user.id
+
+);
+
+}
+
+setLoading(false);
 
 alert(
 "Club rejoint"
@@ -93,6 +209,32 @@ style={{
 padding:30
 }}
 >
+
+<button
+
+onClick={goHome}
+
+style={{
+
+width:"100%",
+
+padding:"18px",
+
+fontSize:"18px",
+
+fontWeight:"600",
+
+borderRadius:"12px",
+
+marginBottom:"20px"
+
+}}
+
+>
+
+🏠 Retour à l'accueil
+
+</button>
 
 <h1>
 
@@ -126,15 +268,43 @@ padding:10
 
 <button
 
+disabled={loading}
+
 onClick={join}
 
 style={{
-padding:12
+
+padding:12,
+
+opacity:
+
+loading
+
+?
+
+0.6
+
+:
+
+1
+
 }}
 
 >
 
-Rejoindre
+{
+
+loading
+
+?
+
+"Connexion au club..."
+
+:
+
+"Rejoindre"
+
+}
 
 </button>
 

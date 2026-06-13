@@ -30,38 +30,46 @@ return;
 
 const {
 
-data:member,
-error:memberError
+data:profile,
+error:profileError
 
 }
 =
 await supabase
 
-.from("club_members")
+.from(
+"profiles"
+)
 
-.select("club_id")
+.select(
+"active_club_id"
+)
 
 .eq(
-"profile_id",
+"id",
 user.id
 )
 
 .single();
 
-if(memberError){
+if(profileError){
 
 alert(
-memberError.message
+profileError.message
 );
 
 return;
 
 }
 
-if(!member){
+if(
+
+!profile?.active_club_id
+
+){
 
 alert(
-"Club introuvable"
+"Aucun club actif"
 );
 
 return;
@@ -89,7 +97,7 @@ match_date:
 date,
 
 club_id:
-member.club_id,
+profile.active_club_id,
 
 organizer_id:
 user.id,

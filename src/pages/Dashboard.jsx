@@ -6,6 +6,10 @@ import JoinClub from "./JoinClub";
 import CreateMatch from "./CreateMatch";
 import Matches from "./Matches";
 import Statistics from "./Statistics";
+import Ranking from "./Ranking";
+import ClubSelector from "./ClubSelector";
+
+
 export default function Dashboard() {
 
 const [club,setClub]=useState(null);
@@ -66,13 +70,52 @@ return;
 
 const {
 
+data:profile
+
+}
+=
+await supabase
+
+.from(
+"profiles"
+)
+
+.select(
+"active_club_id"
+)
+
+.eq(
+"id",
+user.id
+)
+
+.single();
+
+if(
+
+!profile?.active_club_id
+
+){
+
+setPage(
+"club"
+);
+
+return;
+
+}
+
+const {
+
 data
 
 }
 =
 await supabase
 
-.from("club_members")
+.from(
+"club_members"
+)
 
 .select(`
 role,
@@ -88,17 +131,26 @@ invite_code
 user.id
 )
 
+.eq(
+"club_id",
+profile.active_club_id
+)
+
 .single();
 
 if(!data){
 
-setPage("join");
+setPage(
+"club"
+);
 
 return;
 
 }
 
-setClub(data);
+setClub(
+data
+);
 
 await loadStats(
 user.id
@@ -216,10 +268,71 @@ setPage(
 
 function render(){
 
+if(page==="club"){
+
+return(
+<>
+
+<button
+
+onClick={goHome}
+
+style={{
+
+width:"calc(100% - 40px)",
+
+margin:"20px",
+
+padding:"18px",
+
+fontSize:"18px",
+
+fontWeight:"600",
+
+borderRadius:"12px"
+
+}}
+
+>
+
+🏠 Retour à l'accueil
+
+</button>
+
+<ClubSelector
+
+goJoin={()=>
+
+setPage(
+"join"
+)
+
+}
+
+/>
+
+</>
+
+);
+
+}
+
 if(page==="join"){
 
 return(
-<JoinClub/>
+
+<JoinClub
+
+goHome={()=>
+
+setPage(
+"home"
+)
+
+}
+
+/>
+
 );
 
 }
@@ -350,6 +463,48 @@ cursor:"pointer"
 
 }
 
+if(page==="ranking"){
+
+return(
+
+<>
+
+<button
+
+onClick={goHome}
+
+style={{
+
+width:"calc(100% - 40px)",
+
+margin:"20px",
+
+padding:"18px",
+
+fontSize:"18px",
+
+fontWeight:"600",
+
+borderRadius:"12px",
+
+cursor:"pointer"
+
+}}
+
+>
+
+🏠 Retour à l'accueil
+
+</button>
+
+<Ranking/>
+
+</>
+
+);
+
+}
+
 if(page==="matches"){
 
 return(
@@ -407,6 +562,34 @@ padding:30
 ⚽ Foot Five
 
 </h1>
+
+<button
+
+onClick={async()=>{
+
+await supabase.auth.signOut();
+
+window.location.reload();
+
+}}
+
+style={{
+
+float:"right",
+
+padding:"10px 14px",
+
+borderRadius:10,
+
+cursor:"pointer"
+
+}}
+
+>
+
+🚪 Déconnexion
+
+</button>
 
 <h2>
 
@@ -506,6 +689,32 @@ marginBottom:10
 
 </button>
 
+<button
+
+onClick={()=>
+
+setPage(
+"ranking"
+)
+
+}
+
+style={{
+
+width:"100%",
+
+padding:15,
+
+marginBottom:20
+
+}}
+
+>
+
+🏆 Classement
+
+</button>
+
 <div
 
 style={{
@@ -580,14 +789,25 @@ reliability()
 
 <button
 
+onClick={()=>
+
+setPage(
+"club"
+)
+
+}
+
 style={{
+
 width:"100%",
+
 padding:15
+
 }}
 
 >
 
-⚙ Administration
+🏟 Clubs
 
 </button>
 

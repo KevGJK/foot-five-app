@@ -1,13 +1,69 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { supabase } from "./lib/supabase";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MatchVote from "./pages/MatchVote";
 
-export default function App() {
+export default function App(){
 
 const [connected,setConnected]=
-useState(false);
+useState(null);
+
+useEffect(()=>{
+
+check();
+
+const {
+
+data:listener
+
+}
+
+=
+
+supabase.auth.onAuthStateChange(
+
+(_,session)=>{
+
+setConnected(
+
+!!session
+
+);
+
+}
+
+);
+
+return()=>{
+
+listener.subscription.unsubscribe();
+
+};
+
+},[]);
+
+async function check(){
+
+const {
+
+data
+
+}
+
+=
+
+await supabase.auth.getSession();
+
+setConnected(
+
+!!data.session
+
+);
+
+}
 
 const path=
 window.location.pathname;
@@ -22,27 +78,7 @@ path.startsWith(
 
 return(
 
-<MatchVote />
-
-);
-
-}
-
-if(!connected){
-
-return(
-
-<Login
-
-onSuccess={()=>
-
-setConnected(
-true
-)
-
-}
-
-/>
+<MatchVote/>
 
 );
 
@@ -75,6 +111,56 @@ return(
 );
 
 }
+
+if(
+
+connected===null
+
+){
+
+return(
+
+<div
+style={{
+padding:40
+}}
+>
+
+⚽ Chargement...
+
+</div>
+
+);
+
+}
+
+if(
+
+!connected
+
+){
+
+return(
+
+<Login
+
+onSuccess={()=>{
+
+setConnected(
+true
+);
+
+window.location.reload();
+
+}}
+
+/>
+
+);
+
+}
+
+
 
 return(
 

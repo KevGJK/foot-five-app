@@ -3,41 +3,242 @@ import { supabase } from "../lib/supabase";
 
 export default function Login({ onSuccess }) {
 
-  const [email,setEmail]=useState("");
-  const [password,setPassword]=useState("");
+const [email,setEmail]=useState("");
+const [password,setPassword]=useState("");
 
-  async function login(){
+const [firstName,setFirstName]=useState("");
+const [lastName,setLastName]=useState("");
 
-    const { error } =
-      await supabase.auth.signInWithPassword({
+const [registerMode,setRegisterMode]=useState(false);
 
-        email,
-        password
+const [loading,setLoading]=useState(false);
 
-      });
+async function login(){
 
-    if(error){
+setLoading(true);
 
-      alert(error.message);
+const { error } =
 
-      return;
-    }
+await supabase.auth.signInWithPassword({
 
-    onSuccess();
-  }
+email,
 
-  return (
+password
+
+});
+
+setLoading(false);
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+if(
+
+window.location.pathname
+
+.startsWith(
+
+"/join/"
+
+)
+
+){
+
+window.location.reload();
+
+return;
+
+}
+
+onSuccess();
+
+}
+
+async function register(){
+
+if(
+
+!firstName
+
+||
+
+!lastName
+
+||
+
+!email
+
+||
+
+!password
+
+){
+
+alert(
+"Tous les champs sont obligatoires"
+);
+
+return;
+
+}
+
+setLoading(true);
+
+const generatedName=
+
+firstName
+
++
+
+" "
+
++
+
+lastName.charAt(0).toUpperCase();
+
+const {
+
+data,
+
+error
+
+}
+
+=
+
+await supabase.auth.signUp({
+
+email,
+
+password,
+
+options:{
+
+data:{
+
+display_name:
+
+generatedName
+
+}
+
+}
+
+});
+
+if(error){
+
+setLoading(false);
+
+alert(
+error.message
+);
+
+return;
+
+}
+
+if(
+data?.user
+){
+
+const {
+
+error:profileError
+
+}
+
+=
+
+await supabase
+
+.from(
+"profiles"
+)
+
+.upsert({
+
+id:
+data.user.id,
+
+display_name:
+generatedName,
+
+email
+
+});
+
+if(
+profileError
+){
+
+setLoading(false);
+
+alert(
+profileError.message
+);
+
+return;
+
+}
+
+}
+
+setLoading(false);
+
+alert(
+"Compte créé avec succès"
+);
+
+if(
+
+window.location.pathname
+
+.startsWith(
+
+"/join/"
+
+)
+
+){
+
+window.location.reload();
+
+return;
+
+}
+
+setRegisterMode(false);
+
+setPassword("");
+
+onSuccess();
+
+}
+
+return(
 
 <div
+
 style={{
 
 maxWidth:400,
+
 margin:"60px auto",
+
 padding:30,
+
 borderRadius:20,
+
 background:"#ffffff"
 
 }}
+
 >
 
 <h1>
@@ -46,6 +247,72 @@ background:"#ffffff"
 
 </h1>
 
+{
+
+registerMode
+
+&&
+
+<>
+
+<input
+
+placeholder="Prénom"
+
+value={firstName}
+
+onChange={(e)=>
+
+setFirstName(
+e.target.value
+)
+
+}
+
+style={{
+
+width:"100%",
+
+padding:10
+
+}}
+
+/>
+
+<br/>
+<br/>
+
+<input
+
+placeholder="Nom"
+
+value={lastName}
+
+onChange={(e)=>
+
+setLastName(
+e.target.value
+)
+
+}
+
+style={{
+
+width:"100%",
+
+padding:10
+
+}}
+
+/>
+
+<br/>
+<br/>
+
+</>
+
+}
+
 <input
 
 placeholder="Email"
@@ -53,19 +320,25 @@ placeholder="Email"
 value={email}
 
 onChange={(e)=>
+
 setEmail(
 e.target.value
-)}
+)
+
+}
 
 style={{
+
 width:"100%",
+
 padding:10
+
 }}
 
 />
 
-<br />
-<br />
+<br/>
+<br/>
 
 <input
 
@@ -76,37 +349,123 @@ placeholder="Mot de passe"
 value={password}
 
 onChange={(e)=>
+
 setPassword(
 e.target.value
-)}
+)
+
+}
 
 style={{
+
 width:"100%",
+
 padding:10
+
 }}
 
 />
 
-<br />
-<br />
+<br/>
+<br/>
 
 <button
 
-onClick={login}
+disabled={loading}
+
+onClick={
+
+registerMode
+
+?
+
+register
+
+:
+
+login
+
+}
 
 style={{
 
 width:"100%",
+
 padding:15
 
 }}
+
 >
 
-Connexion
+{
+
+loading
+
+?
+
+"Chargement..."
+
+:
+
+registerMode
+
+?
+
+"Créer mon compte"
+
+:
+
+"Connexion"
+
+}
+
+</button>
+
+<br/>
+<br/>
+
+<button
+
+disabled={loading}
+
+onClick={()=>
+
+setRegisterMode(
+
+!registerMode
+
+)
+
+}
+
+style={{
+
+width:"100%",
+
+padding:12
+
+}}
+
+>
+
+{
+
+registerMode
+
+?
+
+"Déjà un compte ?"
+
+:
+
+"Créer un compte"
+
+}
 
 </button>
 
 </div>
 
 );
+
 }
