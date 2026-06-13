@@ -39,17 +39,9 @@ parts[2]
 
 useEffect(()=>{
 
-if(
+// préremplit le code seulement
 
-code
-
-){
-
-join();
-
-}
-
-},[code]);
+},[]);
 
 async function join(){
 
