@@ -247,10 +247,7 @@ return clubRole==="owner";
 async function invite(){
 
 const link=
-
-`https://five-app.vercel.app/join/${inviteCode}`;
-
-console.log(link);
+`https://foot-five-app.vercel.app/join/${inviteCode}`;
 
 const text=
 
@@ -266,8 +263,7 @@ navigator.share
 
 await navigator.share({
 
-title:
-"Foot Five",
+title:"Foot Five",
 
 text
 
