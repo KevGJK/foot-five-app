@@ -13,6 +13,8 @@ const [clubName,setClubName]=useState("");
 
 const [myClubId,setMyClubId]=useState(null);
 
+const [myUserId,setMyUserId]=useState(null);
+
 useEffect(()=>{
 
 load();
@@ -29,6 +31,8 @@ await supabase.auth.getUser();
 
 if(!user)
 return;
+
+setMyUserId(user.id);
 
 const {
 
@@ -155,8 +159,36 @@ email
 "club_id",
 member.club_id);
 
+const sorted=
+
+(data||[])
+
+.sort((a,b)=>{
+
+if(a.profile_id===user.id)
+return -1;
+
+if(b.profile_id===user.id)
+return 1;
+
+return (
+
+(a.profiles?.display_name||"")
+
+.localeCompare(
+
+b.profiles?.display_name||"",
+
+"fr"
+
+)
+
+);
+
+});
+
 setMembers(
-data||[]
+sorted
 );
 
 }
@@ -301,11 +333,27 @@ return(
 
 <div
 style={{
-padding:30
+
+padding:16,
+
+maxWidth:700,
+
+margin:"0 auto"
+
 }}
 >
 
-<h1>
+<h1
+style={{
+
+textAlign:"center",
+
+marginBottom:20,
+
+fontSize:40
+
+}}
+>
 
 👥 Membres
 
@@ -321,8 +369,21 @@ Code du club
 
 <p
 style={{
-fontSize:18,
-fontWeight:"bold"
+
+fontSize:20,
+
+fontWeight:"700",
+
+textAlign:"center",
+
+padding:10,
+
+borderRadius:16,
+
+background:"#181818",
+
+letterSpacing:2
+
 }}
 >
 
@@ -340,7 +401,13 @@ onClick={invite}
 
 style={{
 
-padding:12
+padding:"10px 14px",
+
+fontSize:16,
+
+borderRadius:12,
+
+fontWeight:"600"
 
 }}
 
@@ -364,27 +431,67 @@ key={index}
 
 style={{
 
-marginBottom:15,
+marginBottom:8,
 
-padding:15,
+padding:"12px 14px",
 
-border:"1px solid #ddd",
+borderRadius:14,
 
-borderRadius:12
+background:"#1a1a1a",
+
+border:"1px solid #333"
 
 }}
 
 >
 
-<strong>
+<div
+style={{
+
+fontSize:17,
+
+fontWeight:"700",
+
+lineHeight:1.1
+
+}}
+>
 
 {
+
+m.profile_id===myUserId
+
+?
+
+"👤 "+m.profiles?.display_name+" (Moi)"
+
+:
+
 m.profiles?.display_name
+
 }
 
-</strong>
+</div>
 
-<br/>
+<div
+style={{
+height:2
+}}/>
+
+<div
+
+style={{
+
+opacity:0.8,
+
+fontSize:14,
+
+marginTop:2,
+
+marginBottom:4
+
+}}
+>
 
 {
 
@@ -408,8 +515,12 @@ m.role==="admin"
 
 }
 
-<br/>
-<br/>
+</div>
+
+<div
+style={{
+height:4
+}}/>
 
 {
 
@@ -431,6 +542,16 @@ m.role==="player"
 
 <button
 
+style={{
+
+padding:"8px 10px",
+
+borderRadius:10,
+
+fontSize:14
+
+}}
+
 onClick={()=>
 
 updateRole(
@@ -450,6 +571,16 @@ m.id,
 
 <button
 
+style={{
+
+padding:"8px 10px",
+
+borderRadius:10,
+
+fontSize:14
+
+}}
+
 onClick={()=>
 
 updateRole(
@@ -464,6 +595,7 @@ m.id,
 ↩ Retirer Admin
 
 </button>
+
 
 }
 
@@ -483,10 +615,22 @@ m.role!=="owner"
 
 <>
 
-<br/>
-<br/>
+<div
+style={{
+height:4
+}}/>
 
 <button
+
+style={{
+
+padding:"8px 10px",
+
+borderRadius:10,
+
+fontSize:14
+
+}}
 
 onClick={()=>
 

@@ -24,6 +24,10 @@ rate:0
 
 });
 
+const [logoUrl,setLogoUrl]=useState(null);
+
+const [showLogo,setShowLogo]=useState(false);
+
 function reliability(){
 
 if(
@@ -122,7 +126,8 @@ role,
 clubs(
 id,
 name,
-invite_code
+invite_code,
+logo_url
 )
 `)
 
@@ -150,6 +155,12 @@ return;
 
 setClub(
 data
+);
+
+setLogoUrl(
+data?.clubs?.logo_url
+||
+null
 );
 
 await loadStats(
@@ -549,19 +560,87 @@ cursor:"pointer"
 
 return(
 
+<>
+
+{
+
+showLogo
+
+&&
+
+<div
+
+onClick={()=>{
+
+setShowLogo(
+false
+);
+
+}}
+
+style={{
+
+position:"fixed",
+
+inset:0,
+
+background:"rgba(0,0,0,.95)",
+
+display:"flex",
+
+justifyContent:"center",
+
+alignItems:"center",
+
+zIndex:999
+
+}}
+
+>
+
+<img
+
+src={
+logoUrl
+}
+
+style={{
+
+maxWidth:"90%",
+
+maxHeight:"90%",
+
+borderRadius:20
+
+}}
+
+/>
+
+</div>
+
+}
+
 <div
 style={{
 maxWidth:600,
 margin:"auto",
-padding:30
+padding:16
 }}
 >
 
-<h1>
+<div
+style={{
 
-⚽ Foot Five
+position:"relative",
 
-</h1>
+textAlign:"center",
+
+paddingTop:8,
+
+marginBottom:22
+
+}}
+>
 
 <button
 
@@ -575,37 +654,214 @@ window.location.reload();
 
 style={{
 
-float:"right",
+position:"absolute",
 
-padding:"10px 14px",
+right:0,
 
-borderRadius:10,
+top:0,
 
-cursor:"pointer"
+background:"transparent",
+
+border:"none",
+
+cursor:"pointer",
+
+display:"flex",
+
+flexDirection:"column",
+
+alignItems:"center"
 
 }}
 
 >
 
-🚪 Déconnexion
+<img
+
+src="/logout.png"
+
+style={{
+
+width:52,
+
+height:52,
+
+objectFit:"contain",
+
+marginBottom:-4
+
+}}
+
+/>
+
+<div
+style={{
+
+fontSize:11,
+
+opacity:.7,
+
+marginTop:-6
+
+}}
+>
+
+Me déconnecter
+
+</div>
 
 </button>
 
-<h2>
+<div
+style={{
+
+fontSize:28,
+
+fontWeight:"900",
+
+letterSpacing:2,
+
+marginBottom:28
+
+}}
+
+>
+
+FOOT FIVE MANAGER
+
+</div>
+
+<div
+
+onClick={()=>{
+
+if(
+logoUrl
+){
+
+setShowLogo(
+true
+);
+
+}
+
+}}
+
+style={{
+
+width:130,
+
+height:130,
+
+margin:"0 auto",
+
+borderRadius:"50%",
+
+overflow:"hidden",
+
+background:"#161616",
+
+display:"flex",
+
+justifyContent:"center",
+
+alignItems:"center",
+
+cursor:
+
+logoUrl
+
+?
+
+"pointer"
+
+:
+
+"default",
+
+boxShadow:
+
+"0 0 40px rgba(120,90,255,.35)"
+
+}}
+
+>
+
+{
+
+logoUrl
+
+?
+
+<img
+
+src={
+logoUrl
+}
+
+style={{
+
+width:"100%",
+
+height:"100%",
+
+objectFit:"cover"
+
+}}
+
+/>
+
+:
+
+<div
+style={{
+fontSize:60
+}}
+>
+
+⚽
+
+</div>
+
+}
+
+</div>
+
+<h1
+style={{
+
+marginTop:18,
+
+marginBottom:4,
+
+fontSize:42
+
+}}
+>
 
 {
 club?.clubs?.name
 }
 
-</h2>
+</h1>
 
-<p>
+<div
+style={{
+
+fontSize:18,
+
+opacity:.75
+
+}}
+>
 
 👑 {
 club?.role
 }
 
-</p>
+</div>
+
+</div>
 
 <hr/>
 
@@ -620,7 +876,7 @@ setPage(
 style={{
 width:"100%",
 padding:15,
-marginBottom:10
+marginBottom:12
 }}
 
 >
@@ -640,7 +896,7 @@ setPage(
 style={{
 width:"100%",
 padding:15,
-marginBottom:10
+marginBottom:12
 }}
 
 >
@@ -660,7 +916,7 @@ setPage(
 style={{
 width:"100%",
 padding:15,
-marginBottom:20
+marginBottom:12
 }}
 
 >
@@ -680,7 +936,7 @@ setPage(
 style={{
 width:"100%",
 padding:15,
-marginBottom:10
+marginBottom:12
 }}
 
 >
@@ -705,7 +961,7 @@ width:"100%",
 
 padding:15,
 
-marginBottom:20
+marginBottom:12
 
 }}
 
@@ -719,11 +975,13 @@ marginBottom:20
 
 style={{
 
-border:"1px solid #ddd",
+border:"1px solid #333",
 
-padding:20,
+padding:16,
 
-borderRadius:12
+borderRadius:16,
+
+marginBottom:12
 
 }}
 
@@ -784,9 +1042,6 @@ reliability()
 
 </div>
 
-<br/>
-
-
 <button
 
 onClick={()=>
@@ -812,6 +1067,8 @@ padding:15
 </button>
 
 </div>
+
+</>
 
 );
 
