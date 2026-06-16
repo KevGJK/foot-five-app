@@ -844,21 +844,50 @@ Me déconnecter
 </button>
 
 <div
-style={{
 
-fontSize:22,
+style={{
 
 fontWeight:"900",
 
-letterSpacing:2,
+marginBottom:12,
 
-marginBottom:12
+lineHeight:1.05
 
 }}
 
 >
 
-FOOT FIVE MANAGER
+<div
+style={{
+
+fontSize:22,
+
+letterSpacing:3
+
+}}
+>
+
+FOOT FIVE
+
+</div>
+
+<div
+style={{
+
+fontSize:18,
+
+letterSpacing:5,
+
+opacity:.85,
+
+marginTop:2
+
+}}
+>
+
+MANAGER
+
+</div>
 
 </div>
 
