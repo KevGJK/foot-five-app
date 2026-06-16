@@ -1110,26 +1110,6 @@ marginBottom:12
 
 onClick={()=>
 setPage(
-"members"
-)
-}
-
-style={{
-width:"100%",
-padding:15,
-marginBottom:12
-}}
-
->
-
-👥 Membres
-
-</button>
-
-<button
-
-onClick={()=>
-setPage(
 "create"
 )
 }
@@ -1143,6 +1123,26 @@ marginBottom:12
 >
 
 ➕ Créer un match
+
+</button>
+
+<button
+
+onClick={()=>
+setPage(
+"members"
+)
+}
+
+style={{
+width:"100%",
+padding:15,
+marginBottom:12
+}}
+
+>
+
+👥 Membres
 
 </button>
 
