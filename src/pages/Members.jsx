@@ -148,6 +148,7 @@ await supabase
 id,
 profile_id,
 role,
+level,
 profiles(
 id,
 display_name,
@@ -264,6 +265,30 @@ return;
 
 alert(
 "✅ Membre retiré du club"
+);
+
+load();
+
+}
+
+async function updateLevel(memberId,level){
+
+await supabase
+
+.from("club_members")
+
+.update({
+
+level
+
+})
+
+.eq(
+
+"id",
+
+memberId
+
 );
 
 load();
@@ -516,6 +541,138 @@ m.role==="admin"
 }
 
 </div>
+
+{
+
+(clubRole==="owner" || clubRole==="admin")
+
+&&
+
+m.role!=="owner"
+
+&&
+
+<div
+style={{
+
+marginTop:8
+
+}}
+>
+
+<div
+style={{
+
+fontSize:13,
+
+opacity:.7,
+
+marginBottom:6
+
+}}
+>
+
+🏅 Niveau
+
+</div>
+
+<select
+
+value={
+
+m.level||""
+
+}
+
+onChange={(e)=>{
+
+updateLevel(
+
+m.id,
+
+e.target.value
+
+?
+
+Number(
+
+e.target.value
+
+)
+
+:
+
+null
+
+);
+
+}}
+
+style={{
+
+padding:8,
+
+borderRadius:8,
+
+width:"100%"
+
+}}
+
+>
+
+<option value="">
+
+Non évalué
+
+</option>
+
+<option value="1">
+
+1️⃣ Débutant
+
+</option>
+
+<option value="2">
+
+2️⃣ Loisir
+
+</option>
+
+<option value="3">
+
+3️⃣ Intermédiaire
+
+</option>
+
+<option value="4">
+
+4️⃣ Confirmé
+
+</option>
+
+<option value="5">
+
+5️⃣ Avancé
+
+</option>
+
+<option value="6">
+
+6️⃣ Expert
+
+</option>
+
+<option value="7">
+
+7️⃣ Élite
+
+</option>
+
+</select>
+
+</div>
+
+}
 
 <div
 style={{
