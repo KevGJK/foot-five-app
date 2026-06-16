@@ -78,6 +78,46 @@ return;
 
 const {
 
+data:season
+
+}
+
+=
+
+await supabase
+
+.from(
+
+"seasons"
+
+)
+
+.select(
+
+"id"
+
+)
+
+.eq(
+
+"club_id",
+
+profile.active_club_id
+
+)
+
+.eq(
+
+"active",
+
+true
+
+)
+
+.single();
+
+const {
+
 data,
 error
 
@@ -98,6 +138,9 @@ date,
 
 club_id:
 profile.active_club_id,
+
+season_id:
+season.id,
 
 organizer_id:
 user.id,

@@ -1162,7 +1162,7 @@ marginBottom:12
 
 >
 
-📊 Statistiques
+📊 Statistiques saison
 
 </button>
 
@@ -1188,7 +1188,7 @@ marginBottom:12
 
 >
 
-🏆 Classement
+🏆 Classement saison
 
 </button>
 

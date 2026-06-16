@@ -298,6 +298,50 @@ t.team
 
 ).length;
 
+const draws=
+
+playerTeams.filter(
+
+t=>{
+
+const match=
+
+matches?.find(
+
+m=>
+
+m.id===t.match_id
+
+);
+
+return (
+
+match
+
+&&
+
+!match.winner
+
+);
+
+}
+
+).length;
+
+const losses=
+
+Math.max(
+
+0,
+
+played-
+
+wins-
+
+draws
+
+);
+
 const winRate=
 
 played
@@ -329,24 +373,6 @@ winRate
 
 *
 
-participation
-
-*
-
-volume
-
-*
-
-100
-
-);
-
-Math.round(
-
-winRate
-
-*
-
 Math.pow(
 
 participation,
@@ -354,6 +380,10 @@ participation,
 0.6
 
 )
+
+*
+
+volume
 
 *
 
@@ -366,6 +396,10 @@ rows.push({
 name,
 
 wins,
+
+draws,
+
+losses,
 
 played,
 
@@ -423,7 +457,7 @@ padding:30
 
 <h1>
 
-🏆 Classement
+🏆 Classement saison
 
 </h1>
 
@@ -490,12 +524,31 @@ r.wins
 
 <p>
 
-📅 Présence :
+🟢 Victoires :
 
 {
-r.participation
+r.wins
 }
-%
+
+</p>
+
+<p>
+
+⚪ Matchs nuls :
+
+{
+r.draws
+}
+
+</p>
+
+<p>
+
+🔴 Défaites :
+
+{
+r.losses
+}
 
 </p>
 

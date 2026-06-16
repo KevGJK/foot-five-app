@@ -141,87 +141,6 @@ x.response==="absent"
 
 .length;
 
-let wins=0;
-
-let losses=0;
-
-(matches||[])
-
-.forEach(
-
-m=>{
-
-if(
-m.response!=="present"
-)
-return;
-
-if(
-!m.matches
-)
-return;
-
-if(
-m.team
-===
-m.matches.winner
-){
-
-wins++;
-
-}
-
-else{
-
-losses++;
-
-}
-
-}
-
-);
-
-const ratio=
-
-present
-
-?
-
-wins
-/
-present
-
-:
-
-0;
-
-const score=
-
-present
-
-?
-
-Math.round(
-
-ratio
-
-*
-
-Math.log(
-
-present+1
-
-)
-
-*
-
-100
-
-)
-
-:
-
-0;
 
 stats.push({
 
@@ -237,21 +156,41 @@ p.profiles
 
 "Joueur",
 
+created:0,
+
 present,
 
 absent,
 
-wins,
+rate:
 
-losses,
+present+absent
 
-ratio:
+?
 
 Math.round(
-ratio*100
-),
 
-score
+present
+
+/
+
+(
+
+present+
+
+absent
+
+)
+
+*
+
+100
+
+)
+
+:
+
+0
 
 });
 
@@ -259,10 +198,41 @@ score
 
 stats.sort(
 
-(a,b)=>
+(a,b)=>{
 
-b.score-
-a.score
+if(
+a.id===myId
+)
+return -1;
+
+if(
+b.id===myId
+)
+return 1;
+
+return (
+
+a.name
+
+||
+
+""
+
+)
+
+.localeCompare(
+
+b.name
+
+||
+
+"",
+
+"fr"
+
+);
+
+}
 
 );
 
@@ -282,7 +252,7 @@ padding:30
 
 <h1>
 
-📊 Classement club
+📊 Statistiques saison
 
 </h1>
 
@@ -298,9 +268,9 @@ key={index}
 
 style={{
 
-padding:20,
+padding:18,
 
-marginBottom:15,
+marginBottom:12,
 
 border:"1px solid #ddd",
 
@@ -314,103 +284,75 @@ borderRadius:12
 
 {
 
-index===0
+p.id===myId
 
 ?
 
-"🥇"
+"👤 "+p.name+" (Moi)"
 
 :
 
-index===1
-
-?
-
-"🥈"
-
-:
-
-index===2
-
-?
-
-"🥉"
-
-:
-
-"#"+(index+1)
+"👤 "+p.name
 
 }
-
-{" "}
-
-{p.name}
 
 </h3>
 
 <p>
 
-Score :
-
-{p.score}
-
-</p>
-
-{
-
-(
-
-clubRole==="owner"
-
-||
-
-clubRole==="admin"
-
-||
-
-p.id===myId
-
-)
-
-&&
-
-<>
-
-<p>
-
-Ratio :
-
-{p.ratio}%
+📅 Matchs créés :
+{p.created}
 
 </p>
 
 <p>
 
-Présences :
-
+✅ Présences :
 {p.present}
 
 </p>
 
 <p>
 
-Victoires :
-
-{p.wins}
+❌ Absences :
+{p.absent}
 
 </p>
 
 <p>
 
-Défaites :
-
-{p.losses}
+📈 Taux présence :
+{p.rate}%
 
 </p>
 
-</>
+<p>
+
+Fiabilité :
+
+{
+
+p.rate>=90
+
+?
+
+" 🟢 Excellente"
+
+:
+
+p.rate>=70
+
+?
+
+" 🟡 Correcte"
+
+:
+
+" 🔴 À relancer"
 
 }
+
+</p>
 
 </div>
 
