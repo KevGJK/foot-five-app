@@ -766,7 +766,7 @@ position:"relative",
 
 textAlign:"center",
 
-paddingTop:8,
+paddingTop:70,
 
 marginBottom:22
 
@@ -787,9 +787,9 @@ style={{
 
 position:"absolute",
 
-right:0,
+right:8,
 
-top:4,
+top:8,
 
 background:"transparent",
 
