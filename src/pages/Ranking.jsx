@@ -50,6 +50,51 @@ return;
 
 const {
 
+data:season
+
+}
+
+=
+
+await supabase
+
+.from(
+
+"seasons"
+
+)
+
+.select(
+
+"id"
+
+)
+
+.eq(
+
+"club_id",
+
+profile.active_club_id
+
+)
+
+.eq(
+
+"active",
+
+true
+
+)
+
+.single();
+
+if(
+!season
+)
+return;
+
+const {
+
 data:members
 
 }
@@ -84,18 +129,35 @@ data:matches
 await supabase
 
 .from(
+
 "matches"
+
 )
 
 .select(`
+
 id,
+
 winner,
-club_id
+
+season_id
+
 `)
 
 .eq(
+
 "club_id",
-profile.active_club_id);
+
+profile.active_club_id
+
+)
+
+.eq(
+
+"season_id",
+
+season.id
+);
 
 const {
 
@@ -112,10 +174,38 @@ await supabase
 )
 
 .select(`
+
 match_id,
+
 profile_id,
-response
+
+response,
+
+matches(
+season_id
+)
+
 `);
+
+const seasonAttendances=
+
+(att||[])
+
+.filter(
+
+a=>
+
+a.matches
+
+&&
+
+a.matches.season_id
+
+===
+
+season.id
+
+);
 
 const {
 
@@ -139,7 +229,7 @@ const totalMatches=
 
 new Set(
 
-att
+seasonAttendances
 
 ?.map(
 x=>
@@ -166,7 +256,7 @@ m.profiles?.display_name;
 
 const attendances=
 
-att
+seasonAttendances
 
 ?.filter(
 

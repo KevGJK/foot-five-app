@@ -78,7 +78,9 @@ return;
 
 const {
 
-data:season
+data:seasons,
+
+error:seasonError
 
 }
 
@@ -93,9 +95,7 @@ await supabase
 )
 
 .select(
-
-"id"
-
+"*"
 )
 
 .eq(
@@ -104,17 +104,26 @@ await supabase
 
 profile.active_club_id
 
-)
+);
 
-.eq(
+const season=
 
-"active",
+seasons?.find(
+s=>
+s.active
+);
 
-true
+if(
+!season
+){
 
-)
+alert(
+"Aucune saison active trouvée"
+);
 
-.single();
+return;
+
+}
 
 const {
 
@@ -216,7 +225,7 @@ text+=formattedDate;
 
 text+="\n\n";
 
-text+="Merci d'indiquer votre presence :\n\n";
+text+="Merci d'indiquer votre présence :\n\n";
 
 text+=link;
 

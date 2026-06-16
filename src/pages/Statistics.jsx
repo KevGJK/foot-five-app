@@ -46,6 +46,51 @@ user.id
 if(!member)
 return;
 
+const {
+
+data:season
+
+}
+
+=
+
+await supabase
+
+.from(
+
+"seasons"
+
+)
+
+.select(
+
+"id"
+
+)
+
+.eq(
+
+"club_id",
+
+member.club_id
+
+)
+
+.eq(
+
+"active",
+
+true
+
+)
+
+.single();
+
+if(
+!season
+)
+return;
+
 setClubRole(
 member.role
 );
@@ -101,27 +146,58 @@ data:matches
 await supabase
 
 .from(
+
 "attendances"
+
 )
 
 .select(`
 
 response,
-team,
+
+match_id,
 
 matches(
-winner
+
+winner,
+
+season_id
+
 )
 
 `)
 
 .eq(
+
 "profile_id",
-p.profile_id);
+
+p.profile_id
+
+);
+
+const seasonMatches=
+
+(matches||[])
+
+.filter(
+
+m=>
+
+m.matches
+
+&&
+
+m.matches.season_id
+
+===
+
+season.id
+
+);
 
 const present=
 
-(matches||[])
+seasonMatches
 
 .filter(
 x=>
@@ -132,7 +208,7 @@ x.response==="present"
 
 const absent=
 
-(matches||[])
+seasonMatches
 
 .filter(
 x=>
