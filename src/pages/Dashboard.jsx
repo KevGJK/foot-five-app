@@ -766,9 +766,9 @@ position:"relative",
 
 textAlign:"center",
 
-paddingTop:70,
+paddingTop:8,
 
-marginBottom:22
+marginBottom:14
 
 }}
 >
