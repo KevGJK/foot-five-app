@@ -18,15 +18,19 @@ const [scoreBlack,setScoreBlack]=useState({});
 
 const levelLabels={
 
-1:"N1 - Débutant",
+1:"1️⃣ Débutant",
 
-2:"N2 - Moyen",
+2:"2️⃣ Loisir",
 
-3:"N3 - Bon niveau",
+3:"3️⃣ Intermédiaire",
 
-4:"N4 - Très bon",
+4:"4️⃣ Confirmé",
 
-5:"N5 - Expert"
+5:"5️⃣ Avancé",
+
+6:"6️⃣ Expert",
+
+7:"7️⃣ Élite"
 
 };
 
@@ -94,8 +98,7 @@ created_at,
 guest_name,
 guest_level,
 profiles(
-display_name,
-level
+display_name
 )
 )
 `)
@@ -491,11 +494,15 @@ if(
 p.guest_name
 ){
 
-return p.guest_level;
+return Number(
+p.guest_level
+)||3;
 
 }
 
-return p.profiles?.level||3;
+return Number(
+p.level
+)||3;
 
 }
 
