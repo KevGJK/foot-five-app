@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { RiLogoutBoxFill } from "react-icons/ri";
 import { supabase } from "../lib/supabase";
 
 import Members from "./Members";
@@ -27,6 +28,7 @@ rate:0
 const [logoUrl,setLogoUrl]=useState(null);
 
 const [showLogo,setShowLogo]=useState(false);
+const [logoInput,setLogoInput]=useState(null);
 
 function reliability(){
 
@@ -266,6 +268,135 @@ total
 0
 
 });
+
+}
+
+async function changeLogo(e){
+
+const file=
+e.target.files?.[0];
+
+if(
+!file
+)
+return;
+
+const name=
+
+`${club.clubs.id}-${Date.now()}`;
+
+const {
+
+error:uploadError
+
+}
+
+=
+
+await supabase
+
+.storage
+
+.from(
+"club-logos"
+)
+
+.upload(
+
+name,
+
+file,
+
+{
+
+upsert:true
+
+}
+
+);
+
+if(
+uploadError
+){
+
+alert(
+uploadError.message
+);
+
+return;
+
+}
+
+const {
+
+data
+
+}
+
+=
+
+supabase
+
+.storage
+
+.from(
+"club-logos"
+)
+
+.getPublicUrl(
+name
+);
+
+const url=
+data.publicUrl;
+
+const {
+
+error
+
+}
+
+=
+
+await supabase
+
+.from(
+"clubs"
+)
+
+.update({
+
+logo_url:url
+
+})
+
+.eq(
+
+"id",
+
+club.clubs.id
+
+);
+
+if(
+error
+){
+
+alert(
+error.message
+);
+
+return;
+
+}
+
+setLogoUrl(
+url
+);
+
+alert(
+"✅ Logo mis à jour"
+);
 
 }
 
@@ -658,7 +789,7 @@ position:"absolute",
 
 right:0,
 
-top:0,
+top:4,
 
 background:"transparent",
 
@@ -670,25 +801,25 @@ display:"flex",
 
 flexDirection:"column",
 
-alignItems:"center"
+alignItems:"center",
+
+padding:0,
+
+width:48
 
 }}
 
 >
 
-<img
+<RiLogoutBoxFill
 
-src="/logout.png"
+size={48}
 
 style={{
 
-width:52,
+marginBottom:-2,
 
-height:52,
-
-objectFit:"contain",
-
-marginBottom:-4
+opacity:.92
 
 }}
 
@@ -701,7 +832,7 @@ fontSize:11,
 
 opacity:.7,
 
-marginTop:-6
+marginTop:2
 
 }}
 >
@@ -715,13 +846,13 @@ Me déconnecter
 <div
 style={{
 
-fontSize:28,
+fontSize:22,
 
 fontWeight:"900",
 
 letterSpacing:2,
 
-marginBottom:28
+marginBottom:12
 
 }}
 
@@ -749,9 +880,9 @@ true
 
 style={{
 
-width:130,
+width:80,
 
-height:130,
+height:80,
 
 margin:"0 auto",
 
@@ -781,7 +912,7 @@ logoUrl
 
 boxShadow:
 
-"0 0 40px rgba(120,90,255,.35)"
+"0 0 18px rgba(120,90,255,.25)"
 
 }}
 
@@ -827,14 +958,54 @@ fontSize:60
 
 </div>
 
+{
+
+club?.role==="owner"
+
+&&
+
+<button
+
+onClick={()=>{
+
+logoInput?.click();
+
+}}
+
+style={{
+
+marginTop:10,
+
+padding:"6px 12px",
+
+fontSize:12,
+
+borderRadius:10
+
+}}
+
+>
+
+✏️ Modifier le logo
+
+</button>
+
+}
+
 <h1
 style={{
 
-marginTop:18,
+marginTop:10,
 
-marginBottom:4,
+marginBottom:2,
 
-fontSize:42
+fontSize:26,
+
+lineHeight:1.15,
+
+textAlign:"center",
+
+wordBreak:"break-word"
 
 }}
 >
@@ -864,6 +1035,27 @@ club?.role
 </div>
 
 <hr/>
+
+<input
+
+ref={(el)=>{
+
+setLogoInput(
+el
+);
+
+}}
+
+type="file"
+
+accept="image/*"
+
+onChange={changeLogo}
+
+style={{
+display:"none"
+}}
+/>
 
 <button
 
