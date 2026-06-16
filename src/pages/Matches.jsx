@@ -488,7 +488,38 @@ return p.profiles?.display_name;
 
 }
 
-function playerLevel(p){
+async function getMemberLevel(profileId){
+
+const {
+
+data
+
+}
+
+=
+
+await supabase
+
+.from(
+"club_members"
+)
+
+.select(
+"level"
+)
+
+.eq(
+"profile_id",
+profileId
+)
+
+.single();
+
+return data?.level||3;
+
+}
+
+async function playerLevel(p){
 
 if(
 p.guest_name
@@ -500,9 +531,11 @@ p.guest_level
 
 }
 
-return Number(
-p.level
-)||3;
+return await getMemberLevel(
+
+p.profile_id
+
+);
 
 }
 
@@ -520,31 +553,40 @@ clubRole==="admin";
 
 async function compose(matchId,list){
 
-const players=
+const players=[];
+
+for(
+
+const p
+
+of
 
 participants(
 list
 )
 
-.map(
+){
 
-p=>({
+players.push({
 
 name:
+
 playerName(
 p
 ),
 
 level:
-playerLevel(
+
+await playerLevel(
 p
 )
 
-})
+});
 
-)
+}
 
-.sort(
+players.sort(
+
 (a,b)=>
 
 b.level-
