@@ -1,3 +1,4 @@
+import Seasons from "./Seasons";
 import { useEffect, useState } from "react";
 import { RiLogoutBoxFill } from "react-icons/ri";
 import { supabase } from "../lib/supabase";
@@ -9,7 +10,7 @@ import Matches from "./Matches";
 import Statistics from "./Statistics";
 import Ranking from "./Ranking";
 import ClubSelector from "./ClubSelector";
-
+import Administration from "./Administration";
 
 export default function Dashboard() {
 
@@ -29,6 +30,9 @@ const [logoUrl,setLogoUrl]=useState(null);
 
 const [showLogo,setShowLogo]=useState(false);
 const [logoInput,setLogoInput]=useState(null);
+const [activeSeason,setActiveSeason]=useState(null);
+
+const [loadingSeason,setLoadingSeason]=useState(false);
 
 function reliability(){
 
@@ -55,6 +59,8 @@ return "🔴 À relancer";
 useEffect(()=>{
 
 load();
+
+loadSeason();
 
 },[]);
 
@@ -400,6 +406,110 @@ alert(
 
 }
 
+async function loadSeason(){
+
+setLoadingSeason(true);
+
+const {
+
+data:{user}
+
+}
+
+=
+
+await supabase.auth.getUser();
+
+if(!user){
+
+setLoadingSeason(false);
+
+return;
+
+}
+
+const {
+
+data:profile
+
+}
+
+=
+
+await supabase
+
+.from("profiles")
+
+.select("active_club_id")
+
+.eq("id",user.id)
+
+.single();
+
+if(!profile?.active_club_id){
+
+setLoadingSeason(false);
+
+return;
+
+}
+
+const {
+
+data
+
+}
+
+=
+
+await supabase
+
+.from("seasons")
+
+.select("*")
+
+.eq("club_id",profile.active_club_id)
+
+.eq("active",true)
+
+.single();
+
+setActiveSeason(data);
+
+setLoadingSeason(false);
+
+}
+
+async function closeSeason(){
+
+if(!activeSeason){
+
+return;
+
+}
+
+const ok=
+
+window.confirm(
+
+`Clôturer définitivement la saison ${activeSeason.name} ?`
+
+);
+
+if(!ok){
+
+return;
+
+}
+
+alert(
+
+"Étape suivante : création automatique de la nouvelle saison."
+
+);
+
+}
+
 function goHome(){
 
 setPage(
@@ -654,27 +764,16 @@ return(
 <>
 
 <button
-
 onClick={goHome}
-
 style={{
-
 width:"calc(100% - 40px)",
-
 margin:"20px",
-
 padding:"18px",
-
 fontSize:"18px",
-
 fontWeight:"600",
-
 borderRadius:"12px",
-
 cursor:"pointer"
-
 }}
-
 >
 
 🏠 Retour à l'accueil
@@ -684,6 +783,42 @@ cursor:"pointer"
 <Matches/>
 
 </>
+
+);
+
+}
+
+if(page==="admin"){
+
+return(
+
+<Administration
+
+goHome={goHome}
+
+goSeasons={()=>setPage("seasons")}
+
+/>
+
+);
+
+}
+
+if(page==="seasons"){
+
+return(
+
+<Seasons
+
+goBack={()=>setPage("admin")}
+
+activeSeason={activeSeason}
+
+loadingSeason={loadingSeason}
+
+closeSeason={closeSeason}
+
+/>
 
 );
 
@@ -1263,19 +1398,30 @@ reliability()
 
 </div>
 
+<div
+style={{
+
+display:"flex",
+
+gap:12,
+
+marginTop:12
+
+}}
+
+>
+
 <button
 
 onClick={()=>
 
-setPage(
-"club"
-)
+setPage("club")
 
 }
 
 style={{
 
-width:"100%",
+flex:1,
 
 padding:15
 
@@ -1286,6 +1432,30 @@ padding:15
 🏟 Clubs
 
 </button>
+
+<button
+
+onClick={()=>
+
+setPage("admin")
+
+}
+
+style={{
+
+flex:1,
+
+padding:15
+
+}}
+
+>
+
+⚙ Administration
+
+</button>
+
+</div>
 
 </div>
 

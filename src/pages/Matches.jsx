@@ -8,7 +8,7 @@ const [user,setUser]=useState(null);
 const [clubRole,setClubRole]=useState(null);
 const [guestName,setGuestName]=useState({});
 const [guestLevel,setGuestLevel]=useState({});
-
+const [memberLevels,setMemberLevels]=useState({});
 const [reload,setReload]=useState(false);
 
 const [teams,setTeams]=useState({});
@@ -80,6 +80,56 @@ member.role
 );
 
 const {
+
+data:levels
+
+}
+
+=
+
+await supabase
+
+.from(
+
+"club_members"
+
+)
+
+.select(
+
+"profile_id, level"
+
+)
+
+.eq(
+
+"club_id",
+
+member.club_id
+
+);
+
+const map={};
+
+(levels||[]).forEach(
+
+m=>{
+
+map[m.profile_id]=
+
+m.level
+
+||
+
+3;
+
+}
+
+);
+
+setMemberLevels(map);
+
+const {
 data
 }
 =
@@ -139,14 +189,19 @@ a.team==="white"
 white.push({
 
 name:
-playerName(
-a
-),
+playerName(a),
 
 level:
-playerLevel(
-a
-)
+
+a.guest_name
+
+?
+
+Number(a.guest_level || 3)
+
+:
+
+3
 
 });
 
@@ -159,14 +214,19 @@ a.team==="black"
 black.push({
 
 name:
-playerName(
-a
-),
+playerName(a),
 
 level:
-playerLevel(
-a
-)
+
+a.guest_name
+
+?
+
+Number(a.guest_level || 3)
+
+:
+
+3
 
 });
 
@@ -488,38 +548,7 @@ return p.profiles?.display_name;
 
 }
 
-async function getMemberLevel(profileId){
-
-const {
-
-data
-
-}
-
-=
-
-await supabase
-
-.from(
-"club_members"
-)
-
-.select(
-"level"
-)
-
-.eq(
-"profile_id",
-profileId
-)
-
-.single();
-
-return data?.level||3;
-
-}
-
-async function playerLevel(p){
+function playerLevel(p){
 
 if(
 p.guest_name
@@ -531,11 +560,7 @@ p.guest_level
 
 }
 
-return await getMemberLevel(
-
-p.profile_id
-
-);
+return memberLevels[p.profile_id]||3;
 
 }
 
@@ -577,7 +602,7 @@ p
 
 level:
 
-await playerLevel(
+playerLevel(
 p
 )
 
@@ -1334,9 +1359,10 @@ e.target.value
 }
 
 style={{
-width:"100%",
-padding:10,
-marginBottom:10
+  width: "calc(100% - 2px)",
+  boxSizing: "border-box",
+  padding: 10,
+  marginBottom: 10
 }}
 
 />
@@ -1361,8 +1387,10 @@ e.target.value
 }
 
 style={{
-width:"100%",
-padding:10
+  width: "calc(100% - 2px)",
+  boxSizing: "border-box",
+  padding: 10,
+  marginBottom: 10
 }}
 
 >
@@ -1475,13 +1503,11 @@ canSeeLevels()
 —
 
 {
-
 levelLabels[
-playerLevel(
-p
-)
+p.guest_name
+? Number(p.guest_level || 3)
+: 3
 ]
-
 }
 
 </>
@@ -1656,9 +1682,9 @@ p
 
 {
 levelLabels[
-playerLevel(
-p
-)
+p.guest_name
+? Number(p.guest_level || 3)
+: 3
 ]
 }
 
@@ -2013,8 +2039,6 @@ m
 }
 
 </div>
-
-—
 
 {
 
