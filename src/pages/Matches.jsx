@@ -10,7 +10,6 @@ const [guestName,setGuestName]=useState({});
 const [guestLevel,setGuestLevel]=useState({});
 const [memberLevels,setMemberLevels]=useState({});
 const [reload,setReload]=useState(false);
-
 const [teams,setTeams]=useState({});
 const [expanded,setExpanded]=useState(null);
 const [scoreWhite,setScoreWhite]=useState({});
@@ -905,13 +904,13 @@ await supabase
 
 .update({
 
-score_white:
-white,
+score_white: white,
 
-score_black:
-black,
+score_black: black,
 
-winner
+winner,
+
+status: "finished"
 
 })
 
