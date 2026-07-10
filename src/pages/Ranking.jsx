@@ -225,6 +225,12 @@ await supabase
 *
 `);
 
+const seasonMatchIds = matches.map(m => m.id);
+
+const seasonTeams = (teams || []).filter(
+    t => seasonMatchIds.includes(t.match_id)
+);
+
 const totalMatches=
 
 new Set(
@@ -274,11 +280,11 @@ m.profile_id
 
 [];
 
-const played=
+const played =
 
-teams
+seasonTeams
 
-?.filter(
+.filter(
 
 t=>
 
@@ -324,9 +330,9 @@ totalMatches
 
 0;
 
-const playerTeams=
+const playerTeams =
 
-teams?.filter(
+seasonTeams.filter(
 
 t=>
 
@@ -597,17 +603,6 @@ r.name
 
 {
 r.score
-}
-
-</p>
-
-<p>
-
-
-⚽ Victoires :
-
-{
-r.wins
 }
 
 </p>

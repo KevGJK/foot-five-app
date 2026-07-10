@@ -483,30 +483,376 @@ setLoadingSeason(false);
 async function closeSeason(){
 
 if(!activeSeason){
-
-return;
-
+    alert("Aucune saison active.");
+    return;
 }
 
-const ok=
+const {
+    data:{user}
+}=await supabase.auth.getUser();
 
-window.confirm(
+if(!user){
+    return;
+}
 
+const { data:member } =
+await supabase
+.from("club_members")
+.select("club_id,role")
+.eq("profile_id",user.id)
+.single();
+
+if(!member || member.role!=="owner"){
+    alert("Seul le propriétaire du club peut clôturer une saison.");
+    return;
+}
+
+const ok=window.confirm(
 `Clôturer définitivement la saison ${activeSeason.name} ?`
-
 );
 
 if(!ok){
+    return;
+}
 
-return;
+const { data:openMatches,error } =
+await supabase
+.from("matches")
+.select("id,title,match_date")
+.eq("season_id",activeSeason.id)
+.eq("status","open");
+
+if(error){
+    alert(error.message);
+    return;
+}
+
+if(openMatches && openMatches.length){
+
+    const list=openMatches
+        .map(m=>
+            `${m.title} (${new Date(m.match_date).toLocaleDateString("fr-FR")})`
+        )
+        .join("\n");
+
+    alert(
+`Impossible de clôturer la saison.
+
+Il reste ${openMatches.length} match(s) non terminé(s).
+
+${list}`
+    );
+
+    return;
+}
+
+const { error: deleteError } = await supabase
+.from("season_results")
+.delete()
+.eq("season_id", activeSeason.id);
+
+if (deleteError) {
+    alert(deleteError.message);
+    return;
+}
+
+console.log("Anciennes archives supprimées.");
+
+const { data:members, error:membersError } = await supabase
+.from("club_members")
+.select(`
+profile_id,
+profiles(display_name)
+`)
+.eq("club_id", member.club_id);
+
+if(membersError){
+    alert(membersError.message);
+    return;
+}
+
+const { data:matches, error:matchesError } = await supabase
+.from("matches")
+.select(`
+id,
+winner,
+score_white,
+score_black
+`)
+.eq("season_id", activeSeason.id);
+
+if(matchesError){
+    alert(matchesError.message);
+    return;
+}
+
+const { data:attendances, error:attendancesError } = await supabase
+.from("attendances")
+.select(`
+profile_id,
+match_id,
+response
+`);
+
+if(attendancesError){
+    alert(attendancesError.message);
+    return;
+}
+
+const { data:teams, error:teamsError } = await supabase
+.from("match_teams")
+.select("*");
+
+if(teamsError){
+    alert(teamsError.message);
+    return;
+}
+
+console.log({
+    members,
+    matches,
+    attendances,
+    teams
+});
+
+const seasonMatchIds = matches.map(m => m.id);
+
+const seasonTeams = teams.filter(
+    t => seasonMatchIds.includes(t.match_id)
+);
+
+const results = [];
+
+const totalMatches = matches.length;
+
+for (const m of members) {
+
+    const name = m.profiles?.display_name || "Joueur";
+
+    const playerAttendances = attendances.filter(
+        a => a.profile_id === m.profile_id
+    );
+
+    const present = playerAttendances.filter(
+        a => a.response === "present"
+    ).length;
+
+    const absent = playerAttendances.filter(
+        a => a.response === "absent"
+    ).length;
+
+    const playerTeams = seasonTeams.filter(
+        t =>
+            String(t.player_name).trim().toLowerCase() ===
+            String(name).trim().toLowerCase()
+    );
+
+    const played = playerTeams.length;
+
+    let wins = 0;
+    let draws = 0;
+    let losses = 0;
+
+    for (const t of playerTeams) {
+
+        const match = matches.find(
+            x => x.id === t.match_id
+        );
+
+        if (!match)
+            continue;
+
+        if (!match.winner) {
+
+            draws++;
+
+        }
+        else if (match.winner === t.team) {
+
+            wins++;
+
+        }
+        else {
+
+            losses++;
+
+        }
+
+    }
+
+    const participation =
+        totalMatches
+            ? played / totalMatches
+            : 0;
+
+    const winRate =
+        played
+            ? wins / played
+            : 0;
+
+    const volume =
+        Math.min(
+            1,
+            played / 10
+        );
+
+    const score = Math.round(
+
+        winRate *
+
+        Math.pow(
+            participation,
+            0.6
+        )
+
+        *
+
+        volume
+
+        *
+
+        100
+
+    );
+
+    const reliability =
+        present + absent
+
+            ?
+
+        Math.round(
+            present /
+            (present + absent)
+            * 100
+        )
+
+            :
+
+        0;
+
+    results.push({
+
+        profile_id: m.profile_id,
+
+        player_name: name,
+
+        club_id: member.club_id,
+
+        score,
+
+        wins,
+
+        draws,
+
+        losses,
+
+        played,
+
+        present,
+
+        absent,
+
+        reliability
+
+    });
 
 }
 
-alert(
-
-"Étape suivante : création automatique de la nouvelle saison."
-
+results.sort(
+    (a, b) => b.score - a.score
 );
+
+results.forEach(
+    (r, index) => r.rank = index + 1
+);
+
+console.table(results);
+
+const { error: insertError } = await supabase
+.from("season_results")
+.insert(
+    results.map(r => ({
+        season_id: activeSeason.id,
+        profile_id: r.profile_id,
+        player_name: r.player_name,
+        club_id: r.club_id,
+        rank: r.rank,
+        score: r.score,
+        wins: r.wins,
+        draws: r.draws,
+        losses: r.losses,
+        played: r.played,
+        present: r.present,
+        absent: r.absent,
+        reliability: r.reliability
+    }))
+);
+
+if(insertError){
+    alert(insertError.message);
+    return;
+}
+
+console.log("✅ Archives enregistrées");
+
+console.log("activeSeason =", activeSeason);
+
+const { data: closedSeason, error: closeError } = await supabase
+.from("seasons")
+.update({
+    active: false,
+    closed_at: new Date().toISOString(),
+    closed_by: user.id
+})
+.eq("id", activeSeason.id)
+.select();
+
+console.log("Saison mise à jour :", closedSeason);
+
+if (closeError) {
+    console.error(closeError);
+    alert(closeError.message);
+    return;
+}
+
+if (!closedSeason || closedSeason.length === 0) {
+    alert("Aucune saison n'a été mise à jour.");
+    return;
+}
+
+console.log("✅ Saison clôturée");
+
+const start = new Date(activeSeason.end_date);
+start.setDate(start.getDate() + 1);
+
+const end = new Date(start);
+end.setFullYear(end.getFullYear() + 1);
+end.setDate(end.getDate() - 1);
+
+const seasonName = `${start.getFullYear()}-${end.getFullYear()}`;
+
+const { error:createError } = await supabase
+.from("seasons")
+.insert({
+    club_id: member.club_id,
+    name: seasonName,
+    start_date: start.toISOString().slice(0,10),
+    end_date: end.toISOString().slice(0,10),
+    active: true
+});
+
+if(createError){
+    alert(createError.message);
+    return;
+}
+
+console.log("✅ Nouvelle saison créée");
+
+await loadSeason();
+
+alert(`🎉 La saison ${activeSeason.name} est terminée.
+
+La saison ${seasonName} est maintenant active.`);
 
 }
 

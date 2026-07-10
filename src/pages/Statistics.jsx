@@ -99,29 +99,16 @@ setMyId(
 user.id
 );
 
-const {
+const { data } = await supabase
 
-data
-
-}
-
-=
-
-await supabase
-
-.from(
-"club_members"
-)
+.from("club_members")
 
 .select(`
-
 profile_id,
+profiles(display_name)
+`)
 
-profiles(
-display_name
-)
-
-`);
+.eq("club_id", member.club_id);
 
 const stats=[];
 
