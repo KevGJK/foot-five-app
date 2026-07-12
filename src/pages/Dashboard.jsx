@@ -31,6 +31,7 @@ const [logoUrl,setLogoUrl]=useState(null);
 const [showLogo,setShowLogo]=useState(false);
 const [logoInput,setLogoInput]=useState(null);
 const [activeSeason,setActiveSeason]=useState(null);
+const [allSeasons,setAllSeasons]=useState([]);
 
 const [loadingSeason,setLoadingSeason]=useState(false);
 
@@ -454,27 +455,17 @@ return;
 
 }
 
-const {
-
-data
-
-}
-
-=
-
-await supabase
-
+const { data: seasons } = await supabase
 .from("seasons")
-
 .select("*")
+.eq("club_id", profile.active_club_id)
+.order("start_date", { ascending: false });
 
-.eq("club_id",profile.active_club_id)
+setAllSeasons(seasons || []);
 
-.eq("active",true)
+const active = seasons?.find(s => s.active);
 
-.single();
-
-setActiveSeason(data);
+setActiveSeason(active || null);
 
 setLoadingSeason(false);
 
@@ -1159,6 +1150,8 @@ return(
 goBack={()=>setPage("admin")}
 
 activeSeason={activeSeason}
+
+allSeasons={allSeasons}
 
 loadingSeason={loadingSeason}
 

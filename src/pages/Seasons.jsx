@@ -4,24 +4,14 @@ goBack,
 
 activeSeason,
 
+allSeasons,
+
 loadingSeason,
 
 closeSeason
 
 }){
 
-const nextSeason = activeSeason
-? {
-    name:
-      `${Number(activeSeason.name.slice(0,4))+1}-${Number(activeSeason.name.slice(5))+1}`,
-
-    start:
-      `${Number(activeSeason.name.slice(0,4))+1}-09-01`,
-
-    end:
-      `${Number(activeSeason.name.slice(5))+1}-08-31`
-  }
-: null;
 
 return(
 
@@ -167,11 +157,6 @@ Aucune saison active.
 }
 
 </div>
-{
-
-nextSeason
-
-&&
 
 <div
 
@@ -179,9 +164,13 @@ style={{
 
 marginTop:25,
 
-paddingTop:20,
+padding:20,
 
-borderTop:"1px solid #444"
+borderRadius:16,
+
+border:"1px solid #333",
+
+background:"#1a1a1a"
 
 }}
 
@@ -189,57 +178,113 @@ borderTop:"1px solid #444"
 
 <h2>
 
-📅 Saison suivante
+📚 Historique des saisons
 
 </h2>
 
-<p>
+{
+
+allSeasons?.map(season=>(
+
+<div
+
+key={season.id}
+
+style={{
+
+padding:"12px 0",
+
+borderBottom:"1px solid #333"
+
+}}
+
+>
+
+<div
+
+style={{
+
+display:"flex",
+
+justifyContent:"space-between",
+
+alignItems:"center"
+
+}}
+
+>
+
+<div>
 
 <b>
 
-Nom :
+{season.name}
 
 </b>
 
-{" "}
+<br/>
 
-{nextSeason.name}
+<span
 
-</p>
+style={{
 
-<p>
+fontSize:13,
 
-📅
+opacity:.7
 
-{" "}
+}}
+
+>
 
 {
 
-new Date(nextSeason.start)
+new Date(season.start_date)
 
 .toLocaleDateString("fr-FR")
 
 }
 
-{" "}
-
-→
-
-{" "}
+{" → "}
 
 {
 
-new Date(nextSeason.end)
+new Date(season.end_date)
 
 .toLocaleDateString("fr-FR")
 
 }
 
-</p>
+</span>
 
 </div>
 
+<div>
+
+{
+
+season.active
+
+?
+
+"🟢 Active"
+
+:
+
+"⚪ Terminée"
+
 }
+
+</div>
+
+</div>
+
+</div>
+
+))
+
+}
+
+</div>
 
 <button
 
