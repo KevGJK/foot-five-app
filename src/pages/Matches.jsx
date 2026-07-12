@@ -138,6 +138,9 @@ await supabase
 
 .select(`
 *,
+seasons(
+active
+),
 attendances(
 id,
 profile_id,
@@ -279,7 +282,11 @@ restored
 
 }
 
+function seasonLocked(match){
 
+return match.seasons && !match.seasons.active;
+
+}
 
 async function answer(
 matchId,
@@ -972,6 +979,13 @@ return "🔴 Défaite";
 
 async function reopenMatch(matchId){
 
+const match = matches.find(m => m.id === matchId);
+
+if (match && seasonLocked(match)) {
+    alert("Cette saison est clôturée. Les matchs ne peuvent plus être réouverts.");
+    return;
+}
+
 if(
 
 clubRole
@@ -1270,9 +1284,7 @@ m.attendances||[]
 
 <button
 
-disabled={
-!!m.winner
-}
+disabled={!!m.winner || seasonLocked(m)}
 
 onClick={()=>
 
@@ -1291,9 +1303,7 @@ m.id,
 
 <button
 
-disabled={
-!!m.winner
-}
+disabled={!!m.winner || seasonLocked(m)}
 
 style={{
 marginLeft:10
@@ -1316,9 +1326,9 @@ m.id,
 
 <button
 
-style={{
-marginLeft:10
-}}
+disabled={seasonLocked(m)}
+
+style={{marginLeft:10}}
 
 onClick={()=>
 
@@ -1327,7 +1337,6 @@ m.id
 )
 
 }
-
 >
 
 🗑
@@ -1424,9 +1433,7 @@ value={k}
 
 <button
 
-disabled={
-!!m.winner
-}
+disabled={!!m.winner || seasonLocked(m)}
 
 onClick={()=>
 
@@ -1531,9 +1538,7 @@ marginBottom:10
 
 <button
 
-disabled={
-!!m.winner
-}
+disabled={!!m.winner || seasonLocked(m)}
 
 onClick={async()=>{
 
@@ -1868,9 +1873,7 @@ marginBottom:10
 
 <button
 
-disabled={
-!!m.winner
-}
+disabled={!!m.winner || seasonLocked(m)}
 
 onClick={()=>
 
@@ -1913,7 +1916,7 @@ m.score_black
 
 {
 
-clubRole==="owner"
+clubRole==="owner" && !seasonLocked(m)
 
 &&
 
