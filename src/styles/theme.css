@@ -1,0 +1,49 @@
+:root {
+
+  /* Couleurs */
+
+  --bg: #14161F;
+  --surface: #1E212D;
+  --surface-light: #262A38;
+
+  --primary: #3DDC84;
+  --primary-hover: #33C975;
+
+  --danger: #E5484D;
+  --warning: #F5A524;
+
+  --text: #FFFFFF;
+  --text-secondary: #B7BECF;
+
+  --border: #34384A;
+
+  /* Rayons */
+
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 18px;
+
+  /* Ombres */
+
+  --shadow:
+      0 8px 30px rgba(0,0,0,.35);
+
+  /* Dimensions */
+
+  --page-width: 680px;
+
+  --input-height:52px;
+  --button-height:52px;
+
+  /* Espacements */
+
+  --space-xs:8px;
+  --space-sm:16px;
+  --space-md:24px;
+  --space-lg:32px;
+
+  /* Animation */
+
+  --transition:0.2s ease;
+
+}

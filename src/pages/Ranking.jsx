@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Page from "../components/ui/Page";
+import Card from "../components/ui/Card";
 
 export default function Ranking(){
 
@@ -545,11 +547,7 @@ rows
 
 return(
 
-<div
-style={{
-padding:30
-}}
->
+<Page>
 
 <h1>
 
@@ -563,81 +561,95 @@ ranking.map(
 
 (r,index)=>(
 
-<div
+<Card key={index}>
 
-key={index}
-
+<h3
 style={{
-
-padding:15,
-
-marginBottom:10,
-
-border:"1px solid #ddd",
-
-borderRadius:12
-
+display:"flex",
+justifyContent:"space-between",
+alignItems:"center",
+marginTop:"-8px",
+marginBottom:"10px"
 }}
-
 >
 
-<h3>
-
-#
+<span>
 
 {
-index+1
+index===0
+? "🥇"
+: index===1
+? "🥈"
+: index===2
+? "🥉"
+: `#${index+1}`
 }
 
-—
+</span>
 
-{
-r.name
-}
+<span
+style={{
+fontWeight:"700",
+fontSize:"18px"
+}}
+>
+
+{r.name}
+
+</span>
 
 </h3>
 
-<p>
+<div
+style={{
+marginTop:"-8px",
+marginBottom:"10px"
+}}
+>
 
-🏆 Score :
+<span
+style={{
+fontSize:"13px",
+opacity:.7
+}}
+>
+Score global
+</span>
 
-{
-r.score
-}
-
-</p>
-
-<p>
-
-🟢 Victoires :
-
-{
-r.wins
-}
-
-</p>
-
-<p>
-
-⚪ Matchs nuls :
-
-{
-r.draws
-}
-
-</p>
-
-<p>
-
-🔴 Défaites :
-
-{
-r.losses
-}
-
-</p>
+<div
+style={{
+fontSize:"30px",
+fontWeight:"700",
+marginTop:"0px",
+lineHeight:"1"
+}}
+>
+🏆 {r.score}
+</div>
 
 </div>
+
+<p style={{marginTop:"14px", marginBottom:"10px"}}>
+<b>🎮 Matchs joués :</b> {r.played}
+</p>
+
+<p style={{marginTop:"6px", marginBottom:"12px"}}>
+<b>📊 Participation :</b> {r.participation}%
+</p>
+
+<p style={{marginTop:"6px"}}>
+<b>🟢 Victoires :</b> {r.wins}
+</p>
+
+<p style={{marginTop:"6px"}}>
+<b>⚪ Matchs nuls :</b> {r.draws}
+</p>
+
+<p style={{marginTop:"6px"}}>
+<b>🔴 Défaites :</b> {r.losses}
+</p>
+
+</Card>
 
 )
 
@@ -645,7 +657,7 @@ r.losses
 
 }
 
-</div>
+</Page>
 
 );
 

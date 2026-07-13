@@ -1,3 +1,7 @@
+import Page from "../components/ui/Page";
+import BackButton from "../components/ui/BackButton";
+import Button from "../components/ui/Button";
+
 export default function Administration({
 
 goHome,
@@ -10,73 +14,40 @@ return(
 
 <>
 
-<button
-
-onClick={goHome}
-
-style={{
-
-width:"calc(100% - 40px)",
-
-margin:"20px",
-
-padding:"18px",
-
-fontSize:"18px",
-
-fontWeight:"600",
-
-borderRadius:"12px"
-
-}}
-
->
-
+<BackButton onClick={goHome}>
 🏠 Retour à l'accueil
+</BackButton>
 
-</button>
-
-<div
+<Page
 style={{
-
-padding:20,
-
-maxWidth:600,
-
-margin:"0 auto"
-
+    paddingTop: "8px"
 }}
 >
 
-<h1>
+<h1
+className="page-title"
+style={{
+    marginTop: "8px",
+    marginBottom: "24px"
+}}
+>
 
 ⚙ Administration
 
 </h1>
 
-<button
-
+<Button
 onClick={goSeasons}
-
 style={{
-
-width:"100%",
-
-padding:15,
-
-marginTop:20,
-
-marginBottom:12
-
+marginTop:"20px"
 }}
-
 >
 
 🏆 Gestion des saisons
 
-</button>
+</Button>
 
-</div>
+</Page>
 
 </>
 

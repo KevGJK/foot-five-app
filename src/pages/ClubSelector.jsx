@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Page from "../components/ui/Page";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import BackButton from "../components/ui/BackButton";
 
 export default function ClubSelector({
 
@@ -368,23 +373,26 @@ window.location.reload();
 
 return(
 
-<div
-style={{
-padding:30
-}}
->
+<Page>
 
-<h1>
+<h1 className="page-title">
 
-⚽ Bienvenue
+🏟 Clubs
 
 </h1>
 
-<h3>
+<Card>
 
-Mes clubs
+<h2
+style={{
+marginTop:"-10px",
+marginBottom:"18px"
+}}
+>
 
-</h3>
+👥 Mes clubs
+
+</h2>
 
 {
 
@@ -406,9 +414,9 @@ c.clubs
 
 style={{
 
-padding:12,
+padding:"16px",
 
-marginBottom:10,
+marginBottom:"12px",
 
 cursor:"pointer",
 
@@ -418,13 +426,27 @@ c.clubs.id===activeClub
 
 ?
 
-"3px solid #3ecf8e"
+"2px solid #43d98c"
 
 :
 
-"1px solid #ddd",
+"1px solid rgba(255,255,255,.12)",
 
-borderRadius:12
+borderRadius:"14px",
+
+background:
+
+c.clubs.id===activeClub
+
+?
+
+"rgba(67,217,140,.08)"
+
+:
+
+"rgba(255,255,255,.02)",
+
+transition:"all .2s"
 
 }}
 
@@ -480,98 +502,66 @@ c.role==="admin"
 
 }
 
-<hr/>
+</Card>
 
-<h3>
+<Card>
 
-Créer un club
+<h2
+style={{
+marginTop:"-10px",
+marginBottom:"18px"
+}}
+>
 
-</h3>
+➕ Créer un club
 
-<input
+</h2>
+
+<Input
 
 placeholder="Nom du club"
 
 value={clubName}
 
-onChange={(e)=>
-
-setClubName(
-e.target.value
-)
-
-}
-
-style={{
-
-width:"100%",
-
-padding:12,
-
-marginBottom:15
-
-}}
+onChange={(e)=>setClubName(e.target.value)}
 
 />
 
-<button
+<Button
 
-disabled={loading}
+loading={loading}
 
 onClick={createClub}
 
 style={{
-
-padding:15,
-
-width:"100%"
-
+marginTop:"20px"
 }}
 
 >
 
-{
+➕ Créer mon club
 
-loading
+</Button>
 
-?
+</Card>
 
-"Création..."
+<Button
 
-:
+variant="secondary"
 
-"➕ Créer mon club"
-
-}
-
-</button>
-
-<br/>
-<br/>
-
-<button
-
-onClick={()=>
-
-goJoin()
-
-}
+onClick={goJoin}
 
 style={{
-
-padding:15,
-
-width:"100%"
-
+marginTop:"20px"
 }}
 
 >
 
 🔗 Rejoindre un club
 
-</button>
+</Button>
 
-</div>
+</Page>
 
 );
 

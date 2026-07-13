@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Page from "../components/ui/Page";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import BackButton from "../components/ui/BackButton";
 
 export default function JoinClub({
 
@@ -197,111 +202,64 @@ window.location.href="/";
 
 return(
 
-<div
-style={{
-padding:30
-}}
->
+<>
 
-<button
+<BackButton onClick={goHome} />
 
-onClick={goHome}
+<Page>
 
-style={{
 
-width:"100%",
-
-padding:"18px",
-
-fontSize:"18px",
-
-fontWeight:"600",
-
-borderRadius:"12px",
-
-marginBottom:"20px"
-
-}}
-
->
-
-🏠 Retour à l'accueil
-
-</button>
-
-<h1>
+<h1 className="page-title">
 
 ➕ Rejoindre un club
 
 </h1>
 
-<input
+<p
+style={{
+opacity:.75,
+marginBottom:"20px",
+textAlign:"center"
+}}
+>
+
+Saisissez le code d'invitation communiqué par le propriétaire du club.
+
+</p>
+
+<Card>
+
+<Input
+
+placeholder="Code d'invitation"
 
 value={code}
 
-placeholder="Code"
-
-onChange={(e)=>
-
-setCode(
-e.target.value
-)
-
-}
-
-style={{
-width:"100%",
-padding:10
-}}
+onChange={(e)=>setCode(e.target.value)}
 
 />
 
-<br/>
-<br/>
+<Button
 
-<button
-
-disabled={loading}
+loading={loading}
 
 onClick={join}
 
 style={{
-
-padding:12,
-
-opacity:
-
-loading
-
-?
-
-0.6
-
-:
-
-1
-
+marginTop:"20px"
 }}
 
 >
 
-{
+🔗 Rejoindre le club
 
-loading
+</Button>
 
-?
+</Card>
 
-"Connexion au club..."
+</Page>
 
-:
-
-"Rejoindre"
-
-}
-
-</button>
-
-</div>
+</>
 
 );
 

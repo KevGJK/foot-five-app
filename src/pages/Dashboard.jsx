@@ -2,7 +2,7 @@ import Seasons from "./Seasons";
 import { useEffect, useState } from "react";
 import { RiLogoutBoxFill } from "react-icons/ri";
 import { supabase } from "../lib/supabase";
-
+import BackButton from "../components/ui/BackButton";
 import Members from "./Members";
 import JoinClub from "./JoinClub";
 import CreateMatch from "./CreateMatch";
@@ -11,6 +11,13 @@ import Statistics from "./Statistics";
 import Ranking from "./Ranking";
 import ClubSelector from "./ClubSelector";
 import Administration from "./Administration";
+import MenuButton from "../components/ui/MenuButton";
+import DashboardHeader from "../components/ui/DashboardHeader";
+import Page from "../components/ui/Page";
+import Section from "../components/ui/Section";
+import Button from "../components/ui/Button";
+import StatCard from "../components/ui/StatCard";
+
 
 export default function Dashboard() {
 
@@ -862,42 +869,10 @@ if(page==="club"){
 return(
 <>
 
-<button
-
-onClick={goHome}
-
-style={{
-
-width:"calc(100% - 40px)",
-
-margin:"20px",
-
-padding:"18px",
-
-fontSize:"18px",
-
-fontWeight:"600",
-
-borderRadius:"12px"
-
-}}
-
->
-
-🏠 Retour à l'accueil
-
-</button>
+<BackButton onClick={goHome} />
 
 <ClubSelector
-
-goJoin={()=>
-
-setPage(
-"join"
-)
-
-}
-
+    goJoin={() => setPage("join")}
 />
 
 </>
@@ -932,33 +907,7 @@ return(
 
 <>
 
-<button
-
-onClick={goHome}
-
-style={{
-
-width:"calc(100% - 40px)",
-
-margin:"20px",
-
-padding:"18px",
-
-fontSize:"18px",
-
-fontWeight:"600",
-
-borderRadius:"12px",
-
-cursor:"pointer"
-
-}}
-
->
-
-🏠 Retour à l'accueil
-
-</button>
+<BackButton onClick={goHome} />
 
 <Members/>
 
@@ -973,37 +922,8 @@ if(page==="create"){
 return(
 
 <>
-
-<button
-
-onClick={goHome}
-
-style={{
-
-width:"calc(100% - 40px)",
-
-margin:"20px",
-
-padding:"18px",
-
-fontSize:"18px",
-
-fontWeight:"600",
-
-borderRadius:"12px",
-
-cursor:"pointer"
-
-}}
-
->
-
-🏠 Retour à l'accueil
-
-</button>
-
+<BackButton onClick={goHome} />
 <CreateMatch/>
-
 </>
 
 );
@@ -1015,37 +935,8 @@ if(page==="stats"){
 return(
 
 <>
-
-<button
-
-onClick={goHome}
-
-style={{
-
-width:"calc(100% - 40px)",
-
-margin:"20px",
-
-padding:"18px",
-
-fontSize:"18px",
-
-fontWeight:"600",
-
-borderRadius:"12px",
-
-cursor:"pointer"
-
-}}
-
->
-
-🏠 Retour à l'accueil
-
-</button>
-
+<BackButton onClick={goHome} />
 <Statistics/>
-
 </>
 
 );
@@ -1057,37 +948,8 @@ if(page==="ranking"){
 return(
 
 <>
-
-<button
-
-onClick={goHome}
-
-style={{
-
-width:"calc(100% - 40px)",
-
-margin:"20px",
-
-padding:"18px",
-
-fontSize:"18px",
-
-fontWeight:"600",
-
-borderRadius:"12px",
-
-cursor:"pointer"
-
-}}
-
->
-
-🏠 Retour à l'accueil
-
-</button>
-
+<BackButton onClick={goHome} />
 <Ranking/>
-
 </>
 
 );
@@ -1099,27 +961,10 @@ if(page==="matches"){
 return(
 
 <>
-
-<button
-onClick={goHome}
-style={{
-width:"calc(100% - 40px)",
-margin:"20px",
-padding:"18px",
-fontSize:"18px",
-fontWeight:"600",
-borderRadius:"12px",
-cursor:"pointer"
-}}
->
-
-🏠 Retour à l'accueil
-
-</button>
-
+<BackButton onClick={goHome} />
 <Matches/>
-
 </>
+
 
 );
 
@@ -1167,636 +1012,103 @@ return(
 
 <>
 
-{
+<Page>
 
-showLogo
-
-&&
-
-<div
-
-onClick={()=>{
-
-setShowLogo(
-false
-);
-
-}}
-
-style={{
-
-position:"fixed",
-
-inset:0,
-
-background:"rgba(0,0,0,.95)",
-
-display:"flex",
-
-justifyContent:"center",
-
-alignItems:"center",
-
-zIndex:999
-
-}}
-
->
-
-<img
-
-src={
-logoUrl
-}
-
-style={{
-
-maxWidth:"90%",
-
-maxHeight:"90%",
-
-borderRadius:20
-
-}}
-
+<DashboardHeader
+    club={club}
+    logoUrl={logoUrl}
+    showLogo={showLogo}
+    setShowLogo={setShowLogo}
+    logoInput={logoInput}
+    setLogoInput={setLogoInput}
+    changeLogo={changeLogo}
 />
 
-</div>
-
-}
-
-<div
-style={{
-maxWidth:600,
-margin:"auto",
-padding:16
-}}
->
-
-<div
-style={{
-
-position:"relative",
-
-textAlign:"center",
-
-paddingTop:8,
-
-marginBottom:14
-
-}}
->
-
-<button
-
-onClick={async()=>{
-
-await supabase.auth.signOut();
-
-window.location.reload();
-
-}}
-
-style={{
-
-position:"absolute",
-
-right:8,
-
-top:8,
-
-background:"transparent",
-
-border:"none",
-
-cursor:"pointer",
-
-display:"flex",
-
-flexDirection:"column",
-
-alignItems:"center",
-
-padding:0,
-
-width:48
-
-}}
-
->
-
-<RiLogoutBoxFill
-
-size={48}
-
-style={{
-
-marginBottom:-2,
-
-opacity:.92
-
-}}
-
+<MenuButton
+    icon="➕"
+    title="Créer un match"
+    onClick={() => setPage("create")}
 />
 
-<div
-style={{
-
-fontSize:11,
-
-opacity:.7,
-
-marginTop:2
-
-}}
->
-
-Me déconnecter
-
-</div>
-
-</button>
-
-<div
-
-style={{
-
-fontWeight:"900",
-
-marginBottom:12,
-
-lineHeight:1.05
-
-}}
-
->
-
-<div
-style={{
-
-fontSize:22,
-
-letterSpacing:3
-
-}}
->
-
-FOOT FIVE
-
-</div>
-
-<div
-style={{
-
-fontSize:18,
-
-letterSpacing:5,
-
-opacity:.85,
-
-marginTop:2
-
-}}
->
-
-MANAGER
-
-</div>
-
-</div>
-
-<div
-
-onClick={()=>{
-
-if(
-logoUrl
-){
-
-setShowLogo(
-true
-);
-
-}
-
-}}
-
-style={{
-
-width:80,
-
-height:80,
-
-margin:"0 auto",
-
-borderRadius:"50%",
-
-overflow:"hidden",
-
-background:"#161616",
-
-display:"flex",
-
-justifyContent:"center",
-
-alignItems:"center",
-
-cursor:
-
-logoUrl
-
-?
-
-"pointer"
-
-:
-
-"default",
-
-boxShadow:
-
-"0 0 18px rgba(120,90,255,.25)"
-
-}}
-
->
-
-{
-
-logoUrl
-
-?
-
-<img
-
-src={
-logoUrl
-}
-
-style={{
-
-width:"100%",
-
-height:"100%",
-
-objectFit:"cover"
-
-}}
-
+<MenuButton
+    icon="📅"
+    title="Matchs"
+    onClick={() => setPage("matches")}
 />
 
-:
-
-<div
-style={{
-fontSize:60
-}}
->
-
-⚽
-
-</div>
-
-}
-
-</div>
-
-{
-
-club?.role==="owner"
-
-&&
-
-<button
-
-onClick={()=>{
-
-logoInput?.click();
-
-}}
-
-style={{
-
-marginTop:10,
-
-padding:"6px 12px",
-
-fontSize:12,
-
-borderRadius:10
-
-}}
-
->
-
-✏️ Modifier le logo
-
-</button>
-
-}
-
-<h1
-style={{
-
-marginTop:10,
-
-marginBottom:2,
-
-fontSize:26,
-
-lineHeight:1.15,
-
-textAlign:"center",
-
-wordBreak:"break-word"
-
-}}
->
-
-{
-club?.clubs?.name
-}
-
-</h1>
-
-<div
-style={{
-
-fontSize:18,
-
-opacity:.75
-
-}}
->
-
-👑 {
-club?.role
-}
-
-</div>
-
-</div>
-
-<hr/>
-
-<input
-
-ref={(el)=>{
-
-setLogoInput(
-el
-);
-
-}}
-
-type="file"
-
-accept="image/*"
-
-onChange={changeLogo}
-
-style={{
-display:"none"
-}}
+<MenuButton
+    icon="👥"
+    title="Membres"
+    onClick={() => setPage("members")}
 />
 
-<button
+<MenuButton
+    icon="📊"
+    title="Statistiques saison"
+    onClick={() => setPage("stats")}
+/>
 
-onClick={()=>
-setPage(
-"matches"
-)
-}
+<MenuButton
+    icon="🏆"
+    title="Classement saison"
+    onClick={() => setPage("ranking")}
+/>
 
-style={{
-width:"100%",
-padding:15,
-marginBottom:12
-}}
-
->
-
-📅 Matchs
-
-</button>
-
-<button
-
-onClick={()=>
-setPage(
-"create"
-)
-}
-
-style={{
-width:"100%",
-padding:15,
-marginBottom:12
-}}
-
->
-
-➕ Créer un match
-
-</button>
-
-<button
-
-onClick={()=>
-setPage(
-"members"
-)
-}
-
-style={{
-width:"100%",
-padding:15,
-marginBottom:12
-}}
-
->
-
-👥 Membres
-
-</button>
-
-<button
-
-onClick={()=>
-setPage(
-"stats"
-)
-}
-
-style={{
-width:"100%",
-padding:15,
-marginBottom:12
-}}
-
->
-
-📊 Statistiques saison
-
-</button>
-
-<button
-
-onClick={()=>
-
-setPage(
-"ranking"
-)
-
-}
-
-style={{
-
-width:"100%",
-
-padding:15,
-
-marginBottom:12
-
-}}
-
->
-
-🏆 Classement saison
-
-</button>
-
-<div
-
-style={{
-
-border:"1px solid #333",
-
-padding:16,
-
-borderRadius:16,
-
-marginBottom:12
-
-}}
-
->
-
-<h3>
-
-📈 Tableau de bord
-
-</h3>
+<Section title="📈 Tableau de bord">
 
 <p>
-
-Matchs créés :
-{
-stats.created
-}
-
+<b>📅 Matchs créés :</b> {stats.created}
 </p>
 
-<p>
-
-Présences :
-{
-stats.present
-}
-
+<p style={{ marginTop: 8 }}>
+<b>✅ Présences :</b> {stats.present}
 </p>
 
-<p>
-
-Absences :
-{
-stats.absent
-}
-
+<p style={{ marginTop: 8 }}>
+<b>❌ Absences :</b> {stats.absent}
 </p>
 
-<p>
-
-Taux présence :
-{
-stats.rate
-}
-%
-
+<p style={{ marginTop: 8 }}>
+<b>📊 Taux de présence :</b> {stats.rate}%
 </p>
 
-<p>
-
-Fiabilité :
-
-{
-reliability()
-}
-
+<p style={{ marginTop: 8 }}>
+<b>🎯 Fiabilité :</b> {reliability()}
 </p>
 
-</div>
+</Section>
 
 <div
 style={{
-
-display:"flex",
-
-gap:12,
-
-marginTop:12
-
+display: "flex",
+gap: "12px",
+marginTop: "0px"
 }}
-
 >
 
-<button
-
-onClick={()=>
-
-setPage("club")
-
-}
-
-style={{
-
-flex:1,
-
-padding:15
-
-}}
-
+<Button
+variant="secondary"
+fullWidth
+onClick={() => setPage("club")}
 >
 
 🏟 Clubs
 
-</button>
+</Button>
 
-<button
-
-onClick={()=>
-
-setPage("admin")
-
-}
-
-style={{
-
-flex:1,
-
-padding:15
-
-}}
-
+<Button
+variant="secondary"
+fullWidth
+onClick={() => setPage("admin")}
 >
 
 ⚙ Administration
 
-</button>
+</Button>
 
 </div>
 
-</div>
+</Page>
 
 </>
 

@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Page from "../components/ui/Page";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
 
 export default function Members(){
 
@@ -356,58 +359,47 @@ clubRole==="admin"
 
 return(
 
-<div
-style={{
+<Page>
 
-padding:16,
-
-maxWidth:700,
-
-margin:"0 auto"
-
-}}
->
-
-<h1
-style={{
-
-textAlign:"center",
-
-marginBottom:20,
-
-fontSize:40
-
-}}
->
+<h1 className="page-title">
 
 👥 Membres
 
 </h1>
 
-<hr/>
+<Card>
 
-<h3>
+<h2
+style={{
+marginTop:"-10px",
+marginBottom:"18px"
+}}
+>
 
-Code du club
+🔑 Code d'invitation
 
-</h3>
+</h2>
 
 <p
 style={{
 
-fontSize:20,
+fontSize:26,
 
 fontWeight:"700",
 
 textAlign:"center",
 
-padding:10,
+padding:"16px",
 
-borderRadius:16,
+borderRadius:"14px",
 
-background:"#181818",
+background:"rgba(255,255,255,.04)",
 
-letterSpacing:2
+border:"1px solid rgba(255,255,255,.10)",
+
+letterSpacing:"4px",
+
+marginBottom:"20px"
 
 }}
 >
@@ -420,29 +412,17 @@ inviteCode
 
 <br/>
 
-<button
+<Button
 
 onClick={invite}
 
-style={{
-
-padding:"10px 14px",
-
-fontSize:16,
-
-borderRadius:12,
-
-fontWeight:"600"
-
-}}
-
 >
 
-📤 Inviter
+📤 Inviter un joueur
 
-</button>
+</Button>
 
-<hr/>
+</Card>
 
 {
 
@@ -450,34 +430,20 @@ members.map(
 
 (m,index)=>(
 
-<div
-
-key={index}
-
-style={{
-
-marginBottom:8,
-
-padding:"12px 14px",
-
-borderRadius:14,
-
-background:"#1a1a1a",
-
-border:"1px solid #333"
-
-}}
-
->
+<Card key={index}>
 
 <div
 style={{
 
-fontSize:17,
+fontSize:"20px",
 
 fontWeight:"700",
 
-lineHeight:1.1
+lineHeight:"1.2",
+
+marginTop:"-8px",
+
+marginBottom:"8px"
 
 }}
 >
@@ -507,13 +473,11 @@ height:2
 
 style={{
 
-opacity:0.8,
+opacity:.75,
 
-fontSize:14,
+fontSize:"15px",
 
-marginTop:2,
-
-marginBottom:4
+marginBottom:"16px"
 
 }}
 >
@@ -610,11 +574,19 @@ null
 
 style={{
 
-padding:8,
+width:"100%",
 
-borderRadius:8,
+padding:"12px",
 
-width:"100%"
+borderRadius:"12px",
+
+fontSize:"15px",
+
+background:"#2a2a2a",
+
+color:"#ffffff",
+
+border:"1px solid rgba(255,255,255,.12)"
 
 }}
 
@@ -697,61 +669,39 @@ m.role==="player"
 
 ?
 
-<button
+<Button
+
+variant="secondary"
+
+onClick={()=>updateRole(m.id,"admin")}
 
 style={{
-
-padding:"8px 10px",
-
-borderRadius:10,
-
-fontSize:14
-
+marginTop:"10px"
 }}
-
-onClick={()=>
-
-updateRole(
-m.id,
-"admin"
-)
-
-}
 
 >
 
 🛡 Nommer Admin
 
-</button>
+</Button>
 
 :
 
-<button
+<Button
+
+variant="secondary"
+
+onClick={()=>updateRole(m.id,"player")}
 
 style={{
-
-padding:"8px 10px",
-
-borderRadius:10,
-
-fontSize:14
-
+marginTop:"10px"
 }}
-
-onClick={()=>
-
-updateRole(
-m.id,
-"player"
-)
-
-}
 
 >
 
 ↩ Retirer Admin
 
-</button>
+</Button>
 
 
 }
@@ -777,17 +727,9 @@ style={{
 height:4
 }}/>
 
-<button
+<Button
 
-style={{
-
-padding:"8px 10px",
-
-borderRadius:10,
-
-fontSize:14
-
-}}
+variant="danger"
 
 onClick={()=>
 
@@ -801,17 +743,21 @@ m.profiles?.display_name
 
 }
 
+style={{
+marginTop:"10px"
+}}
+
 >
 
 ❌ Retirer du club
 
-</button>
+</Button>
 
 </>
 
 }
 
-</div>
+</Card>
 
 )
 
@@ -819,7 +765,7 @@ m.profiles?.display_name
 
 }
 
-</div>
+</Page>
 
 );
 

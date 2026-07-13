@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import Page from "../components/ui/Page";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
 
 export default function CreateMatch() {
 
@@ -260,130 +264,118 @@ alert(
 
 }
 
-return(
+return (
 
-<div
-style={{
-padding:30,
-maxWidth:600,
-margin:"auto"
-}}
->
+<Page>
 
-<h1>
+<h1 className="page-title">
 
 ➕ Créer un match
 
 </h1>
 
+<Card>
+
 {
 
-created
-
-&&
+created && (
 
 <div
-
 style={{
-
-padding:15,
-marginBottom:20,
-borderRadius:10,
 background:"#25D366",
-color:"white"
-
+color:"white",
+padding:"16px",
+borderRadius:"14px",
+marginBottom:"20px",
+fontWeight:"600"
 }}
-
 >
 
-✅ Match créé
+✅ Match créé avec succès
 
 </div>
 
+)
+
 }
 
-<input
+<div className="section">
+
+<label className="label">
+
+Nom du match
+
+</label>
+
+<Input
 
 value={title}
 
-onChange={(e)=>
-
-setTitle(
-e.target.value
-)
-
-}
-
-style={{
-width:"100%",
-padding:12,
-marginBottom:12
-}}
+onChange={(e)=>setTitle(e.target.value)}
 
 />
 
-<input
+</div>
 
-placeholder="Lieu"
+<div className="section">
+
+<label className="label">
+
+Lieu
+
+</label>
+
+<Input
+
+placeholder="Ex : Urban Soccer Annecy"
 
 value={location}
 
-onChange={(e)=>
-
-setLocation(
-e.target.value
-)
-
-}
-
-style={{
-width:"100%",
-padding:12,
-marginBottom:12
-}}
+onChange={(e)=>setLocation(e.target.value)}
 
 />
 
-<input
+</div>
+
+<div className="section">
+
+<label className="label">
+
+Date et heure
+
+</label>
+
+<Input
 
 type="datetime-local"
 
 value={date}
 
-onChange={(e)=>
-
-setDate(
-e.target.value
-)
-
-}
-
-style={{
-width:"100%",
-padding:12,
-marginBottom:20
-}}
+onChange={(e)=>setDate(e.target.value)}
 
 />
 
-<button
+</div>
+
+<Button
+
+variant="primary"
 
 onClick={create}
 
 style={{
-
-width:"100%",
-padding:15
-
+    marginTop: "20px"
 }}
 
 >
 
-Créer
+Créer le match
 
-</button>
+</Button>
 
-</div>
+</Card>
+
+</Page>
 
 );
 

@@ -1,3 +1,8 @@
+import Page from "../components/ui/Page";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import BackButton from "../components/ui/BackButton";
+
 export default function Seasons({
 
 goBack,
@@ -17,68 +22,19 @@ return(
 
 <>
 
-<button
-
-onClick={goBack}
-
-style={{
-
-width:"calc(100% - 40px)",
-
-margin:"20px",
-
-padding:"18px",
-
-fontSize:"18px",
-
-fontWeight:"600",
-
-borderRadius:"12px"
-
-}}
-
->
-
+<BackButton onClick={goBack}>
 ⚙ Retour Administration
+</BackButton>
 
-</button>
+<Page>
 
-<div
-style={{
-
-padding:20,
-
-maxWidth:600,
-
-margin:"0 auto"
-
-}}
-
->
-
-<h1>
+<h1 className="page-title">
 
 🏆 Gestion des saisons
 
 </h1>
 
-<div
-
-style={{
-
-marginTop:25,
-
-padding:20,
-
-borderRadius:16,
-
-border:"1px solid #333",
-
-background:"#1a1a1a"
-
-}}
-
->
+<Card>
 
 <h2>
 
@@ -108,19 +64,13 @@ activeSeason
 
 <p>
 
-<b>Nom :</b>
-
-{" "}
-
-{activeSeason.name}
+<b>🏷️ Nom :</b> {activeSeason.name}
 
 </p>
 
-<p>
+<p style={{ marginTop: 8 }}>
 
-📅
-
-{" "}
+<b>📅 Période :</b>{" "}
 
 {
 
@@ -128,7 +78,7 @@ new Date(activeSeason.start_date).toLocaleDateString("fr-FR")
 
 }
 
-{" "}→{" "}
+{" → "}
 
 {
 
@@ -138,9 +88,9 @@ new Date(activeSeason.end_date).toLocaleDateString("fr-FR")
 
 </p>
 
-<p>
+<p style={{ marginTop: 8 }}>
 
-🟢 Saison active
+🟢 <b>Statut :</b> Saison active
 
 </p>
 
@@ -156,31 +106,27 @@ Aucune saison active.
 
 }
 
-</div>
+</Card>
 
-<div
-
-style={{
-
-marginTop:25,
-
-padding:20,
-
-borderRadius:16,
-
-border:"1px solid #333",
-
-background:"#1a1a1a"
-
-}}
-
->
+<Card>
 
 <h2>
 
 📚 Historique des saisons
 
 </h2>
+
+<p
+style={{
+opacity:.7,
+fontSize:"14px",
+marginBottom:"16px"
+}}
+>
+
+Toutes les saisons du club, de la plus récente à la plus ancienne.
+
+</p>
 
 {
 
@@ -192,9 +138,9 @@ key={season.id}
 
 style={{
 
-padding:"12px 0",
+padding:"14px 0",
 
-borderBottom:"1px solid #333"
+borderBottom:"1px solid rgba(255,255,255,.08)"
 
 }}
 
@@ -208,7 +154,9 @@ display:"flex",
 
 justifyContent:"space-between",
 
-alignItems:"center"
+alignItems:"center",
+
+gap:"16px"
 
 }}
 
@@ -216,27 +164,26 @@ alignItems:"center"
 
 <div>
 
-<b>
-
-{season.name}
-
-</b>
-
-<br/>
-
-<span
-
+<div
 style={{
-
-fontSize:13,
-
-opacity:.7
-
+fontWeight:"700",
+fontSize:"16px"
 }}
-
 >
 
-{
+🏆 {season.name}
+
+</div>
+
+<div
+style={{
+fontSize:"13px",
+opacity:.7,
+marginTop:"4px"
+}}
+>
+
+📅 {
 
 new Date(season.start_date)
 
@@ -254,11 +201,16 @@ new Date(season.end_date)
 
 }
 
-</span>
+</div>
 
 </div>
 
-<div>
+<div
+style={{
+fontWeight:"600",
+fontSize:"14px"
+}}
+>
 
 {
 
@@ -284,41 +236,21 @@ season.active
 
 }
 
-</div>
+</Card>
 
-<button
-
+<Button
+variant="danger"
 onClick={closeSeason}
-
 style={{
-
-width:"100%",
-
-padding:15,
-
-marginTop:20,
-
-background:"#c62828",
-
-color:"white",
-
-border:"none",
-
-borderRadius:12,
-
-fontWeight:"bold",
-
-cursor:"pointer"
-
+    marginTop:"20px"
 }}
-
 >
 
 🔒 Clôturer la saison
 
-</button>
+</Button>
 
-</div>
+</Page>
 
 </>
 
