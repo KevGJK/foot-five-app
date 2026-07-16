@@ -127,20 +127,29 @@ export default function Login({ onSuccess }) {
         }}
       >
 
-        <h1
-          className="page-title"
-          style={{
-            marginBottom: "10px"
-          }}
-        >
-          ⚽ Foot Five Manager
-        </h1>
+        <img
+
+src="/icon-512.png"
+
+alt="Foot Five Manager"
+
+style={{
+
+display:"block",
+
+width:"140px",
+
+margin:"0 auto 20px auto"
+
+}}
+
+/>
 
         <p
           style={{
             textAlign: "center",
             opacity: .75,
-            marginBottom: "30px",
+            marginBottom: "24px",
             lineHeight: 1.5
           }}
         >
@@ -196,7 +205,7 @@ export default function Login({ onSuccess }) {
           }
 
           style={{
-            marginTop: "24px"
+            marginTop: "20px"
           }}
 
         >
@@ -228,7 +237,7 @@ export default function Login({ onSuccess }) {
           }
 
           style={{
-            marginTop: "14px"
+            marginTop: "12px"
           }}
 
         >
