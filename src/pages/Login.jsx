@@ -1,471 +1,254 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
+import Page from "../components/ui/Page";
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+
 export default function Login({ onSuccess }) {
 
-const [email,setEmail]=useState("");
-const [password,setPassword]=useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-const [firstName,setFirstName]=useState("");
-const [lastName,setLastName]=useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
-const [registerMode,setRegisterMode]=useState(false);
+  const [registerMode, setRegisterMode] = useState(false);
 
-const [loading,setLoading]=useState(false);
+  const [loading, setLoading] = useState(false);
 
-async function login(){
+  async function login() {
 
-setLoading(true);
+    setLoading(true);
 
-const { error } =
+    const { error } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-await supabase.auth.signInWithPassword({
+    setLoading(false);
 
-email,
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
-password
+    if (window.location.pathname.startsWith("/join/")) {
+      window.location.reload();
+      return;
+    }
 
-});
+    onSuccess();
+  }
 
-setLoading(false);
+  async function register() {
 
-if(error){
+    if (!firstName || !lastName || !email || !password) {
+      alert("Tous les champs sont obligatoires");
+      return;
+    }
 
-alert(error.message);
+    setLoading(true);
 
-return;
+    const generatedName =
+      firstName + " " + lastName.charAt(0).toUpperCase();
 
-}
+    const { data, error } =
+      await supabase.auth.signUp({
 
-if(
+        email,
+        password,
 
-window.location.pathname
+        options: {
+          data: {
+            display_name: generatedName
+          }
+        }
 
-.startsWith(
+      });
 
-"/join/"
+    if (error) {
 
-)
+      setLoading(false);
+      alert(error.message);
+      return;
 
-){
+    }
 
-window.location.reload();
+    if (data?.user) {
 
-return;
+      const { error: profileError } =
+        await supabase
+          .from("profiles")
+          .upsert({
+            id: data.user.id,
+            display_name: generatedName,
+            email
+          });
 
-}
+      if (profileError) {
 
-onSuccess();
+        setLoading(false);
+        alert(profileError.message);
+        return;
 
-}
+      }
 
-async function register(){
+    }
 
-if(
+    setLoading(false);
 
-!firstName
+    alert("Compte créé avec succès");
 
-||
+    if (window.location.pathname.startsWith("/join/")) {
 
-!lastName
+      window.location.reload();
+      return;
 
-||
+    }
 
-!email
+    setRegisterMode(false);
+    setPassword("");
+
+    onSuccess();
+
+  }
 
-||
+  return (
 
-!password
+    <Page>
 
-){
+      <Card
+        style={{
+          maxWidth: "460px",
+          margin: "40px auto"
+        }}
+      >
 
-alert(
-"Tous les champs sont obligatoires"
-);
+        <h1
+          className="page-title"
+          style={{
+            marginBottom: "10px"
+          }}
+        >
+          ⚽ Foot Five Manager
+        </h1>
 
-return;
+        <p
+          style={{
+            textAlign: "center",
+            opacity: .75,
+            marginBottom: "30px",
+            lineHeight: 1.5
+          }}
+        >
+          Organisez vos matchs,
+          composez des équipes équilibrées
+          et suivez vos statistiques.
+        </p>
 
-}
+        {registerMode && (
+          <>
 
-setLoading(true);
+            <Input
+              placeholder="Prénom"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
 
-const generatedName=
+            <Input
+              placeholder="Nom"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              style={{ marginTop: "16px" }}
+            />
 
-firstName
+          </>
+        )}
 
-+
+        <Input
+          placeholder="Adresse e-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{
+            marginTop: registerMode ? "16px" : "0"
+          }}
+        />
 
-" "
+        <Input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ marginTop: "16px" }}
+        />
 
-+
+        <Button
 
-lastName.charAt(0).toUpperCase();
+          disabled={loading}
 
-const {
+          onClick={
+            registerMode
+              ? register
+              : login
+          }
 
-data,
+          style={{
+            marginTop: "24px"
+          }}
 
-error
+        >
 
-}
+          {
 
-=
+            loading
 
-await supabase.auth.signUp({
+              ? "Chargement..."
 
-email,
+              : registerMode
 
-password,
+                ? "Créer mon compte"
 
-options:{
+                : "Se connecter"
 
-data:{
+          }
 
-display_name:
+        </Button>
 
-generatedName
+        <Button
 
-}
+          variant="secondary"
 
-}
+          disabled={loading}
 
-});
+          onClick={() =>
+            setRegisterMode(!registerMode)
+          }
 
-if(error){
+          style={{
+            marginTop: "14px"
+          }}
 
-setLoading(false);
+        >
 
-alert(
-error.message
-);
+          {
 
-return;
+            registerMode
 
-}
+              ? "J'ai déjà un compte"
 
-if(
-data?.user
-){
+              : "Créer un compte"
 
-const {
+          }
 
-error:profileError
+        </Button>
 
-}
+      </Card>
 
-=
+    </Page>
 
-await supabase
-
-.from(
-"profiles"
-)
-
-.upsert({
-
-id:
-data.user.id,
-
-display_name:
-generatedName,
-
-email
-
-});
-
-if(
-profileError
-){
-
-setLoading(false);
-
-alert(
-profileError.message
-);
-
-return;
-
-}
-
-}
-
-setLoading(false);
-
-alert(
-"Compte créé avec succès"
-);
-
-if(
-
-window.location.pathname
-
-.startsWith(
-
-"/join/"
-
-)
-
-){
-
-window.location.reload();
-
-return;
-
-}
-
-setRegisterMode(false);
-
-setPassword("");
-
-onSuccess();
-
-}
-
-return(
-
-<div
-
-style={{
-
-maxWidth:400,
-
-margin:"60px auto",
-
-padding:30,
-
-borderRadius:20,
-
-background:"#ffffff"
-
-}}
-
->
-
-<h1>
-
-⚽ Foot Five
-
-</h1>
-
-{
-
-registerMode
-
-&&
-
-<>
-
-<input
-
-placeholder="Prénom"
-
-value={firstName}
-
-onChange={(e)=>
-
-setFirstName(
-e.target.value
-)
-
-}
-
-style={{
-
-width:"100%",
-
-padding:10
-
-}}
-
-/>
-
-<br/>
-<br/>
-
-<input
-
-placeholder="Nom"
-
-value={lastName}
-
-onChange={(e)=>
-
-setLastName(
-e.target.value
-)
-
-}
-
-style={{
-
-width:"100%",
-
-padding:10
-
-}}
-
-/>
-
-<br/>
-<br/>
-
-</>
-
-}
-
-<input
-
-placeholder="Email"
-
-value={email}
-
-onChange={(e)=>
-
-setEmail(
-e.target.value
-)
-
-}
-
-style={{
-
-width:"100%",
-
-padding:10
-
-}}
-
-/>
-
-<br/>
-<br/>
-
-<input
-
-type="password"
-
-placeholder="Mot de passe"
-
-value={password}
-
-onChange={(e)=>
-
-setPassword(
-e.target.value
-)
-
-}
-
-style={{
-
-width:"100%",
-
-padding:10
-
-}}
-
-/>
-
-<br/>
-<br/>
-
-<button
-
-disabled={loading}
-
-onClick={
-
-registerMode
-
-?
-
-register
-
-:
-
-login
-
-}
-
-style={{
-
-width:"100%",
-
-padding:15
-
-}}
-
->
-
-{
-
-loading
-
-?
-
-"Chargement..."
-
-:
-
-registerMode
-
-?
-
-"Créer mon compte"
-
-:
-
-"Connexion"
-
-}
-
-</button>
-
-<br/>
-<br/>
-
-<button
-
-disabled={loading}
-
-onClick={()=>
-
-setRegisterMode(
-
-!registerMode
-
-)
-
-}
-
-style={{
-
-width:"100%",
-
-padding:12
-
-}}
-
->
-
-{
-
-registerMode
-
-?
-
-"Déjà un compte ?"
-
-:
-
-"Créer un compte"
-
-}
-
-</button>
-
-</div>
-
-);
+  );
 
 }

@@ -137,17 +137,18 @@ return(
 
 }
 
-if(
+if (connected === null) {
 
-connected===null
-
-){
-
-return(
+return (
 
 <div
 style={{
-padding:40
+display:"flex",
+justifyContent:"center",
+alignItems:"center",
+height:"100vh",
+fontSize:"20px",
+fontWeight:"600"
 }}
 >
 

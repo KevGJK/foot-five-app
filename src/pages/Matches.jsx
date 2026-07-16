@@ -1410,15 +1410,36 @@ alignItems:"center"
 }}
 >
 
+<div
+style={{
+display:"flex",
+alignItems:"center",
+gap:"8px"
+}}
+>
+
 <span
 style={{
 fontWeight:"600"
 }}
 >
 
-⚽ {playerName(p)}
+{p.guest_name ? "👥" : "⚽"} {playerName(p)}
 
 </span>
+
+<span
+style={{
+fontSize:"14px",
+opacity:.7
+}}
+>
+
+• {levelLabels[playerLevel(p)]}
+
+</span>
+
+</div>
 
 {
 
@@ -1432,55 +1453,83 @@ gap:"8px"
 }}
 >
 
-<Button
-variant="secondary"
+<button
+
 onClick={()=>startEditGuest(p)}
+
 style={{
-width:"36px",
-height:"36px",
-minWidth:"36px",
-padding:0,
-borderRadius:"50%"
+
+width:"32px",
+
+height:"32px",
+
+borderRadius:"50%",
+
+border:"none",
+
+background:"#394055",
+
+color:"white",
+
+cursor:"pointer",
+
+display:"flex",
+
+alignItems:"center",
+
+justifyContent:"center",
+
+fontSize:"16px"
+
 }}
+
 >
 
 ✏️
 
-</Button>
+</button>
 
-<Button
-variant="danger"
+<button
+
 onClick={()=>removeGuest(p.id)}
+
 style={{
-width:"36px",
-height:"36px",
-minWidth:"36px",
-padding:0,
-borderRadius:"50%"
+
+width:"32px",
+
+height:"32px",
+
+borderRadius:"50%",
+
+border:"none",
+
+background:"#E84545",
+
+color:"white",
+
+cursor:"pointer",
+
+display:"flex",
+
+alignItems:"center",
+
+justifyContent:"center",
+
+fontSize:"16px"
+
 }}
+
 >
 
 ❌
 
-</Button>
+</button>
 
 </div>
 
 )
 
 }
-
-</div>
-
-<div
-style={{
-marginTop:"4px",
-fontSize:"14px",
-opacity:.7
-}}
->
-
-{levelLabels[playerLevel(p)]}
 
 </div>
 
