@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Page from "../components/ui/Page";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
 
 export default function Matches() {
 
@@ -7,6 +11,9 @@ const [matches,setMatches]=useState([]);
 const [user,setUser]=useState(null);
 const [clubRole,setClubRole]=useState(null);
 const [guestName,setGuestName]=useState({});
+const [editingGuest,setEditingGuest]=useState(null);
+const [editGuestName,setEditGuestName]=useState("");
+const [editGuestLevel,setEditGuestLevel]=useState(3);
 const [guestLevel,setGuestLevel]=useState({});
 const [memberLevels,setMemberLevels]=useState({});
 const [reload,setReload]=useState(false);
@@ -383,6 +390,64 @@ v=>!v
 
 }
 
+function startEditGuest(attendance){
+
+setEditingGuest(attendance.id);
+
+setEditGuestName(attendance.guest_name);
+
+setEditGuestLevel(Number(attendance.guest_level || 3));
+
+}
+
+async function saveGuest(){
+
+await supabase
+
+.from("attendances")
+
+.update({
+
+guest_name:editGuestName,
+
+guest_level:Number(editGuestLevel)
+
+})
+
+.eq("id",editingGuest);
+
+setEditingGuest(null);
+
+setReload(v=>!v);
+
+}
+
+async function removeGuest(attendanceId){
+
+const ok=window.confirm(
+
+"Retirer cet invité du match ?"
+
+);
+
+if(!ok){
+
+return;
+
+}
+
+await supabase
+
+.from("attendances")
+
+.delete()
+
+.eq("id",attendanceId);
+
+setReload(v=>!v);
+
+}
+
 async function removeMatch(id){
 
 const ok=
@@ -572,13 +637,7 @@ return memberLevels[p.profile_id]||3;
 
 function canSeeLevels(){
 
-return
-
-clubRole==="owner"
-
-||
-
-clubRole==="admin";
+return clubRole==="owner" || clubRole==="admin";
 
 }
 
@@ -1207,13 +1266,9 @@ a.match_date
 
 return(
 
-<div
-style={{
-padding:30
-}}
->
+<Page>
 
-<h1>
+<h1 className="page-title">
 
 📅 Matchs
 
@@ -1225,133 +1280,375 @@ activeMatches.map(
 
 (m)=>(
 
-<div
+<Card key={m.id}>
 
-key={m.id}
-
+<h2
 style={{
-
-padding:20,
-
-border:"1px solid #ddd",
-
-borderRadius:12,
-
-marginBottom:20
-
+marginTop:"-8px",
+marginBottom:"18px",
+fontSize:"28px"
 }}
-
 >
-
-<h2>
 
 {m.title}
 
 </h2>
 
-<p>
+<p style={{marginBottom:"8px"}}>
 
-📍 {m.location}
-
-</p>
-
-<p>
-
-🕒 {
-
-new Date(
-m.match_date
-)
-
-.toLocaleString()
-
-}
+<b>📍 Lieu :</b> {m.location}
 
 </p>
 
-<p>
+<p style={{marginBottom:"8px"}}>
 
-Mon statut :
+<b>🕒 Date :</b>{" "}
+
+{new Date(m.match_date).toLocaleString()}
+
+</p>
+
+<p style={{marginBottom:"18px"}}>
+
+<b>🙋 Mon statut :</b>{" "}
+
+{myAnswer(m.attendances||[])}
+
+</p>
+
+
+<Button
+
+variant="success"
+
+disabled={!!m.winner || seasonLocked(m)}
+
+onClick={()=>answer(m.id,"present")}
+
+>
+
+✅ Présent
+
+</Button>
+
+<Button
+
+variant="danger"
+
+disabled={!!m.winner || seasonLocked(m)}
+
+onClick={()=>answer(m.id,"absent")}
+
+style={{
+marginTop:"10px"
+}}
+
+>
+
+❌ Absent
+
+</Button>
+
+<hr/>
+
+<h3
+style={{
+marginTop:"26px",
+marginBottom:"10px"
+}}
+>
+
+👥 Participants ({participants(m.attendances||[]).length}/10)
+
+</h3>
+
+<p>
 
 {
-myAnswer(
+placesLeft(
 m.attendances||[]
 )
 }
 
 </p>
 
+{
 
-<button
-
-disabled={!!m.winner || seasonLocked(m)}
-
-onClick={()=>
-
-answer(
-m.id,
-"present"
+participants(
+m.attendances||[]
 )
 
-}
+.map(
 
->
+(p,index)=>
 
-✅ Présent
+<div
 
-</button>
-
-<button
-
-disabled={!!m.winner || seasonLocked(m)}
+key={index}
 
 style={{
-marginLeft:10
+
+padding:"10px 14px",
+
+marginBottom:"8px",
+
+background:"rgba(255,255,255,.04)",
+
+border:"1px solid rgba(255,255,255,.08)",
+
+borderRadius:"10px"
+
 }}
 
-onClick={()=>
+>
 
-answer(
+<div
+style={{
+display:"flex",
+justifyContent:"space-between",
+alignItems:"center"
+}}
+>
+
+<span
+style={{
+fontWeight:"600"
+}}
+>
+
+⚽ {playerName(p)}
+
+</span>
+
+{
+
+p.guest_name && editingGuest !== p.id && (
+
+<div
+style={{
+display:"flex",
+alignItems:"center",
+gap:"8px"
+}}
+>
+
+<Button
+variant="secondary"
+onClick={()=>startEditGuest(p)}
+style={{
+width:"36px",
+height:"36px",
+minWidth:"36px",
+padding:0,
+borderRadius:"50%"
+}}
+>
+
+✏️
+
+</Button>
+
+<Button
+variant="danger"
+onClick={()=>removeGuest(p.id)}
+style={{
+width:"36px",
+height:"36px",
+minWidth:"36px",
+padding:0,
+borderRadius:"50%"
+}}
+>
+
+❌
+
+</Button>
+
+</div>
+
+)
+
+}
+
+</div>
+
+<div
+style={{
+marginTop:"4px",
+fontSize:"14px",
+opacity:.7
+}}
+>
+
+{levelLabels[playerLevel(p)]}
+
+</div>
+
+{
+
+editingGuest===p.id && (
+
+<>
+
+<Input
+
+value={editGuestName}
+
+onChange={(e)=>setEditGuestName(e.target.value)}
+
+style={{
+marginTop:"12px"
+}}
+
+/>
+
+<select
+
+value={editGuestLevel}
+
+onChange={(e)=>setEditGuestLevel(Number(e.target.value))}
+
+style={{
+
+width:"100%",
+
+padding:"12px",
+
+borderRadius:"12px",
+
+marginTop:"10px",
+
+marginBottom:"10px"
+
+}}
+
+>
+
+{
+
+Object.entries(levelLabels).map(([k,v])=>
+
+<option key={k} value={k}>
+
+{v}
+
+</option>
+
+)
+
+}
+
+</select>
+
+<Button
+
+variant="success"
+
+onClick={saveGuest}
+
+>
+
+💾 Enregistrer
+
+</Button>
+
+<Button
+
+variant="secondary"
+
+style={{
+marginTop:"10px"
+}}
+
+onClick={()=>setEditingGuest(null)}
+
+>
+
+Annuler
+
+</Button>
+
+</>
+
+)
+}
+
+</div>
+
+)
+
+}
+
+<div
+style={{
+display:"flex",
+gap:10,
+marginBottom:10
+}}
+>
+
+<Button
+
+variant="secondary"
+
+disabled={!!m.winner || seasonLocked(m)}
+
+onClick={async()=>{
+
+if(teams[m.id]){
+
+const ok=window.confirm(
+
+"Les équipes actuelles seront remplacées. Continuer ?"
+
+);
+
+if(!ok){
+
+return;
+
+}
+
+}
+
+await compose(
+
 m.id,
-"absent"
-)
 
-}
+m.attendances
+
+);
+
+}}
 
 >
 
-❌ Absent
+{
 
-</button>
+teams[m.id]
 
-<button
+?
 
-disabled={seasonLocked(m)}
+"🔄 Recomposer les équipes"
 
-style={{marginLeft:10}}
+:
 
-onClick={()=>
-
-removeMatch(
-m.id
-)
+"⚽ Composer les équipes"
 
 }
->
 
-🗑
+</Button>
 
-</button>
+
+</div>
 
 <hr/>
 
-<input
+<Input
 
-placeholder="Nom invité"
+placeholder="Nom de l'invité"
 
-value={
-guestName[m.id]||""
-}
+value={guestName[m.id] || ""}
 
 onChange={(e)=>
 
@@ -1359,19 +1656,11 @@ setGuestName({
 
 ...guestName,
 
-[m.id]:
-e.target.value
+[m.id]:e.target.value
 
 })
 
 }
-
-style={{
-  width: "calc(100% - 2px)",
-  boxSizing: "border-box",
-  padding: 10,
-  marginBottom: 10
-}}
 
 />
 
@@ -1395,10 +1684,25 @@ e.target.value
 }
 
 style={{
-  width: "calc(100% - 2px)",
-  boxSizing: "border-box",
-  padding: 10,
-  marginBottom: 10
+
+width:"100%",
+
+padding:"12px",
+
+borderRadius:"12px",
+
+fontSize:"15px",
+
+background:"#2a2a2a",
+
+color:"#ffffff",
+
+border:"1px solid rgba(255,255,255,.12)",
+
+marginTop:"10px",
+
+marginBottom:"20px"
+
 }}
 
 >
@@ -1428,185 +1732,28 @@ value={k}
 
 </select>
 
-<br/>
-<br/>
+<Button
 
-<button
-
-disabled={!!m.winner || seasonLocked(m)}
-
-onClick={()=>
-
-addGuest(
-m.id
-)
-
-}
-
->
-
-Ajouter invité
-
-</button>
-
-<hr/>
-
-<h3>
-
-🏆 Participants
-
-(
-{
-participants(
-m.attendances||[]
-).length
-}
-
-/10)
-
-</h3>
-
-<p>
-
-{
-placesLeft(
-m.attendances||[]
-)
-}
-
-</p>
-
-{
-
-participants(
-m.attendances||[]
-)
-
-.map(
-
-(p,index)=>
-
-<div
-key={index}
->
-
-{
-playerName(
-p
-)
-}
-
-—
-
-{
-
-canSeeLevels()
-
-&&
-
-<>
-
-—
-
-{
-levelLabels[
-p.guest_name
-? Number(p.guest_level || 3)
-: 3
-]
-}
-
-</>
-
-}
-
-</div>
-
-)
-
-}
-
-<br/>
-
-<div
-style={{
-display:"flex",
-gap:10,
-marginBottom:10
-}}
->
-
-<button
+variant="secondary"
 
 disabled={!!m.winner || seasonLocked(m)}
 
-onClick={async()=>{
-
-if(
-teams[m.id]
-){
-
-const ok=
-
-window.confirm(
-
-"Les équipes actuelles seront remplacées. Continuer ?"
-
-);
-
-if(
-!ok
-){
-
-return;
-
-}
-
-}
-
-await compose(
-
-m.id,
-
-m.attendances
-
-);
-
-}}
-
-style={{
-
-padding:10,
-
-marginBottom:10
-
-}}
+onClick={()=>addGuest(m.id)}
 
 >
 
-{
+➕ Ajouter un invité
 
-teams[m.id]
-
-?
-
-"🔄 Recomposer équipes"
-
-:
-
-"⚽ Composer équipes"
-
-}
-
-</button>
-
-
-
-</div>
+</Button>
 
 <hr/>
 
-<h3>
+<h3
+style={{
+marginTop:"24px",
+marginBottom:"10px"
+}}
+>
 
 ❌ Absents
 
@@ -1631,14 +1778,38 @@ m.attendances||[]
 (p,index)=>
 
 <div
+
 key={index}
+
+style={{
+
+padding:"10px 14px",
+
+marginBottom:"8px",
+
+background:"rgba(255,255,255,.03)",
+
+border:"1px solid rgba(255,255,255,.08)",
+
+borderRadius:"10px"
+
+}}
+
 >
 
-{
-playerName(
-p
-)
-}
+❌ {playerName(p)}
+
+<div
+style={{
+marginTop:"4px",
+fontSize:"14px",
+opacity:.7
+}}
+>
+
+{levelLabels[playerLevel(p)]}
+
+</div>
 
 </div>
 
@@ -1646,11 +1817,15 @@ p
 
 }
 
-<hr/>
 
-<h3>
+<h3
+style={{
+marginTop:"24px",
+marginBottom:"10px"
+}}
+>
 
-⏳ Liste attente
+⏳ Liste d'attente
 
 (
 {
@@ -1673,24 +1848,38 @@ m.attendances||[]
 (p,index)=>
 
 <div
+
 key={index}
+
+style={{
+
+padding:"10px 14px",
+
+marginBottom:"8px",
+
+background:"rgba(255,255,255,.03)",
+
+border:"1px solid rgba(255,255,255,.08)",
+
+borderRadius:"10px"
+
+}}
+
 >
 
-{
-playerName(
-p
-)
-}
+⚽ {playerName(p)}
 
-—
+<div
+style={{
+marginTop:"4px",
+fontSize:"14px",
+opacity:.7
+}}
+>
 
-{
-levelLabels[
-p.guest_name
-? Number(p.guest_level || 3)
-: 3
-]
-}
+{levelLabels[playerLevel(p)]}
+
+</div>
 
 </div>
 
@@ -1709,15 +1898,14 @@ teams[m.id]
 
 <hr/>
 
-<h3>
+<h3
+style={{
+marginTop:"24px",
+marginBottom:"12px"
+}}
+>
 
-Equipe BLANC
-
-(
-{
-teams[m.id].scoreA
-}
-)
+⚪ Équipe Blanche ({teams[m.id].scoreA})
 
 </h3>
 
@@ -1727,9 +1915,27 @@ teams[m.id].A.map(
 
 (p,index)=>
 
-<div key={index}>
+<div
 
-• {p.name}
+key={index}
+
+style={{
+
+padding:"10px 14px",
+
+marginBottom:"8px",
+
+background:"rgba(255,255,255,.04)",
+
+border:"1px solid rgba(255,255,255,.08)",
+
+borderRadius:"10px"
+
+}}
+
+>
+
+⚽ {p.name}
 
 </div>
 
@@ -1737,17 +1943,14 @@ teams[m.id].A.map(
 
 }
 
-<br/>
+<h3
+style={{
+marginTop:"20px",
+marginBottom:"12px"
+}}
+>
 
-<h3>
-
-Equipe FONCÉ
-
-(
-{
-teams[m.id].scoreB
-}
-)
+⚫ Équipe Foncée ({teams[m.id].scoreB})
 
 </h3>
 
@@ -1757,9 +1960,27 @@ teams[m.id].B.map(
 
 (p,index)=>
 
-<div key={index}>
+<div
 
-• {p.name}
+key={index}
+
+style={{
+
+padding:"10px 14px",
+
+marginBottom:"8px",
+
+background:"rgba(255,255,255,.04)",
+
+border:"1px solid rgba(255,255,255,.08)",
+
+borderRadius:"10px"
+
+}}
+
+>
+
+⚽ {p.name}
 
 </div>
 
@@ -1767,47 +1988,42 @@ teams[m.id].B.map(
 
 }
 
-<br/>
+<Button
 
-<button
+variant="success"
 
 style={{
-marginTop:10
+marginTop:"12px"
 }}
 
-onClick={()=>
-
-sendWhatsapp(
-m
-)
-
-}
+onClick={()=>sendWhatsapp(m)}
 
 >
 
-📤 WhatsApp
+📤 Partager sur WhatsApp
 
-</button>
+</Button>
 
 <hr/>
 
-<h3>
+<h3
+style={{
+marginTop:"26px",
+marginBottom:"14px"
+}}
+>
 
-🏆 Résultat
+🏆 Résultat du match
 
 </h3>
 
-<input
+<Input
 
 type="number"
 
-placeholder="Score BLANC"
+placeholder="Score équipe blanche"
 
-value={
-scoreWhite[m.id]
-||
-""
-}
+value={scoreWhite[m.id] || ""}
 
 onChange={(e)=>
 
@@ -1815,36 +2031,21 @@ setScoreWhite({
 
 ...scoreWhite,
 
-[m.id]:
-e.target.value
+[m.id]:e.target.value
 
 })
 
 }
 
-style={{
-
-width:"100%",
-
-padding:10,
-
-marginBottom:10
-
-}}
-
 />
 
-<input
+<Input
 
 type="number"
 
-placeholder="Score FONCÉ"
+placeholder="Score équipe foncée"
 
-value={
-scoreBlack[m.id]
-||
-""
-}
+value={scoreBlack[m.id] || ""}
 
 onChange={(e)=>
 
@@ -1852,42 +2053,31 @@ setScoreBlack({
 
 ...scoreBlack,
 
-[m.id]:
-e.target.value
+[m.id]:e.target.value
 
 })
 
 }
 
-style={{
-
-width:"100%",
-
-padding:10,
-
-marginBottom:10
-
-}}
-
 />
 
-<button
+<Button
+
+variant="success"
 
 disabled={!!m.winner || seasonLocked(m)}
 
-onClick={()=>
+onClick={()=>saveResult(m.id)}
 
-saveResult(
-m.id
-)
-
-}
+style={{
+marginTop:"12px"
+}}
 
 >
 
-🏆 Valider résultat
+🏆 Valider le résultat
 
-</button>
+</Button>
 
 
 {
@@ -1920,21 +2110,21 @@ clubRole==="owner" && !seasonLocked(m)
 
 &&
 
-<button
+<Button
 
-onClick={()=>
+variant="secondary"
 
-reopenMatch(
-m.id
-)
+onClick={()=>reopenMatch(m.id)}
 
-}
+style={{
+marginTop:"10px"
+}}
 
 >
 
 🔓 Réouvrir le match
 
-</button>
+</Button>
 
 }
 
@@ -1946,7 +2136,25 @@ m.id
 
 }
 
-</div>
+<Button
+
+variant="danger"
+
+disabled={seasonLocked(m)}
+
+onClick={()=>removeMatch(m.id)}
+
+style={{
+marginTop:"20px"
+}}
+
+>
+
+🗑 Supprimer le match
+
+</Button>
+
+</Card>
 
 )
 
@@ -1954,9 +2162,14 @@ m.id
 
 }
 
-<hr/>
-
-<h2>
+<h2
+className="section-title"
+style={{
+textAlign:"center",
+marginTop:"36px",
+marginBottom:"18px"
+}}
+>
 
 🏁 Matchs terminés
 
@@ -1968,24 +2181,12 @@ finishedMatches.map(
 
 (m)=>(
 
-<div
+<Card
 
 key={m.id}
 
 style={{
-
-padding:12,
-
-marginBottom:10,
-
-border:"1px solid #ddd",
-
-borderRadius:10,
-
-background:"#f7f7f7",
-
 cursor:"pointer"
-
 }}
 
 onClick={()=>
@@ -2008,7 +2209,24 @@ m.id
 
 >
 
-<div>
+<div
+style={{
+display:"flex",
+justifyContent:"space-between",
+alignItems:"center",
+fontWeight:"700",
+fontSize:"22px",
+marginTop:"-6px"
+}}
+>
+
+<span>
+
+⚽ {m.title}
+
+</span>
+
+<span>
 
 {
 
@@ -2016,43 +2234,47 @@ expanded===m.id
 
 ?
 
-"▾"
+"▲"
 
 :
 
-"▸"
+"▼"
 
 }
 
-&nbsp;
+</span>
 
-{m.title}
+</div>
 
-<div
+<p
 style={{
-fontSize:14
+marginTop:"10px",
+marginBottom:"12px"
+}}
+>
+
+📅 {
+
+new Date(m.match_date)
+
+.toLocaleDateString("fr-FR")
+
+}
+
+</p>
+
+<p
+style={{
+fontWeight:"700",
+marginBottom:"12px"
 }}
 >
 
 {
-myResult(
-m
-)
+myResult(m)
 }
 
-</div>
-
-{
-
-new Date(
-m.match_date
-)
-
-.toLocaleDateString()
-
-}
-
-</div>
+</p>
 
 {
 
@@ -2066,35 +2288,47 @@ marginTop:10
 }}
 >
 
-<p>
+<div
+style={{
+fontSize:"34px",
+fontWeight:"800",
+textAlign:"center",
+margin:"14px 0"
+}}
+>
 
-⚪
+⚪ {m.score_white}
 
-{
-m.score_white
-}
+<span
+style={{
+margin:"0 18px"
+}}
+>
 
-—
+-
 
-⚫
+</span>
 
-{
-m.score_black
-}
+⚫ {m.score_black}
 
-</p>
+</div>
 
-<p>
+<div
+style={{
+textAlign:"center",
+fontWeight:"700",
+fontSize:"18px",
+marginBottom:"8px"
+}}
+>
 
-🏆
-
-{
+🏆 {
 
 m.winner==="white"
 
 ?
 
-"Victoire BLANC"
+"Victoire Équipe Blanche"
 
 :
 
@@ -2102,7 +2336,7 @@ m.winner==="black"
 
 ?
 
-"Victoire FONCÉ"
+"Victoire Équipe Foncée"
 
 :
 
@@ -2110,13 +2344,13 @@ m.winner==="black"
 
 }
 
-</p>
+</div>
 
 </div>
 
 }
 
-</div>
+</Card>
 
 )
 
@@ -2124,7 +2358,7 @@ m.winner==="black"
 
 }
 
-</div>
+</Page>
 
 );
 

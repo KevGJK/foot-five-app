@@ -1,5 +1,7 @@
 import { useEffect,useState } from "react";
 import { supabase } from "../lib/supabase";
+import Page from "../components/ui/Page";
+import Card from "../components/ui/Card";
 
 export default function Statistics(){
 
@@ -307,15 +309,11 @@ stats
 
 return(
 
-<div
-style={{
-padding:30
-}}
->
+<Page>
 
-<h1>
+<h1 className="page-title">
 
-📊 Statistiques saison
+📊 Statistiques de la saison
 
 </h1>
 
@@ -325,25 +323,24 @@ players.map(
 
 (p,index)=>(
 
-<div
+<Card key={index}>
 
-key={index}
-
+<h3
 style={{
-
-padding:18,
-
-marginBottom:12,
-
-border:"1px solid #ddd",
-
-borderRadius:12
-
+display:"flex",
+justifyContent:"space-between",
+alignItems:"center",
+marginTop:"-8px",
+marginBottom:"20px"
 }}
-
 >
 
-<h3>
+<span
+style={{
+fontWeight:"700",
+fontSize:"20px"
+}}
+>
 
 {
 
@@ -359,39 +356,55 @@ p.id===myId
 
 }
 
+</span>
+
 </h3>
 
 <p>
-
-📅 Matchs créés :
-{p.created}
-
+<b>📅 Matchs créés :</b> {p.created}
 </p>
 
-<p>
-
-✅ Présences :
-{p.present}
-
+<p style={{marginTop:"8px"}}>
+<b>✅ Présences :</b> {p.present}
 </p>
 
-<p>
-
-❌ Absences :
-{p.absent}
-
+<p style={{marginTop:"8px"}}>
+<b>❌ Absences :</b> {p.absent}
 </p>
 
-<p>
+<div
+style={{
+marginTop:"8px",
+marginBottom:"14px"
+}}
+>
 
-📈 Taux présence :
-{p.rate}%
+<div
+style={{
+fontSize:"17px",
+opacity:.7
+}}
+>
+Taux de présence
+</div>
 
-</p>
+<div
+style={{
+fontSize:"30px",
+fontWeight:"700",
+lineHeight:"1"
+}}
+>
 
-<p>
+📈 {p.rate}%
 
-Fiabilité :
+</div>
+
+</div>
+
+<p style={{marginTop:"12px"}}>
+
+<b>🎯 Fiabilité :</b>
 
 {
 
@@ -417,7 +430,7 @@ p.rate>=70
 
 </p>
 
-</div>
+</Card>
 
 )
 
@@ -425,7 +438,7 @@ p.rate>=70
 
 }
 
-</div>
+</Page>
 
 );
 
