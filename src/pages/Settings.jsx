@@ -4,10 +4,19 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Switch from "../components/ui/Switch";
 import { useEffect, useState } from "react";
+import {
+  isPushSupported,
+  getPermission,
+  requestPermission
+} from "../services/push";
 
 export default function Settings(){
 
 const [pushEnabled,setPushEnabled]=useState(false);
+
+const [pushSupported,setPushSupported]=useState(false);
+
+const [pushPermission,setPushPermission]=useState("default");
 
 const [notifications,setNotifications]=useState({
 
@@ -52,6 +61,8 @@ async function load(){
     await loadProfile(user.id);
 
     await loadSettings(user.id);
+
+    await checkPush();
 
 }
 
@@ -138,6 +149,22 @@ async function loadSettings(profileId){
         results:data.results
 
     });
+
+}
+
+async function checkPush(){
+
+    const supported = await isPushSupported();
+
+    setPushSupported(supported);
+
+    if(supported){
+
+        const permission = await getPermission();
+
+        setPushPermission(permission);
+
+    }
 
 }
 
@@ -373,6 +400,82 @@ checked={notifications.results}
 disabled={!pushEnabled}
 onChange={(v)=>updateNotification("results",v)}
 />
+
+</Card>
+
+<Card>
+
+<h2 className="section-title">
+
+📲 Notifications Push
+
+</h2>
+
+<div style={{marginBottom:"10px"}}>
+
+<b>Compatibilité :</b>{" "}
+
+{
+
+pushSupported
+
+?
+
+"✅ Oui"
+
+:
+
+"❌ Non"
+
+}
+
+</div>
+
+<div style={{marginBottom:"20px"}}>
+
+<b>Autorisation :</b>{" "}
+
+{
+
+pushPermission==="granted"
+
+?
+
+"✅ Accordée"
+
+:
+
+pushPermission==="denied"
+
+?
+
+"❌ Refusée"
+
+:
+
+"⏳ Non demandée"
+
+}
+
+</div>
+
+<Button
+
+onClick={async()=>{
+
+const permission = await requestPermission();
+
+setPushPermission(permission);
+
+}}
+
+disabled={!pushSupported}
+
+>
+
+🔔 Autoriser les notifications Push
+
+</Button>
 
 </Card>
 
