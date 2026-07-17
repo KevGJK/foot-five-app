@@ -67,6 +67,11 @@ export async function subscribeToPush() {
 
     }
 
+console.log(
+  "VAPID KEY =",
+  import.meta.env.VITE_VAPID_PUBLIC_KEY
+);
+
     return await registration.pushManager.subscribe({
 
         userVisibleOnly: true,
