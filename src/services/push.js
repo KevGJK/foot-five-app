@@ -56,10 +56,18 @@ function urlBase64ToUint8Array(base64String) {
 
 export async function subscribeToPush() {
 
+    console.log("① Début subscribeToPush");
+
+    console.log("② VAPID =", import.meta.env.VITE_VAPID_PUBLIC_KEY);
+
     const registration = await navigator.serviceWorker.ready;
+
+    console.log("③ Service Worker OK", registration);
 
     const existingSubscription =
         await registration.pushManager.getSubscription();
+
+    console.log("④ Existing =", existingSubscription);
 
     if (existingSubscription) {
 
@@ -67,19 +75,21 @@ export async function subscribeToPush() {
 
     }
 
-console.log(
-  "VAPID KEY =",
-  import.meta.env.VITE_VAPID_PUBLIC_KEY
-);
+    console.log("⑤ Création abonnement...");
 
-    return await registration.pushManager.subscribe({
+    const subscription =
+        await registration.pushManager.subscribe({
 
-        userVisibleOnly: true,
+            userVisibleOnly: true,
 
-        applicationServerKey: urlBase64ToUint8Array(
-            import.meta.env.VITE_VAPID_PUBLIC_KEY
-        )
+            applicationServerKey: urlBase64ToUint8Array(
+                import.meta.env.VITE_VAPID_PUBLIC_KEY
+            )
 
-    });
+        });
+
+    console.log("⑥ Subscription =", subscription);
+
+    return subscription;
 
 }
