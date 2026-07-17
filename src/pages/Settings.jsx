@@ -7,7 +7,8 @@ import { useEffect, useState } from "react";
 import {
   isPushSupported,
   getPermission,
-  requestPermission
+  requestPermission,
+  subscribeToPush
 } from "../services/push";
 
 export default function Settings(){
@@ -17,6 +18,8 @@ const [pushEnabled,setPushEnabled]=useState(false);
 const [pushSupported,setPushSupported]=useState(false);
 
 const [pushPermission,setPushPermission]=useState("default");
+
+const [subscriptionInfo,setSubscriptionInfo]=useState(null);
 
 const [notifications,setNotifications]=useState({
 
@@ -476,6 +479,63 @@ disabled={!pushSupported}
 🔔 Autoriser les notifications Push
 
 </Button>
+
+<Button
+style={{marginTop:"12px"}}
+onClick={async()=>{
+
+    try{
+
+        const subscription = await subscribeToPush();
+
+        console.log(subscription);
+
+        setSubscriptionInfo(subscription.toJSON());
+
+    }
+
+    catch(e){
+
+        console.error(e);
+
+        alert(e.message);
+
+    }
+
+}}
+>
+
+🧪 Créer un abonnement Push
+
+</Button>
+
+{
+
+subscriptionInfo &&
+
+<pre
+style={{
+
+marginTop:"20px",
+
+fontSize:"12px",
+
+whiteSpace:"pre-wrap",
+
+wordBreak:"break-word",
+
+maxHeight:"250px",
+
+overflow:"auto"
+
+}}
+>
+
+{JSON.stringify(subscriptionInfo,null,2)}
+
+</pre>
+
+}
 
 </Card>
 
