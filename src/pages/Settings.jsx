@@ -8,7 +8,8 @@ import {
   isPushSupported,
   getPermission,
   requestPermission,
-  subscribeToPush
+  subscribeToPush,
+  saveSubscription
 } from "../services/push";
 
 export default function Settings(){
@@ -488,9 +489,13 @@ onClick={async()=>{
 
         const subscription = await subscribeToPush();
 
-        console.log(subscription);
+await saveSubscription(subscription);
 
-        setSubscriptionInfo(subscription.toJSON());
+console.log(subscription);
+
+setSubscriptionInfo(subscription.toJSON());
+
+alert("✅ Abonnement enregistré !");
 
     }
 

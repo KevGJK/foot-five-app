@@ -56,18 +56,11 @@ function urlBase64ToUint8Array(base64String) {
 
 export async function subscribeToPush() {
 
-    console.log("① Début subscribeToPush");
-
-    console.log("② VAPID =", import.meta.env.VITE_VAPID_PUBLIC_KEY);
 
     const registration = await navigator.serviceWorker.ready;
 
-    console.log("③ Service Worker OK", registration);
-
     const existingSubscription =
         await registration.pushManager.getSubscription();
-
-    console.log("④ Existing =", existingSubscription);
 
     if (existingSubscription) {
 
@@ -75,7 +68,6 @@ export async function subscribeToPush() {
 
     }
 
-    console.log("⑤ Création abonnement...");
 
     const subscription =
         await registration.pushManager.subscribe({
@@ -88,8 +80,49 @@ export async function subscribeToPush() {
 
         });
 
-    console.log("⑥ Subscription =", subscription);
 
     return subscription;
+
+}
+
+export async function saveSubscription(subscription){
+
+    const {
+
+        data:{user}
+
+    } = await supabase.auth.getUser();
+
+    if(!user){
+
+        throw new Error("Utilisateur non connecté");
+
+    }
+
+    const json = subscription.toJSON();
+
+    const {
+
+        error
+
+    } = await supabase
+  .from("push_subscriptions")
+  .upsert(
+    {
+      profile_id: user.id,
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth
+    },
+    {
+      onConflict: "profile_id,endpoint"
+
+        });
+
+    if(error){
+
+        throw error;
+
+    }
 
 }
