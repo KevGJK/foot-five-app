@@ -1,24 +1,30 @@
 import Button from "./Button";
+import Badge from "./Badge";
 
 export default function MenuButton({
   icon,
   title,
+  badge = null,
   onClick,
   variant = "secondary",
+  style = {},
 }) {
+
   return (
+
     <Button
       variant={variant}
       onClick={onClick}
       style={{
-        marginBottom: "12px",
-        padding: "0 20px",
-      }}
+  marginBottom: "12px",
+  padding: "0 20px",
+  ...style,
+}}
     >
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "36px 1fr",
+          gridTemplateColumns: "36px 1fr auto",
           alignItems: "center",
           width: "100%",
         }}
@@ -41,6 +47,18 @@ export default function MenuButton({
         >
           {title}
         </span>
+
+{
+  badge > 0 && (
+    <Badge
+      color="danger"
+      small
+    >
+      {badge}
+    </Badge>
+  )
+}
+
       </div>
     </Button>
   );

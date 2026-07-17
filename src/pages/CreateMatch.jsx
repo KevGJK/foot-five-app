@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { createNotification } from "../services/notifications";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -46,7 +47,7 @@ await supabase
 )
 
 .select(
-"active_club_id"
+"active_club_id, display_name"
 )
 
 .eq(
@@ -179,6 +180,26 @@ error.message
 return;
 
 }
+
+await createNotification({
+
+    clubId: profile.active_club_id,
+
+    createdBy: user.id,
+
+    createdByName: profile.display_name,
+
+    type: "NEW_MATCH",
+
+    title: "Nouveau match",
+
+    message: `${profile.display_name} a créé un nouveau match.`,
+
+    action: "match",
+
+    actionId: data.id
+
+});
 
 const link=
 

@@ -11,8 +11,11 @@ import Statistics from "./Statistics";
 import Ranking from "./Ranking";
 import ClubSelector from "./ClubSelector";
 import Administration from "./Administration";
+import Settings from "./Settings";
+import Notifications from "./Notifications";
 import MenuButton from "../components/ui/MenuButton";
 import DashboardHeader from "../components/ui/DashboardHeader";
+import { getUnreadCount } from "../services/notifications";
 import Page from "../components/ui/Page";
 import Section from "../components/ui/Section";
 import Button from "../components/ui/Button";
@@ -41,6 +44,7 @@ const [activeSeason,setActiveSeason]=useState(null);
 const [allSeasons,setAllSeasons]=useState([]);
 
 const [loadingSeason,setLoadingSeason]=useState(false);
+const [unreadCount,setUnreadCount]=useState(0);
 
 function reliability(){
 
@@ -69,6 +73,8 @@ useEffect(()=>{
 load();
 
 loadSeason();
+
+loadUnread();
 
 },[]);
 
@@ -475,6 +481,14 @@ const active = seasons?.find(s => s.active);
 setActiveSeason(active || null);
 
 setLoadingSeason(false);
+
+}
+
+async function loadUnread(){
+
+const count = await getUnreadCount();
+
+setUnreadCount(count);
 
 }
 
@@ -970,6 +984,38 @@ return(
 
 }
 
+if(page==="settings"){
+
+return(
+
+<>
+
+<BackButton onClick={goHome} />
+
+<Settings/>
+
+</>
+
+);
+
+}
+
+if(page==="notifications"){
+
+return(
+
+<>
+
+<BackButton onClick={goHome} />
+
+<Notifications/>
+
+</>
+
+);
+
+}
+
 if(page==="admin"){
 
 return(
@@ -1054,6 +1100,13 @@ return(
     onClick={() => setPage("ranking")}
 />
 
+<MenuButton
+    icon="🔔"
+    title="Notifications"
+    badge={unreadCount}
+    onClick={() => setPage("notifications")}
+/>
+
 <Section title="📈 Tableau de bord">
 
 <p>
@@ -1080,21 +1133,41 @@ return(
 
 <div
 style={{
-display: "flex",
-gap: "12px",
-marginTop: "0px"
+display:"flex",
+gap:"12px",
+alignItems:"stretch"
 }}
 >
 
-<Button
-variant="secondary"
-fullWidth
+<MenuButton
+icon="🏟"
+title="Clubs"
 onClick={() => setPage("club")}
+style={{
+flex:1,
+marginBottom:0
+}}
+/>
+
+<MenuButton
+icon="⚙"
+title="Paramètres"
+onClick={() => setPage("settings")}
+style={{
+flex:1,
+marginBottom:0
+}}
+/>
+
+</div>
+
+<div
+style={{
+marginTop:"20px",
+paddingTop:"20px",
+borderTop:"1px solid rgba(255,255,255,.08)"
+}}
 >
-
-🏟 Clubs
-
-</Button>
 
 <Button
 variant="secondary"
@@ -1102,7 +1175,7 @@ fullWidth
 onClick={() => setPage("admin")}
 >
 
-⚙ Administration
+👑 Administration
 
 </Button>
 
