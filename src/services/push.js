@@ -106,16 +106,18 @@ export async function saveSubscription(subscription){
         error
 
     } = await supabase
-  .from("push_subscriptions")
-  .upsert(
-    {
-      profile_id: user.id,
-      endpoint: json.endpoint,
-      p256dh: json.keys.p256dh,
-      auth: json.keys.auth
-    },
-    {
-      onConflict: "profile_id,endpoint"
+
+        .from("push_subscriptions")
+
+        .upsert({
+
+            profile_id:user.id,
+
+            endpoint:json.endpoint,
+
+            p256dh:json.keys.p256dh,
+
+            auth:json.keys.auth
 
         });
 
