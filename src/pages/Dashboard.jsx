@@ -484,11 +484,17 @@ setLoadingSeason(false);
 
 }
 
-async function loadUnread(){
+async function loadUnread() {
 
-const count = await getUnreadCount();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-setUnreadCount(count);
+  if (!user) return;
+
+  const count = await getUnreadCount(user.id);
+
+  setUnreadCount(count);
 
 }
 

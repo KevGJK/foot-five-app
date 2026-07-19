@@ -4,13 +4,7 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Switch from "../components/ui/Switch";
 import { useEffect, useState } from "react";
-import {
-  isPushSupported,
-  getPermission,
-  requestPermission,
-  subscribeToPush,
-  saveSubscription
-} from "../services/push";
+import { registerDevice } from "../services/registerDevice";
 
 export default function Settings(){
 
@@ -156,17 +150,15 @@ async function loadSettings(profileId){
 
 }
 
-async function checkPush(){
+async function checkPush() {
 
-    const supported = await isPushSupported();
+    const supported = "Notification" in window;
 
     setPushSupported(supported);
 
-    if(supported){
+    if (supported) {
 
-        const permission = await getPermission();
-
-        setPushPermission(permission);
+        setPushPermission(Notification.permission);
 
     }
 
