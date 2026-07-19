@@ -1,149 +1,115 @@
+import { getFCMToken } from "./firebaseMessaging";
 import { supabase } from "../lib/supabase";
 
-export async function createNotification({
+export async function registerNotifications() {
 
-    clubId,
+  const permission = await Notification.requestPermission();
 
-    createdBy,
+  if (permission !== "granted") {
+    throw new Error("Permission refusée");
+  }
 
-    createdByName,
+  const token = await getFCMToken();
 
-    type,
+  if (!token) {
+    throw new Error("Impossible d'obtenir le token Firebase");
+  }
 
-    title,
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    message,
+  if (!user) {
+    throw new Error("Utilisateur non connecté");
+  }
 
-    action,
+  await supabase
+    .from("device_tokens")
+    .upsert({
+      profile_id: user.id,
+      token,
+      platform: "web",
+      updated_at: new Date().toISOString(),
+    });
 
-    actionId
-
-}){
-
-    // Création de la notification
-
-    const { data: notification, error } = await supabase
-
-        .from("notifications")
-
-        .insert({
-
-            club_id: clubId,
-
-            created_by: createdBy,
-
-            created_by_name: createdByName,
-
-            type,
-
-            title,
-
-            message,
-
-            action,
-
-            action_id: actionId
-
-        })
-
-        .select()
-
-        .single();
-
-    if(error) throw error;
-
-    // Recherche des membres du club
-
-    const {
-
-        data: members,
-
-        error: membersError
-
-    } = await supabase
-
-        .from("club_members")
-
-        .select("profile_id")
-
-        .eq("club_id", clubId);
-
-    if(membersError) throw membersError;
-
-    // Création des destinataires
-
-    const receivers = members.map(member => ({
-
-        notification_id: notification.id,
-
-        profile_id: member.profile_id,
-
-        is_read: member.profile_id === createdBy,
-
-        delivered_at: new Date().toISOString(),
-
-        read_at: member.profile_id === createdBy
-            ? new Date().toISOString()
-            : null
-
-    }));
-
-    const {
-
-        error: receiverError
-
-    } = await supabase
-
-        .from("notification_users")
-
-        .insert(receivers);
-
-    if(receiverError) throw receiverError;
-
-    return notification;
-
+  return token;
 }
 
-export async function getUnreadCount(){
+export async function createNotification({
+  clubId,
+  createdBy,
+  createdByName,
+  type,
+  title,
+  message,
+  action,
+  actionId,
+}) {
 
-    const {
+  // Création de la notification
+  const { data: notification, error } = await supabase
+    .from("notifications")
+    .insert({
+      club_id: clubId,
+      created_by: createdBy,
+      created_by_name: createdByName,
+      type,
+      title,
+      message,
+      action,
+      action_id: actionId,
+      created_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
 
-        data:{user}
+  if (error) throw error;
 
-    } = await supabase.auth.getUser();
+  // Récupération des membres du club
+  const { data: members, error: membersError } = await supabase
+    .from("club_members")
+    .select("profile_id")
+    .eq("club_id", clubId);
 
-    if(!user) return 0;
+  if (membersError) throw membersError;
 
-    const {
+  // Création des destinataires
+  const rows = members.map((m) => ({
+    notification_id: notification.id,
+    profile_id: m.profile_id,
+    is_read: false,
+    delivered_at: new Date().toISOString(),
+  }));
 
-        count,
+const { error: insertError } = await supabase
+  .from("notification_users")
+  .insert(rows);
 
-        error
+if (insertError) throw insertError;
 
-    } = await supabase
+// Déclenche l'envoi des notifications
+await sendPush(notification.id);
 
-        .from("notification_users")
+return notification;
+}
 
-        .select("*",{
+export async function getUnreadCount(profileId) {
 
-            count:"exact",
+  if (!profileId) return 0;
 
-            head:true
+  const { count, error } = await supabase
+    .from("notification_users")
+    .select("*", {
+      count: "exact",
+      head: true,
+    })
+    .eq("profile_id", profileId)
+    .eq("is_read", false);
 
-        })
+  if (error) {
+    console.error(error);
+    return 0;
+  }
 
-        .eq("profile_id",user.id)
-
-        .eq("is_read",false);
-
-    if(error){
-
-        console.log(error);
-
-        return 0;
-
-    }
-
-    return count || 0;
-
+  return count ?? 0;
 }
