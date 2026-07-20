@@ -16,6 +16,8 @@ import Notifications from "./Notifications";
 import MenuButton from "../components/ui/MenuButton";
 import DashboardHeader from "../components/ui/DashboardHeader";
 import { getUnreadCount } from "../services/notifications";
+import { registerDevice } from "../services/registerDevice";
+
 import Page from "../components/ui/Page";
 import Section from "../components/ui/Section";
 import Button from "../components/ui/Button";
@@ -68,15 +70,17 @@ return "🔴 À relancer";
 
 }
 
-useEffect(()=>{
+useEffect(() => {
 
-load();
+  load();
 
-loadSeason();
+  loadSeason();
 
-loadUnread();
+  loadUnread();
 
-},[]);
+  // registerCurrentDevice();
+
+}, []);
 
 async function load(){
 
@@ -495,6 +499,24 @@ async function loadUnread() {
   const count = await getUnreadCount(user.id);
 
   setUnreadCount(count);
+
+}
+
+async function registerCurrentDevice() {
+
+  try {
+
+    await registerDevice();
+
+    console.log("✅ Appareil enregistré");
+
+  }
+
+  catch (e) {
+
+    console.error("❌ Erreur registerDevice :", e);
+
+  }
 
 }
 

@@ -1,6 +1,9 @@
 {
   "imports": {
     "@supabase/functions-js": "jsr:@supabase/functions-js@^2",
-    "@supabase/server": "npm:@supabase/server@^1"
+    "@supabase/server": "npm:@supabase/server@^1",
+    "@supabase/supabase-js": "jsr:@supabase/supabase-js@2",
+    "firebase-admin/app": "npm:firebase-admin@13.4.0/app",
+    "firebase-admin/messaging": "npm:firebase-admin@13.4.0/messaging"
   }
 }

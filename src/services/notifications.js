@@ -23,14 +23,27 @@ export async function registerNotifications() {
     throw new Error("Utilisateur non connecté");
   }
 
-  await supabase
-    .from("device_tokens")
-    .upsert({
+const { data, error } = await supabase
+  .from("device_tokens")
+  .upsert(
+    {
       profile_id: user.id,
       token,
       platform: "web",
       updated_at: new Date().toISOString(),
-    });
+    },
+    {
+      onConflict: "profile_id",
+    }
+  )
+  .select();
+
+console.log("device_tokens =", data);
+
+if (error) {
+  console.error("Erreur device_tokens :", error);
+  throw error;
+}
 
   return token;
 }
@@ -45,6 +58,14 @@ export async function createNotification({
   action,
   actionId,
 }) {
+
+if (!clubId) {
+  throw new Error("clubId manquant");
+}
+
+if (!createdBy) {
+  throw new Error("createdBy manquant");
+}
 
   // Création de la notification
   const { data: notification, error } = await supabase
@@ -112,4 +133,23 @@ export async function getUnreadCount(profileId) {
   }
 
   return count ?? 0;
+}
+
+async function sendPush(notificationId) {
+
+  const { data, error } = await supabase.functions.invoke(
+    "send-push",
+    {
+      body: { notificationId },
+    }
+  );
+
+  if (error) {
+    console.error("Erreur send-push :", error);
+    throw error;
+  }
+
+  console.log("✅ send-push :", data);
+
+  return data;
 }

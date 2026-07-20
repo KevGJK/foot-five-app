@@ -457,11 +457,23 @@ pushPermission==="denied"
 
 <Button
 
-onClick={async()=>{
+onClick={async () => {
 
-const permission = await requestPermission();
+  try {
 
-setPushPermission(permission);
+    await registerDevice();
+
+    setPushPermission(Notification.permission);
+
+    alert("✅ Notifications Push activées");
+
+  } catch (e) {
+
+    console.error(e);
+
+    alert(e.message);
+
+  }
 
 }}
 
@@ -473,38 +485,7 @@ disabled={!pushSupported}
 
 </Button>
 
-<Button
-style={{marginTop:"12px"}}
-onClick={async()=>{
-
-    try{
-
-        const subscription = await subscribeToPush();
-
-await saveSubscription(subscription);
-
-console.log(subscription);
-
-setSubscriptionInfo(subscription.toJSON());
-
-alert("✅ Abonnement enregistré !");
-
-    }
-
-    catch(e){
-
-        console.error(e);
-
-        alert(e.message);
-
-    }
-
-}}
->
-
-🧪 Créer un abonnement Push
-
-</Button>
+{/* Fonction en cours de développement */}
 
 {
 

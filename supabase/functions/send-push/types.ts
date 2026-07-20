@@ -23,3 +23,15 @@ export interface PushNotification {
   action_id: string | null;
 
 }
+
+export interface PushResult {
+
+  profile_id: string;
+
+  success: boolean;
+
+  messageId?: string;
+
+  error?: string;
+
+}
