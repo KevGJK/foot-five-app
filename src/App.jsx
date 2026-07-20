@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-
 import { supabase } from "./lib/supabase";
-
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MatchVote from "./pages/MatchVote";
 import JoinClub from "./pages/JoinClub";
+
 
 export default function App(){
 
@@ -26,13 +25,9 @@ data:listener
 
 supabase.auth.onAuthStateChange(
 
-(_,session)=>{
+async (_, session) => {
 
-setConnected(
-
-!!session
-
-);
+  setConnected(!!session);
 
 }
 
@@ -48,21 +43,14 @@ listener.subscription.unsubscribe();
 
 async function check(){
 
-const {
+  const {
+    data
+  } =
+  await supabase.auth.getSession();
 
-data
-
-}
-
-=
-
-await supabase.auth.getSession();
-
-setConnected(
-
-!!data.session
-
-);
+  setConnected(
+    !!data.session
+  );
 
 }
 
