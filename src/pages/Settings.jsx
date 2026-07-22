@@ -14,8 +14,6 @@ const [pushSupported,setPushSupported]=useState(false);
 
 const [pushPermission,setPushPermission]=useState("default");
 
-const [subscriptionInfo,setSubscriptionInfo]=useState(null);
-
 const [notifications,setNotifications]=useState({
 
 newMatch:true,
@@ -484,36 +482,6 @@ disabled={!pushSupported}
 🔔 Autoriser les notifications Push
 
 </Button>
-
-{/* Fonction en cours de développement */}
-
-{
-
-subscriptionInfo &&
-
-<pre
-style={{
-
-marginTop:"20px",
-
-fontSize:"12px",
-
-whiteSpace:"pre-wrap",
-
-wordBreak:"break-word",
-
-maxHeight:"250px",
-
-overflow:"auto"
-
-}}
->
-
-{JSON.stringify(subscriptionInfo,null,2)}
-
-</pre>
-
-}
 
 </Card>
 

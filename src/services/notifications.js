@@ -25,17 +25,12 @@ export async function registerNotifications() {
 
 const { data, error } = await supabase
   .from("device_tokens")
-  .upsert(
-    {
-      profile_id: user.id,
-      token,
-      platform: "web",
-      updated_at: new Date().toISOString(),
-    },
-    {
-      onConflict: "profile_id",
-    }
-  )
+  .insert({
+    profile_id: user.id,
+    token,
+    platform: "web",
+    updated_at: new Date().toISOString(),
+  })
   .select();
 
 console.log("device_tokens =", data);
