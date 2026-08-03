@@ -48,21 +48,30 @@ export async function sendFirebasePush(
 
   const messaging = getMessagingInstance();
 
-  return await messaging.send({
+return await messaging.send({
+  token,
 
-    token,
+  notification: {
+    title,
+    body,
+  },
 
-    notification:{
-
+  webpush: {
+    notification: {
       title,
-
-      body
-
+      body,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      requireInteraction: true,
     },
 
-    data
+    fcmOptions: {
+      link: "/",
+    },
+  },
 
-  });
+  data,
+});
 
 }
 

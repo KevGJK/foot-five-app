@@ -25,12 +25,17 @@ export async function registerNotifications() {
 
 const { data, error } = await supabase
   .from("device_tokens")
-  .insert({
-    profile_id: user.id,
-    token,
-    platform: "web",
-    updated_at: new Date().toISOString(),
-  })
+  .upsert(
+    {
+      profile_id: user.id,
+      token,
+      platform: "web",
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "profile_id",
+    }
+  )
   .select();
 
 console.log("device_tokens =", data);
@@ -132,12 +137,20 @@ export async function getUnreadCount(profileId) {
 
 async function sendPush(notificationId) {
 
+console.log("🚀 Appel de send-push avec notification :", notificationId);
+
   const { data, error } = await supabase.functions.invoke(
     "send-push",
     {
       body: { notificationId },
     }
   );
+
+console.log(
+  "📨 Réponse send-push :",
+  JSON.stringify(data, null, 2)
+);
+console.log("❌ Erreur send-push :", error);
 
   if (error) {
     console.error("Erreur send-push :", error);
