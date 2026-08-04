@@ -6,11 +6,11 @@ import "./styles/app.css";
 import App from './App.jsx'
 import { registerDevice } from "./services/registerDevice";
 
-import { registerSW } from "virtual:pwa-register";
+// import { registerSW } from "virtual:pwa-register";
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
   </StrictMode>,
 )
-registerSW();
+// registerSW();
