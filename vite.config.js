@@ -8,58 +8,58 @@ plugins:[
 
 react(),
 
-VitePWA({
-
-registerType:"autoUpdate",
-
-  devOptions: {
-        enabled: true
-      },
-
-manifest:{
-
-name:"Foot Five",
-
-short_name:"Foot Five",
-
-description:
-"Organisation de matchs de Five",
-
-theme_color:"#0f172a",
-
-background_color:"#ffffff",
-
-display:"standalone",
-
-start_url:"/",
-
-icons:[
-
-{
-
-src:"icon-192.png",
-
-sizes:"192x192",
-
-type:"image/png"
-
-},
-
-{
-
-src:"icon-512.png",
-
-sizes:"512x512",
-
-type:"image/png"
-
-}
-
-]
-
-}
-
-})
+// VitePWA({
+//
+// registerType:"autoUpdate",
+//
+//  devOptions: {
+//        enabled: true
+//      },
+//
+//manifest:{
+//
+// name:"Foot Five",
+//
+// short_name:"Foot Five",
+//
+// description:
+// "Organisation de matchs de Five",
+//
+// theme_color:"#0f172a",
+//
+// background_color:"#ffffff",
+//
+// display:"standalone",
+//
+// start_url:"/",
+//
+// icons:[
+//
+// {
+//
+// src:"icon-192.png",
+//
+// sizes:"192x192",
+//
+// type:"image/png"
+//
+// },
+//
+// {
+//
+// src:"icon-512.png",
+//
+// sizes:"512x512",
+//
+// type:"image/png"
+//
+// }
+//
+// ]
+//
+// }
+//
+// })
 
 ]
 
