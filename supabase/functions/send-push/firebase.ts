@@ -35,43 +35,30 @@ function getMessagingInstance() {
 }
 
 export async function sendFirebasePush(
-
   token: string,
-
   title: string,
-
   body: string,
-
-  data: Record<string,string> = {}
-
-){
+  data: Record<string, string> = {}
+) {
 
   const messaging = getMessagingInstance();
 
-return await messaging.send({
+const message = {
   token,
-
-  notification: {
-    title,
-    body,
-  },
 
   webpush: {
     notification: {
       title,
       body,
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
-      requireInteraction: true,
-    },
-
-    fcmOptions: {
-      link: "/",
     },
   },
 
   data,
-});
+};
+
+console.log("📤 Message envoyé à Firebase :", JSON.stringify(message, null, 2));
+
+return await messaging.send(message);
 
 }
 
