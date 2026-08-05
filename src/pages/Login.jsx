@@ -40,7 +40,17 @@ export default function Login({ onSuccess }) {
       return;
     }
 
-    onSuccess();
+    if (
+  window.location.pathname.startsWith("/match/")
+) {
+
+  window.location.reload();
+  return;
+
+}
+
+onSuccess();
+
   }
 
   async function register() {
@@ -110,9 +120,18 @@ export default function Login({ onSuccess }) {
     }
 
     setRegisterMode(false);
-    setPassword("");
+setPassword("");
 
-    onSuccess();
+if (
+  window.location.pathname.startsWith("/match/")
+) {
+
+  window.location.reload();
+  return;
+
+}
+
+onSuccess();
 
   }
 

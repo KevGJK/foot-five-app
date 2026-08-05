@@ -137,7 +137,7 @@ export async function getUnreadCount(profileId) {
 
 async function sendPush(notificationId) {
 
-console.log("🚀 Appel de send-push avec notification :", notificationId);
+  console.log("🚀 Appel de send-push avec notification :", notificationId);
 
   const { data, error } = await supabase.functions.invoke(
     "send-push",
@@ -146,16 +146,15 @@ console.log("🚀 Appel de send-push avec notification :", notificationId);
     }
   );
 
-console.log(
-  "📨 Réponse send-push :",
-  JSON.stringify(data, null, 2)
-);
-console.log("❌ Erreur send-push :", error);
-
   if (error) {
-    console.error("Erreur send-push :", error);
+    console.error("❌ Erreur send-push :", error);
     throw error;
   }
+
+  console.log(
+    "📨 Réponse send-push :",
+    JSON.stringify(data, null, 2)
+  );
 
   console.log("✅ send-push :", data);
 
