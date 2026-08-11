@@ -13,44 +13,35 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 self.addEventListener("notificationclick", (event) => {
-
   event.notification.close();
 
   const payload = event.notification.data;
 
   if (!payload) {
-
     event.waitUntil(
       clients.openWindow("/")
     );
-
     return;
-
   }
 
   if (
     payload.action === "match" &&
     payload.actionId
   ) {
-
     event.waitUntil(
       clients.openWindow(
         `/match/${payload.actionId}`
       )
     );
-
     return;
-
   }
 
   event.waitUntil(
     clients.openWindow("/")
   );
-
 });
 
 messaging.onBackgroundMessage((payload) => {
-
   console.log("📩 Background message :", payload);
 
   self.registration.showNotification(
@@ -59,8 +50,7 @@ messaging.onBackgroundMessage((payload) => {
       body: payload.notification.body,
       icon: "/icon-192.png",
       badge: "/icon-192.png",
-      data: payload.data
+      data: payload.data,
     }
   );
-
 });
