@@ -1,5 +1,10 @@
 import { firebaseApp } from "../lib/firebase";
-import { getMessaging, getToken, isSupported } from "firebase/messaging";
+import {
+  getMessaging,
+  getToken,
+  isSupported,
+  onMessage,
+} from "firebase/messaging";
 
 let messagingInstance = null;
 
@@ -33,4 +38,34 @@ export async function getFCMToken() {
   console.log("✅ FCM TOKEN :", token);
 
   return token;
+}
+
+export async function listenToForegroundMessages() {
+  const messaging = await getMessagingInstance();
+
+  const unsubscribe = onMessage(messaging, async (payload) => {
+    console.log("📩 Message Firebase reçu au premier plan :", payload);
+
+    if (Notification.permission !== "granted") {
+      console.log("🔕 Permission de notification non accordée");
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+
+    const title =
+      payload.notification?.title || "Foot Five";
+
+    const body =
+      payload.notification?.body || "";
+
+    await registration.showNotification(title, {
+      body,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: payload.data || {},
+    });
+  });
+
+  return unsubscribe;
 }

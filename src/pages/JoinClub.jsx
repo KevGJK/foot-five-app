@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
@@ -12,41 +12,13 @@ goHome
 
 }){
 
-const [code,setCode]=useState("");
+const initialCode =
+  window.location.pathname
+    .split("/")[2] || "";
+
+const [code,setCode]=useState(initialCode);
 
 const [loading,setLoading]=useState(false);
-
-useEffect(()=>{
-
-const parts=
-
-window.location.pathname
-
-.split("/");
-
-if(
-
-parts[1]==="join"
-
-&&
-
-parts[2]
-
-){
-
-setCode(
-parts[2]
-);
-
-}
-
-},[]);
-
-useEffect(()=>{
-
-// préremplit le code seulement
-
-},[]);
 
 async function join(){
 

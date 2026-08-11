@@ -78,16 +78,26 @@ style={{
 
 </h1>
 
+<div
+style={{
+marginTop:"20px",
+marginBottom:"16px"
+}}
+>
+
 <Button
 onClick={goSeasons}
 style={{
-marginTop:"20px"
+marginTop:0
 }}
 >
 
 🏆 Gestion des saisons
 
 </Button>
+
+</div>
+
 
 <Card>
 

@@ -4,7 +4,6 @@ import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
-import BackButton from "../components/ui/BackButton";
 
 export default function ClubSelector({
 
@@ -20,72 +19,68 @@ const [clubs,setClubs]=useState([]);
 
 const [activeClub,setActiveClub]=useState(null);
 
-useEffect(()=>{
+useEffect(() => {
 
-loadClubs();
+  let cancelled = false;
 
-},[]);
+  async function loadClubs() {
 
-async function loadClubs(){
+    const {
+      data: {
+        user
+      }
+    } = await supabase.auth.getUser();
 
-const {
-data:{user}
-}
-=
-await supabase.auth.getUser();
+    if (!user || cancelled) {
+      return;
+    }
 
-if(!user)
-return;
+    const {
+      data: profile
+    } = await supabase
+      .from("profiles")
+      .select("active_club_id")
+      .eq("id", user.id)
+      .single();
 
-const {
-data:profile
-}
-=
-await supabase
+    if (cancelled) {
+      return;
+    }
 
-.from("profiles")
+    setActiveClub(
+      profile?.active_club_id
+    );
 
-.select(
-"active_club_id"
-)
+    const {
+      data
+    } = await supabase
+      .from("club_members")
+      .select(`
+        role,
+        clubs(
+          id,
+          name
+        )
+      `)
+      .eq("profile_id", user.id);
 
-.eq(
-"id",
-user.id
-)
+    if (cancelled) {
+      return;
+    }
 
-.single();
+    setClubs(
+      data || []
+    );
 
-setActiveClub(
-profile?.active_club_id
-);
+  }
 
-const {
-data
-}
-=
-await supabase
+  loadClubs();
 
-.from("club_members")
+  return () => {
+    cancelled = true;
+  };
 
-.select(`
-role,
-clubs(
-id,
-name
-)
-`)
-
-.eq(
-"profile_id",
-user.id
-);
-
-setClubs(
-data||[]
-);
-
-}
+}, []);
 
 function generateCode(){
 

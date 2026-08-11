@@ -14,8 +14,6 @@ const [clubRole,setClubRole]=useState(null);
 
 const [clubName,setClubName]=useState("");
 
-const [myClubId,setMyClubId]=useState(null);
-
 const [myUserId,setMyUserId]=useState(null);
 
 useEffect(()=>{
@@ -106,10 +104,6 @@ return;
 
 setClubRole(
 member.role
-);
-
-setMyClubId(
-member.club_id
 );
 
 const {

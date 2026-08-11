@@ -15,169 +15,124 @@ ratio:0
 
 });
 
-useEffect(()=>{
+useEffect(() => {
+
+  let cancelled = false;
+
+  async function load() {
+
+    const id =
+      window.location.pathname
+        .split("/player/")[1];
+
+    const {
+      data: user
+    } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq(
+        "id",
+        id
+      )
+      .single();
+
+    if (cancelled) {
+      return;
+    }
+
+    setPlayer(user);
+
+    const {
+      data
+    } = await supabase
+      .from("attendances")
+      .select(`
+        response,
+        team,
+        matches(
+          winner
+        )
+      `)
+      .eq(
+        "profile_id",
+        id
+      );
+
+    if (cancelled) {
+      return;
+    }
+
+    const present =
+      (data || [])
+        .filter(
+          x => x.response === "present"
+        )
+        .length;
+
+    const absent =
+      (data || [])
+        .filter(
+          x => x.response === "absent"
+        )
+        .length;
+
+    let wins = 0;
+    let losses = 0;
+
+    (data || []).forEach(
+      a => {
+
+        if (
+          a.response !== "present"
+        )
+          return;
+
+        if (
+          !a.matches
+        )
+          return;
+
+        if (
+          a.matches.winner
+        ) {
+
+          wins++;
+
+        } else {
+
+          losses++;
+
+        }
+
+      }
+    );
+
+    const ratio =
+      present
+        ? Math.round(
+            wins /
+            present *
+            100
+          )
+        : 0;
+
+    setStats({
+      present,
+      absent,
+      wins,
+      losses,
+      ratio
+    });
 
-load();
+  }
 
-},[]);
+  load();
 
-async function load(){
+  return () => {
+    cancelled = true;
+  };
 
-const id=
-
-window.location.pathname
-
-.split("/player/")[1];
-
-const {
-
-data:user
-
-}
-
-=
-
-await supabase
-
-.from("profiles")
-
-.select("*")
-
-.eq(
-"id",
-id
-)
-
-.single();
-
-setPlayer(
-user
-);
-
-const {
-
-data
-
-}
-
-=
-
-await supabase
-
-.from("attendances")
-
-.select(`
-
-response,
-team,
-matches(
-winner
-)
-
-`)
-
-.eq(
-"profile_id",
-id);
-
-const present=
-
-(data||[])
-
-.filter(
-x=>
-x.response==="present"
-)
-
-.length;
-
-const absent=
-
-(data||[])
-
-.filter(
-x=>
-x.response==="absent"
-)
-
-.length;
-
-let wins=0;
-
-let losses=0;
-
-(data||[])
-
-.forEach(
-
-a=>{
-
-if(
-a.response!=="present"
-)
-return;
-
-if(
-!a.matches
-)
-return;
-
-if(
-a.team
-===
-
-a.matches.winner
-){
-
-wins++;
-
-}
-
-else{
-
-losses++;
-
-}
-
-}
-
-);
-
-const ratio=
-
-present
-
-?
-
-Math.round(
-
-wins
-
-/
-
-present
-
-*
-
-100
-
-)
-
-:
-
-0;
-
-setStats({
-
-present,
-absent,
-wins,
-losses,
-ratio
-
-});
-
-}
+}, []);
 
 return(
 

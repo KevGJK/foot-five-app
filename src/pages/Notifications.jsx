@@ -8,61 +8,64 @@ export default function Notifications() {
 
 const [notifications,setNotifications]=useState([]);
 
-useEffect(()=>{
+useEffect(() => {
 
-loadNotifications();
+  let cancelled = false;
 
-},[]);
+  async function loadNotifications() {
 
-async function loadNotifications(){
+    const {
+      data: {
+        user
+      }
+    } = await supabase.auth.getUser();
 
-const {
+    if (!user || cancelled) {
+      return;
+    }
 
-data:{user}
+    const {
+      data,
+      error
+    } = await supabase
+      .from("notification_users")
+      .select(`
+        is_read,
+        read_at,
+        notifications(
+          id,
+          type,
+          title,
+          message,
+          created_at
+        )
+      `)
+      .eq("profile_id", user.id)
+      .order("created_at", {
+        foreignTable: "notifications",
+        ascending: false
+      });
 
-}=await supabase.auth.getUser();
+    if (cancelled) {
+      return;
+    }
 
-if(!user)return;
+    if (error) {
+      console.log(error);
+      return;
+    }
 
-const {
+    setNotifications(data || []);
 
-data,
-error
+  }
 
-}=await supabase
+  loadNotifications();
 
-.from("notification_users")
+  return () => {
+    cancelled = true;
+  };
 
-.select(`
-is_read,
-read_at,
-notifications(
-id,
-type,
-title,
-message,
-created_at
-)
-`)
-
-.eq("profile_id",user.id)
-
-.order("created_at",{
-foreignTable:"notifications",
-ascending:false
-});
-
-if(error){
-
-console.log(error);
-
-return;
-
-}
-
-setNotifications(data||[]);
-
-}
+}, []);
 
 async function markAsRead(notificationId){
 

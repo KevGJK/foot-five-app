@@ -14,64 +14,53 @@ window.location.pathname
 .split("/")
 .pop();
 
-useEffect(()=>{
+useEffect(() => {
 
-load();
+  let cancelled = false;
 
-},[]);
+  async function load() {
 
-async function load(){
+    const {
+      data: {
+        user
+      }
+    } = await supabase
+      .auth
+      .getUser();
 
-const {
+    if (cancelled) {
+      return;
+    }
 
-data:{
-user
-}
+    setUser(user);
 
-}
+    const {
+      data
+    } = await supabase
+      .from("matches")
+      .select("*")
+      .eq(
+        "id",
+        matchId
+      )
+      .single();
 
-=
+    if (cancelled) {
+      return;
+    }
 
-await supabase
-.auth
-.getUser();
+    setMatch(data);
+    setLoading(false);
 
-setUser(
-user
-);
+  }
 
-const {
+  load();
 
-data
+  return () => {
+    cancelled = true;
+  };
 
-}
-
-=
-
-await supabase
-
-.from(
-"matches"
-)
-
-.select("*")
-
-.eq(
-"id",
-matchId
-)
-
-.single();
-
-setMatch(
-data
-);
-
-setLoading(
-false
-);
-
-}
+}, [matchId]);
 
 async function vote(response){
 

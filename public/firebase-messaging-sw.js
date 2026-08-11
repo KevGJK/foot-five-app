@@ -12,41 +12,6 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-self.addEventListener("push", (event) => {
-
-  console.log("📦 PUSH reçu :", event);
-
-  if (!event.data) {
-    console.log("❌ Aucun payload");
-    return;
-  }
-
-  const payload = event.data.json();
-
-  console.log("📦 PUSH DATA :", payload);
-
-  event.waitUntil(
-
-  self.registration.showNotification(
-
-  payload.notification.title,
-
-  {
-
-    body: payload.notification.body,
-
-    icon: "/icon-192.png",
-
-    badge: "/icon-192.png",
-
-    data: payload.data
-
-  }
-  )
-);
-
-});
-
 self.addEventListener("notificationclick", (event) => {
 
   event.notification.close();
