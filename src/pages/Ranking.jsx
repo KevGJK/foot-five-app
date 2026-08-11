@@ -7,543 +7,303 @@ export default function Ranking(){
 
 const [ranking,setRanking]=useState([]);
 
-useEffect(()=>{
-
-load();
-
-},[]);
-
-async function load(){
-
-const {
-data:{user}
-}
-=
-await supabase.auth.getUser();
-
-if(!user)
-return;
-
-const {
-data:profile
-}
-=
-await supabase
-
-.from(
-"profiles"
-)
-
-.select(
-"active_club_id"
-)
-
-.eq(
-"id",
-user.id
-)
-
-.single();
-
-if(
-!profile?.active_club_id
-)
-return;
-
-const {
-
-data:season
-
-}
-
-=
-
-await supabase
-
-.from(
-
-"seasons"
-
-)
-
-.select(
-
-"id"
-
-)
-
-.eq(
-
-"club_id",
-
-profile.active_club_id
-
-)
-
-.eq(
-
-"active",
-
-true
-
-)
-
-.single();
-
-if(
-!season
-)
-return;
-
-const {
-
-data:members
-
-}
-
-=
-
-await supabase
-
-.from(
-"club_members"
-)
-
-.select(`
-profile_id,
-profiles(
-display_name
-)
-`)
-
-.eq(
-"club_id",
-profile.active_club_id);
-
-const {
-
-data:matches
-
-}
-
-=
-
-await supabase
-
-.from(
-
-"matches"
-
-)
-
-.select(`
-
-id,
-
-winner,
-
-season_id
-
-`)
-
-.eq(
-
-"club_id",
-
-profile.active_club_id
-
-)
-
-.eq(
-
-"season_id",
-
-season.id
-);
-
-const {
-
-data:att
-
-}
-
-=
-
-await supabase
-
-.from(
-"attendances"
-)
-
-.select(`
-
-match_id,
-
-profile_id,
-
-response,
-
-matches(
-season_id
-)
-
-`);
-
-const seasonAttendances=
-
-(att||[])
-
-.filter(
-
-a=>
-
-a.matches
-
-&&
-
-a.matches.season_id
-
-===
-
-season.id
-
-);
-
-const {
-
-data:teams
-
-}
-
-=
-
-await supabase
-
-.from(
-"match_teams"
-)
-
-.select(`
-*
-`);
-
-const seasonMatchIds = matches.map(m => m.id);
-
-const seasonTeams = (teams || []).filter(
-    t => seasonMatchIds.includes(t.match_id)
-);
-
-const totalMatches=
-
-new Set(
-
-seasonAttendances
-
-?.map(
-x=>
-x.match_id
-)
-
-).size;
-
-const rows=[];
-
-for(
-
-const m
-
-of
-
-members||[]
-
-){
-
-const name=
-
-m.profiles?.display_name;
-
-const attendances=
-
-seasonAttendances
-
-?.filter(
-
-a=>
-
-a.profile_id
-
-===
-
-m.profile_id
-
-)
-
-||
-
-[];
-
-const played =
-
-seasonTeams
-
-.filter(
-
-t=>
-
-String(
-t.player_name
-)
-
-.trim()
-
-.toLowerCase()
-
-===
-
-String(
-name
-)
-
-.trim()
-
-.toLowerCase()
-
-)
-
-.length
-
-||
-
-0;
-
-const participation=
-
-totalMatches
-
-?
-
-played
-
-/
-
-totalMatches
-
-:
-
-0;
-
-const playerTeams =
-
-seasonTeams.filter(
-
-t=>
-
-String(
-t.player_name
-)
-
-.trim()
-
-.toLowerCase()
-
-===
-
-String(
-name
-)
-
-.trim()
-
-.toLowerCase()
-
-)
-
-||
-
-[];
-
-const wins=
-
-playerTeams.filter(
-
-t=>{
-
-const match=
-
-matches?.find(
-
-m=>
-
-m.id===t.match_id
-
-);
-
-return (
-
-match
-
-&&
-
-match.winner
-
-===
-
-t.team
-
-);
-
-}
-
-).length;
-
-const draws=
-
-playerTeams.filter(
-
-t=>{
-
-const match=
-
-matches?.find(
-
-m=>
-
-m.id===t.match_id
-
-);
-
-return (
-
-match
-
-&&
-
-!match.winner
-
-);
-
-}
-
-).length;
-
-const losses=
-
-Math.max(
-
-0,
-
-played-
-
-wins-
-
-draws
-
-);
-
-const winRate=
-
-played
-
-?
-
-wins
-
-/
-
-played
-
-:
-
-0;
-
-const volume=
-
-Math.min(
-1,
-played/10
-);
-
-const score=
-
-Math.round(
-
-winRate
-
-*
-
-Math.pow(
-
-participation,
-
-0.6
-
-)
-
-*
-
-volume
-
-*
-
-100
-
-);
-
-rows.push({
-
-name,
-
-wins,
-
-draws,
-
-losses,
-
-played,
-
-participation:
-
-Math.round(
-participation*100
-),
-
-score,
-
-debug:{
-
-played,
-
-wins,
-
-winRate,
-
-participation,
-
-volume
-
-}
-
-});
-
-}
-
-rows.sort(
-
-(a,b)=>
-
-b.score
-
--
-
-a.score
-
-);
-
-setRanking(
-rows
-);
-
-}
+useEffect(() => {
+
+  let cancelled = false;
+
+  async function load() {
+
+    const {
+      data: {
+        user
+      }
+    } = await supabase.auth.getUser();
+
+    if (!user || cancelled) {
+      return;
+    }
+
+    const {
+      data: profile
+    } = await supabase
+      .from("profiles")
+      .select("active_club_id")
+      .eq(
+        "id",
+        user.id
+      )
+      .single();
+
+    if (
+      !profile?.active_club_id ||
+      cancelled
+    ) {
+      return;
+    }
+
+    const {
+      data: season
+    } = await supabase
+      .from("seasons")
+      .select("id")
+      .eq(
+        "club_id",
+        profile.active_club_id
+      )
+      .eq(
+        "active",
+        true
+      )
+      .single();
+
+    if (!season || cancelled) {
+      return;
+    }
+
+    const {
+      data: members
+    } = await supabase
+      .from("club_members")
+      .select(`
+        profile_id,
+        profiles(
+          display_name
+        )
+      `)
+      .eq(
+        "club_id",
+        profile.active_club_id
+      );
+
+    if (cancelled) {
+      return;
+    }
+
+    const {
+      data: matches
+    } = await supabase
+      .from("matches")
+      .select(`
+        id,
+        winner,
+        season_id
+      `)
+      .eq(
+        "club_id",
+        profile.active_club_id
+      )
+      .eq(
+        "season_id",
+        season.id
+      );
+
+    if (cancelled) {
+      return;
+    }
+
+    const {
+      data: teams
+    } = await supabase
+      .from("match_teams")
+      .select("*");
+
+    if (cancelled) {
+      return;
+    }
+
+    const seasonMatchIds =
+      (matches || []).map(
+        m => m.id
+      );
+
+    const seasonTeams =
+      (teams || []).filter(
+        t =>
+          seasonMatchIds.includes(
+            t.match_id
+          )
+      );
+
+    const totalMatches =
+      (matches || []).length;
+
+    const rows = [];
+
+    for (
+      const m
+      of members || []
+    ) {
+
+      const name =
+        m.profiles?.display_name;
+
+      const played =
+        seasonTeams
+          .filter(
+            t =>
+              String(
+                t.player_name
+              )
+                .trim()
+                .toLowerCase()
+              ===
+              String(
+                name
+              )
+                .trim()
+                .toLowerCase()
+          )
+          .length;
+
+      const participation =
+        totalMatches
+          ? played / totalMatches
+          : 0;
+
+      const playerTeams =
+        seasonTeams.filter(
+          t =>
+            String(
+              t.player_name
+            )
+              .trim()
+              .toLowerCase()
+            ===
+            String(
+              name
+            )
+              .trim()
+              .toLowerCase()
+        );
+
+      const wins =
+        playerTeams.filter(
+          t => {
+
+            const match =
+              matches?.find(
+                m =>
+                  m.id ===
+                  t.match_id
+              );
+
+            return (
+              match &&
+              match.winner ===
+                t.team
+            );
+
+          }
+        ).length;
+
+      const draws =
+        playerTeams.filter(
+          t => {
+
+            const match =
+              matches?.find(
+                m =>
+                  m.id ===
+                  t.match_id
+              );
+
+            return (
+              match &&
+              !match.winner
+            );
+
+          }
+        ).length;
+
+      const losses =
+        Math.max(
+          0,
+          played -
+          wins -
+          draws
+        );
+
+      const matchesWithResult =
+        wins +
+        draws;
+
+      const performance =
+        matchesWithResult
+          ? (
+              wins +
+              draws * 0.5
+            ) /
+            matchesWithResult
+          : 0;
+
+      const experience =
+        Math.min(
+          100,
+          played * 10
+        );
+
+      const participationScore =
+        participation * 100;
+
+      const performanceScore =
+        performance * 100;
+
+      const score =
+        Math.round(
+          performanceScore * 0.60 +
+          participationScore * 0.25 +
+          experience * 0.15
+        );
+
+      rows.push({
+
+        name,
+
+        wins,
+
+        draws,
+
+        losses,
+
+        played,
+
+        participation:
+          Math.round(
+            participation * 100
+          ),
+
+        performance:
+          Math.round(
+            performanceScore
+          ),
+
+        experience,
+
+        score
+
+      });
+
+    }
+
+    rows.sort(
+      (a,b) =>
+        b.score -
+        a.score
+    );
+
+    if (!cancelled) {
+      setRanking(rows);
+    }
+
+  }
+
+  load();
+
+  return () => {
+    cancelled = true;
+  };
+
+}, []);
 
 return(
 
@@ -613,7 +373,9 @@ fontSize:"13px",
 opacity:.7
 }}
 >
-Score global
+
+Score global : {r.score}/100
+
 </span>
 
 <div

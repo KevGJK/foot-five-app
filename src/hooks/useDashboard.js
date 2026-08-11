@@ -1,7 +1,0 @@
-export function useDashboard() {
-
-  return {
-
-  };
-
-}

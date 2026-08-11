@@ -4,55 +4,52 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MatchVote from "./pages/MatchVote";
 import JoinClub from "./pages/JoinClub";
-
+import PlayerProfile from "./pages/PlayerProfile";
 
 export default function App(){
 
 const [connected,setConnected]=
 useState(null);
 
-useEffect(()=>{
+useEffect(() => {
 
-check();
+  let mounted = true;
 
-const {
+  async function initializeAuth() {
 
-data:listener
+    const {
+      data
+    } = await supabase.auth.getSession();
 
-}
+    if (mounted) {
+      setConnected(!!data.session);
+    }
 
-=
+  }
 
-supabase.auth.onAuthStateChange(
-
-async (_, session) => {
-
-  setConnected(!!session);
-
-}
-
-);
-
-return()=>{
-
-listener.subscription.unsubscribe();
-
-};
-
-},[]);
-
-async function check(){
+  initializeAuth();
 
   const {
-    data
-  } =
-  await supabase.auth.getSession();
+    data: listener
+  } = supabase.auth.onAuthStateChange(
+    async (_, session) => {
 
-  setConnected(
-    !!data.session
+      if (mounted) {
+        setConnected(!!session);
+      }
+
+    }
   );
 
-}
+  return () => {
+
+    mounted = false;
+
+    listener.subscription.unsubscribe();
+
+  };
+
+}, []);
 
 const path=
 window.location.pathname;
@@ -98,30 +95,15 @@ window.location="/";
 }
 
 if(
-
-window.location.pathname
-
-.startsWith(
-
-"/player/"
-
-)
-
+  window.location.pathname
+  .startsWith(
+    "/player/"
+  )
 ){
 
-const PlayerProfile=
-
-require(
-"./pages/PlayerProfile"
-)
-
-.default;
-
-return(
-
-<PlayerProfile/>
-
-);
+  return(
+    <PlayerProfile/>
+  );
 
 }
 

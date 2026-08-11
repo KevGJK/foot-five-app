@@ -1,52 +1,64 @@
 import { getFCMToken } from "./firebaseMessaging";
 import { supabase } from "../lib/supabase";
 
+
 export async function registerNotifications() {
 
+
   const permission = await Notification.requestPermission();
+
 
   if (permission !== "granted") {
     throw new Error("Permission refusée");
   }
 
+
   const token = await getFCMToken();
+
 
   if (!token) {
     throw new Error("Impossible d'obtenir le token Firebase");
   }
 
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
 
   if (!user) {
     throw new Error("Utilisateur non connecté");
   }
 
-const { data, error } = await supabase
-  .from("device_tokens")
-  .upsert(
-    {
-      profile_id: user.id,
-      token,
-      platform: "web",
-      updated_at: new Date().toISOString(),
-    },
-    {
-      onConflict: "profile_id",
-    }
-  )
-  .select();
 
-console.log("device_tokens =", data);
+  const { data, error } = await supabase
+    .from("device_tokens")
+    .upsert(
+      {
+        profile_id: user.id,
+        token,
+        platform: "web",
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "profile_id",
+      }
+    )
+    .select();
 
-if (error) {
-  console.error("Erreur device_tokens :", error);
-  throw error;
-}
+
+  console.log("device_tokens =", data);
+
+
+  if (error) {
+    console.error("Erreur device_tokens :", error);
+    throw error;
+  }
+
 
   return token;
 }
+
 
 export async function createNotification({
   clubId,
@@ -57,15 +69,19 @@ export async function createNotification({
   message,
   action,
   actionId,
+  recipientIds,
 }) {
 
-if (!clubId) {
-  throw new Error("clubId manquant");
-}
 
-if (!createdBy) {
-  throw new Error("createdBy manquant");
-}
+  if (!clubId) {
+    throw new Error("clubId manquant");
+  }
+
+
+  if (!createdBy) {
+    throw new Error("createdBy manquant");
+  }
+
 
   // Création de la notification
   const { data: notification, error } = await supabase
@@ -84,39 +100,81 @@ if (!createdBy) {
     .select()
     .single();
 
-  if (error) throw error;
 
-  // Récupération des membres du club
-  const { data: members, error: membersError } = await supabase
-    .from("club_members")
-    .select("profile_id")
-    .eq("club_id", clubId);
+  if (error) {
+    throw error;
+  }
 
-  if (membersError) throw membersError;
+
+  let profileIds;
+
+
+  // Si des destinataires précis sont fournis,
+  // la notification leur est envoyée uniquement.
+  if (Array.isArray(recipientIds)) {
+
+    profileIds = recipientIds.filter(Boolean);
+
+  } else {
+
+    // Sinon, comportement actuel :
+    // notification envoyée à tous les membres du club.
+    const { data: members, error: membersError } = await supabase
+      .from("club_members")
+      .select("profile_id")
+      .eq("club_id", clubId);
+
+
+    if (membersError) {
+      throw membersError;
+    }
+
+
+    profileIds = (members || [])
+      .map((m) => m.profile_id)
+      .filter(Boolean);
+
+  }
+
 
   // Création des destinataires
-  const rows = members.map((m) => ({
+  const rows = profileIds.map((profileId) => ({
     notification_id: notification.id,
-    profile_id: m.profile_id,
+    profile_id: profileId,
     is_read: false,
     delivered_at: new Date().toISOString(),
   }));
 
-const { error: insertError } = await supabase
-  .from("notification_users")
-  .insert(rows);
 
-if (insertError) throw insertError;
+  if (rows.length > 0) {
 
-// Déclenche l'envoi des notifications
-await sendPush(notification.id);
+    const { error: insertError } = await supabase
+      .from("notification_users")
+      .insert(rows);
 
-return notification;
+
+    if (insertError) {
+      throw insertError;
+    }
+
+  }
+
+
+  // Déclenche l'envoi des notifications
+  await sendPush(notification.id);
+
+
+  return notification;
 }
+
 
 export async function getUnreadCount(profileId) {
 
-  if (!profileId) return 0;
+
+  if (!profileId) {
+    return 0;
+  }
+
 
   const { count, error } = await supabase
     .from("notification_users")
@@ -127,36 +185,50 @@ export async function getUnreadCount(profileId) {
     .eq("profile_id", profileId)
     .eq("is_read", false);
 
+
   if (error) {
     console.error(error);
     return 0;
   }
 
+
   return count ?? 0;
 }
 
+
 async function sendPush(notificationId) {
 
-  console.log("🚀 Appel de send-push avec notification :", notificationId);
+
+  console.log(
+    "🚀 Appel de send-push avec notification :",
+    notificationId
+  );
+
 
   const { data, error } = await supabase.functions.invoke(
     "send-push",
     {
-      body: { notificationId },
+      body: {
+        notificationId,
+      },
     }
   );
+
 
   if (error) {
     console.error("❌ Erreur send-push :", error);
     throw error;
   }
 
+
   console.log(
     "📨 Réponse send-push :",
     JSON.stringify(data, null, 2)
   );
 
+
   console.log("✅ send-push :", data);
+
 
   return data;
 }

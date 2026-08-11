@@ -38,29 +38,45 @@ results:true
 
 const [profile,setProfile]=useState(null);
 
-useEffect(()=>{
+useEffect(() => {
 
-load();
+  let cancelled = false;
 
-},[]);
-
-async function load(){
+  async function load() {
 
     const {
-
-        data:{user}
-
+      data: {
+        user
+      }
     } = await supabase.auth.getUser();
 
-    if(!user) return;
+    if (!user || cancelled) {
+      return;
+    }
 
     await loadProfile(user.id);
 
+    if (cancelled) {
+      return;
+    }
+
     await loadSettings(user.id);
+
+    if (cancelled) {
+      return;
+    }
 
     await checkPush();
 
-}
+  }
+
+  load();
+
+  return () => {
+    cancelled = true;
+  };
+
+}, []);
 
 async function loadProfile(profileId){
 

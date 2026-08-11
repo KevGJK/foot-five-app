@@ -1,6 +1,5 @@
 import Seasons from "./Seasons";
 import { useEffect, useState } from "react";
-import { RiLogoutBoxFill } from "react-icons/ri";
 import { supabase } from "../lib/supabase";
 import BackButton from "../components/ui/BackButton";
 import Members from "./Members";
@@ -13,31 +12,22 @@ import ClubSelector from "./ClubSelector";
 import Administration from "./Administration";
 import Settings from "./Settings";
 import Notifications from "./Notifications";
-import MenuButton from "../components/ui/MenuButton";
 import DashboardHeader from "../components/ui/DashboardHeader";
-import { getUnreadCount } from "../services/notifications";
-
+import { useStatistics } from "../hooks/useStatistics";
 import Page from "../components/ui/Page";
-import Section from "../components/ui/Section";
-import Button from "../components/ui/Button";
-import StatCard from "../components/ui/StatCard";
-
+import Card from "../components/ui/Card";
+import { useNotifications } from "../hooks/useNotifications";
+import { useClub } from "../hooks/useClub";
+import DashboardMenu from "../components/dashboard/DashboardMenu";
+import DashboardStats from "../components/dashboard/DashboardStats";
+import DashboardActions from "../components/dashboard/DashboardActions";
 
 export default function Dashboard() {
 
-const [club,setClub]=useState(null);
 const [page,setPage]=useState("loading");
 
-const [stats,setStats]=useState({
-
-created:0,
-present:0,
-absent:0,
-rate:0
-
-});
-
-const [logoUrl,setLogoUrl]=useState(null);
+const {stats,loadStats} = useStatistics();
+const {club,setClub,logoUrl,setLogoUrl} = useClub();
 
 const [showLogo,setShowLogo]=useState(false);
 const [logoInput,setLogoInput]=useState(null);
@@ -45,7 +35,12 @@ const [activeSeason,setActiveSeason]=useState(null);
 const [allSeasons,setAllSeasons]=useState([]);
 
 const [loadingSeason,setLoadingSeason]=useState(false);
-const [unreadCount,setUnreadCount]=useState(0);
+
+const [selectedSeason,setSelectedSeason]=useState(null);
+const [seasonResults,setSeasonResults]=useState([]);
+const [loadingResults,setLoadingResults]=useState(false);
+
+const {unread: unreadCount,loadUnread} = useNotifications();
 
 function reliability(){
 
@@ -68,16 +63,6 @@ return "🟡 Correcte";
 return "🔴 À relancer";
 
 }
-
-useEffect(() => {
-
-  load();
-
-  loadSeason();
-
-  loadUnread();
-
-}, []);
 
 async function load(){
 
@@ -190,105 +175,11 @@ await loadStats(
 user.id
 );
 
-setPage("home");
-
-}
-
-async function loadStats(userId){
-
-const {
-
-count:created
-
-}
-=
-await supabase
-
-.from("matches")
-
-.select(
-"*",
-{
-count:"exact",
-head:true
-}
-)
-
-.eq(
-"organizer_id",
-userId
+await loadUnread(
+user.id
 );
 
-const {
-
-data
-
-}
-=
-await supabase
-
-.from("attendances")
-
-.select(
-"response"
-)
-
-.eq(
-"profile_id",
-userId);
-
-const present=
-
-data?.filter(
-x=>
-x.response==="present"
-).length
-||
-0;
-
-const absent=
-
-data?.filter(
-x=>
-x.response==="absent"
-).length
-||
-0;
-
-const total=
-present+
-absent;
-
-setStats({
-
-created:
-created||0,
-
-present,
-
-absent,
-
-rate:
-
-total
-
-?
-
-Math.round(
-
-present
-/
-total
-*
-100
-
-)
-
-:
-
-0
-
-});
+setPage("home");
 
 }
 
@@ -485,77 +376,170 @@ setLoadingSeason(false);
 
 }
 
-async function loadUnread() {
+async function viewSeasonResults(season){
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+setLoadingResults(true);
 
-  if (!user) return;
+setSelectedSeason(season);
+setSeasonResults([]);
 
-  const count = await getUnreadCount(user.id);
+const {
+data:{user}
+}=await supabase.auth.getUser();
 
-  setUnreadCount(count);
+if(!user){
+
+setLoadingResults(false);
+
+return;
+
+}
+
+const {
+data:profile
+}=await supabase
+
+.from("profiles")
+
+.select("active_club_id")
+
+.eq("id",user.id)
+
+.single();
+
+if(!profile?.active_club_id){
+
+setLoadingResults(false);
+
+return;
+
+}
+
+const {
+data,
+error
+}=await supabase
+
+.from("season_results")
+
+.select(`
+rank,
+score,
+wins,
+draws,
+losses,
+played,
+present,
+absent,
+reliability,
+experience,
+performance,
+participation,
+player_name
+`)
+
+.eq(
+"season_id",
+season.id
+)
+
+.eq(
+"club_id",
+profile.active_club_id
+)
+
+.order(
+"rank",
+{
+ascending:true
+}
+);
+
+if(error){
+
+console.error(error);
+
+alert(
+"Impossible de charger le classement de cette saison."
+);
+
+setLoadingResults(false);
+
+return;
+
+}
+
+setSeasonResults(
+data || []
+);
+
+setLoadingResults(false);
+
+setPage("season-results");
 
 }
 
 async function closeSeason(){
 
-if(!activeSeason){
+  if(!activeSeason){
     alert("Aucune saison active.");
     return;
-}
+  }
 
-const {
+  const {
     data:{user}
-}=await supabase.auth.getUser();
+  } = await supabase.auth.getUser();
 
-if(!user){
+  if(!user){
     return;
-}
+  }
 
-const { data:member } =
-await supabase
-.from("club_members")
-.select("club_id,role")
-.eq("profile_id",user.id)
-.single();
+  const {
+    data:member
+  } = await supabase
+    .from("club_members")
+    .select("club_id,role")
+    .eq("profile_id",user.id)
+    .eq("club_id",activeSeason.club_id)
+    .single();
 
-if(!member || member.role!=="owner"){
+  if(!member || member.role!=="owner"){
     alert("Seul le propriétaire du club peut clôturer une saison.");
     return;
-}
+  }
 
-const ok=window.confirm(
-`Clôturer définitivement la saison ${activeSeason.name} ?`
-);
+  const ok = window.confirm(
+    `Clôturer définitivement la saison ${activeSeason.name} ?`
+  );
 
-if(!ok){
+  if(!ok){
     return;
-}
+  }
 
-const { data:openMatches,error } =
-await supabase
-.from("matches")
-.select("id,title,match_date")
-.eq("season_id",activeSeason.id)
-.eq("status","open");
+  const {
+    data:openMatches,
+    error:openMatchesError
+  } = await supabase
+    .from("matches")
+    .select("id,title,match_date")
+    .eq("season_id",activeSeason.id)
+    .eq("status","open");
 
-if(error){
-    alert(error.message);
+  if(openMatchesError){
+    alert(openMatchesError.message);
     return;
-}
+  }
 
-if(openMatches && openMatches.length){
+  if(openMatches && openMatches.length){
 
-    const list=openMatches
-        .map(m=>
-            `${m.title} (${new Date(m.match_date).toLocaleDateString("fr-FR")})`
-        )
-        .join("\n");
+    const list = openMatches
+      .map(m =>
+        `${m.title} (${new Date(m.match_date).toLocaleDateString("fr-FR")})`
+      )
+      .join("\n");
 
     alert(
-`Impossible de clôturer la saison.
+      `Impossible de clôturer la saison.
 
 Il reste ${openMatches.length} match(s) non terminé(s).
 
@@ -563,108 +547,121 @@ ${list}`
     );
 
     return;
-}
+  }
 
-const { error: deleteError } = await supabase
-.from("season_results")
-.delete()
-.eq("season_id", activeSeason.id);
+  const {
+    data:members,
+    error:membersError
+  } = await supabase
+    .from("club_members")
+    .select(`
+      profile_id,
+      profiles(display_name)
+    `)
+    .eq("club_id",member.club_id);
 
-if (deleteError) {
-    alert(deleteError.message);
-    return;
-}
-
-console.log("Anciennes archives supprimées.");
-
-const { data:members, error:membersError } = await supabase
-.from("club_members")
-.select(`
-profile_id,
-profiles(display_name)
-`)
-.eq("club_id", member.club_id);
-
-if(membersError){
+  if(membersError){
     alert(membersError.message);
     return;
-}
+  }
 
-const { data:matches, error:matchesError } = await supabase
-.from("matches")
-.select(`
-id,
-winner,
-score_white,
-score_black
-`)
-.eq("season_id", activeSeason.id);
+  const {
+    data:matches,
+    error:matchesError
+  } = await supabase
+    .from("matches")
+    .select(`
+      id,
+      winner,
+      score_white,
+      score_black
+    `)
+    .eq("season_id",activeSeason.id);
 
-if(matchesError){
+  if(matchesError){
     alert(matchesError.message);
     return;
-}
+  }
 
-const { data:attendances, error:attendancesError } = await supabase
-.from("attendances")
-.select(`
-profile_id,
-match_id,
-response
-`);
+  const seasonMatchIds = (matches || []).map(
+    m => m.id
+  );
 
-if(attendancesError){
+  const {
+    data:attendances,
+    error:attendancesError
+  } = await supabase
+    .from("attendances")
+    .select(`
+      profile_id,
+      match_id,
+      response
+    `)
+    .in(
+      "match_id",
+      seasonMatchIds.length
+        ? seasonMatchIds
+        : ["00000000-0000-0000-0000-000000000000"]
+    );
+
+  if(attendancesError){
     alert(attendancesError.message);
     return;
-}
+  }
 
-const { data:teams, error:teamsError } = await supabase
-.from("match_teams")
-.select("*");
+  const {
+    data:teams,
+    error:teamsError
+  } = await supabase
+    .from("match_teams")
+    .select("*")
+    .in(
+      "match_id",
+      seasonMatchIds.length
+        ? seasonMatchIds
+        : ["00000000-0000-0000-0000-000000000000"]
+    );
 
-if(teamsError){
+  if(teamsError){
     alert(teamsError.message);
     return;
-}
+  }
 
-console.log({
-    members,
-    matches,
-    attendances,
-    teams
-});
+  const totalMatches = matches.length;
 
-const seasonMatchIds = matches.map(m => m.id);
+  const results = [];
 
-const seasonTeams = teams.filter(
-    t => seasonMatchIds.includes(t.match_id)
-);
+  for(const m of members || []){
 
-const results = [];
+    const name =
+      m.profiles?.display_name || "Joueur";
 
-const totalMatches = matches.length;
-
-for (const m of members) {
-
-    const name = m.profiles?.display_name || "Joueur";
-
-    const playerAttendances = attendances.filter(
+    const playerAttendances =
+      (attendances || []).filter(
         a => a.profile_id === m.profile_id
-    );
+      );
 
-    const present = playerAttendances.filter(
+    const present =
+      playerAttendances.filter(
         a => a.response === "present"
-    ).length;
+      ).length;
 
-    const absent = playerAttendances.filter(
+    const absent =
+      playerAttendances.filter(
         a => a.response === "absent"
-    ).length;
+      ).length;
 
-    const playerTeams = seasonTeams.filter(
+    const playerTeams =
+      (teams || []).filter(
         t =>
-            String(t.player_name).trim().toLowerCase() ===
-            String(name).trim().toLowerCase()
-    );
+          String(t.player_name)
+            .trim()
+            .toLowerCase()
+          ===
+          String(name)
+            .trim()
+            .toLowerCase()
+      );
 
     const played = playerTeams.length;
 
@@ -672,214 +669,302 @@ for (const m of members) {
     let draws = 0;
     let losses = 0;
 
-    for (const t of playerTeams) {
+    for(const team of playerTeams){
 
-        const match = matches.find(
-            x => x.id === t.match_id
+      const match =
+        matches.find(
+          m => m.id === team.match_id
         );
 
-        if (!match)
-            continue;
+      if(!match){
+        continue;
+      }
 
-        if (!match.winner) {
+      if(!match.winner){
 
-            draws++;
+        draws++;
 
-        }
-        else if (match.winner === t.team) {
+      } else if(
+        match.winner === team.team
+      ){
 
-            wins++;
+        wins++;
 
-        }
-        else {
+      } else {
 
-            losses++;
+        losses++;
 
-        }
+      }
 
     }
 
-    const participation =
-        totalMatches
-            ? played / totalMatches
-            : 0;
+const participation =
+    totalMatches
+        ? played / totalMatches
+        : 0;
 
-    const winRate =
-        played
-            ? wins / played
-            : 0;
+const matchesWithResult =
+    wins + draws;
 
-    const volume =
-        Math.min(
-            1,
-            played / 10
-        );
+const performance =
+    matchesWithResult
+        ? (
+            wins +
+            draws * 0.5
+        ) / matchesWithResult
+        : 0;
 
-    const score = Math.round(
+const experience =
+    Math.min(
+        100,
+        played * 10
+    );
 
-        winRate *
+const participationScore =
+    participation * 100;
 
-        Math.pow(
-            participation,
-            0.6
-        )
+const performanceScore =
+    performance * 100;
 
-        *
-
-        volume
-
-        *
-
-        100
-
+const score =
+    Math.round(
+        performanceScore * 0.60 +
+        participationScore * 0.25 +
+        experience * 0.15
     );
 
     const reliability =
-        present + absent
-
-            ?
-
-        Math.round(
+      present + absent
+        ? Math.round(
             present /
-            (present + absent)
-            * 100
-        )
-
-            :
-
-        0;
+            (present + absent) *
+            100
+          )
+        : 0;
 
     results.push({
 
-        profile_id: m.profile_id,
+      profile_id:m.profile_id,
 
-        player_name: name,
+      player_name:name,
 
-        club_id: member.club_id,
+      club_id:member.club_id,
 
-        score,
+      score,
 
-        wins,
+      wins,
 
-        draws,
+      draws,
 
-        losses,
+      losses,
 
-        played,
+      played,
 
-        present,
+      present,
 
-        absent,
+      absent,
 
-        reliability
+      reliability,
+
+      experience,
+
+performance: Math.round(performanceScore),
+
+participation: Math.round(participationScore),
 
     });
 
-}
+  }
 
-results.sort(
-    (a, b) => b.score - a.score
-);
+  results.sort(
+    (a,b) => b.score - a.score
+  );
 
-results.forEach(
-    (r, index) => r.rank = index + 1
-);
+  results.forEach(
+    (r,index) => {
+      r.rank = index + 1;
+    }
+  );
 
-console.table(results);
+  /*
+   * Suppression d'une éventuelle archive
+   * précédente pour cette saison.
+   */
 
-const { error: insertError } = await supabase
-.from("season_results")
-.insert(
-    results.map(r => ({
-        season_id: activeSeason.id,
-        profile_id: r.profile_id,
-        player_name: r.player_name,
-        club_id: r.club_id,
-        rank: r.rank,
-        score: r.score,
-        wins: r.wins,
-        draws: r.draws,
-        losses: r.losses,
-        played: r.played,
-        present: r.present,
-        absent: r.absent,
-        reliability: r.reliability
-    }))
-);
+  const {
+    error:deleteError
+  } = await supabase
+    .from("season_results")
+    .delete()
+    .eq("season_id",activeSeason.id);
 
-if(insertError){
+  if(deleteError){
+    alert(deleteError.message);
+    return;
+  }
+
+  const {
+    error:insertError
+  } = await supabase
+    .from("season_results")
+    .insert(
+      results.map(r => ({
+        season_id:activeSeason.id,
+        profile_id:r.profile_id,
+        player_name:r.player_name,
+        club_id:r.club_id,
+        rank:r.rank,
+        score:r.score,
+        wins:r.wins,
+        draws:r.draws,
+        losses:r.losses,
+        played:r.played,
+        present:r.present,
+        absent:r.absent,
+        reliability:r.reliability,
+        experience:r.experience,
+performance:r.performance,
+participation:r.participation
+      }))
+    );
+
+  if(insertError){
     alert(insertError.message);
     return;
-}
+  }
 
-console.log("✅ Archives enregistrées");
+  const {
+    data:closedSeason,
+    error:closeError
+  } = await supabase
+    .from("seasons")
+    .update({
+      active:false,
+      closed_at:new Date().toISOString(),
+      closed_by:user.id
+    })
+    .eq("id",activeSeason.id)
+    .select();
 
-console.log("activeSeason =", activeSeason);
-
-const { data: closedSeason, error: closeError } = await supabase
-.from("seasons")
-.update({
-    active: false,
-    closed_at: new Date().toISOString(),
-    closed_by: user.id
-})
-.eq("id", activeSeason.id)
-.select();
-
-console.log("Saison mise à jour :", closedSeason);
-
-if (closeError) {
-    console.error(closeError);
+  if(closeError){
     alert(closeError.message);
     return;
-}
+  }
 
-if (!closedSeason || closedSeason.length === 0) {
-    alert("Aucune saison n'a été mise à jour.");
+  if(
+    !closedSeason ||
+    closedSeason.length === 0
+  ){
+
+    alert(
+      "Aucune saison n'a été mise à jour."
+    );
+
     return;
-}
+  }
 
-console.log("✅ Saison clôturée");
+  const start =
+    new Date(activeSeason.end_date);
 
-const start = new Date(activeSeason.end_date);
-start.setDate(start.getDate() + 1);
+  start.setDate(
+    start.getDate() + 1
+  );
 
-const end = new Date(start);
-end.setFullYear(end.getFullYear() + 1);
-end.setDate(end.getDate() - 1);
+  const end =
+    new Date(start);
 
-const seasonName = `${start.getFullYear()}-${end.getFullYear()}`;
+  end.setFullYear(
+    end.getFullYear() + 1
+  );
 
-const { error:createError } = await supabase
-.from("seasons")
-.insert({
-    club_id: member.club_id,
-    name: seasonName,
-    start_date: start.toISOString().slice(0,10),
-    end_date: end.toISOString().slice(0,10),
-    active: true
-});
+  end.setDate(
+    end.getDate() - 1
+  );
 
-if(createError){
-    alert(createError.message);
+  const seasonName =
+    `${start.getFullYear()}-${end.getFullYear()}`;
+
+  const {
+    error:createError
+  } = await supabase
+    .from("seasons")
+    .insert({
+      club_id:member.club_id,
+      name:seasonName,
+      start_date:
+        start.toISOString().slice(0,10),
+      end_date:
+        end.toISOString().slice(0,10),
+      active:true
+    });
+
+  if(createError){
+
+    alert(
+      `La saison a été clôturée mais la nouvelle saison n'a pas pu être créée.
+
+${createError.message}`
+    );
+
+    await loadSeason();
+
     return;
+  }
+
+  await loadSeason();
+
+  alert(
+    `🎉 La saison ${activeSeason.name} est terminée.
+
+La saison ${seasonName} est maintenant active.`
+  );
+
 }
 
-console.log("✅ Nouvelle saison créée");
+async function refreshDashboard() {
 
-await loadSeason();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
-alert(`🎉 La saison ${activeSeason.name} est terminée.
+  if (!user) return;
 
-La saison ${seasonName} est maintenant active.`);
+  await loadStats(user.id);
+  await loadUnread(user.id);
 
 }
 
-function goHome(){
+useEffect(() => {
 
-setPage(
-"home"
-);
+  load();
+  loadSeason();
+
+}, []);
+
+useEffect(() => {
+
+  if (page === "home") {
+    refreshDashboard();
+  }
+
+}, [page]);
+
+async function goHome(){
+
+  await refreshDashboard();
+
+  setPage("home");
+
+}
+
+function renderWithBack(content) {
+
+  return (
+    <>
+      <BackButton onClick={goHome} />
+      {content}
+    </>
+  );
 
 }
 
@@ -924,102 +1009,57 @@ setPage(
 
 if(page==="members"){
 
-return(
-
-<>
-
-<BackButton onClick={goHome} />
-
-<Members/>
-
-</>
-
-);
+  return renderWithBack(
+    <Members/>
+  );
 
 }
 
 if(page==="create"){
 
-return(
-
-<>
-<BackButton onClick={goHome} />
-<CreateMatch/>
-</>
-
-);
+  return renderWithBack(
+    <CreateMatch/>
+  );
 
 }
 
 if(page==="stats"){
 
-return(
-
-<>
-<BackButton onClick={goHome} />
-<Statistics/>
-</>
-
-);
+  return renderWithBack(
+    <Statistics/>
+  );
 
 }
 
 if(page==="ranking"){
 
-return(
-
-<>
-<BackButton onClick={goHome} />
-<Ranking/>
-</>
-
-);
+  return renderWithBack(
+    <Ranking/>
+  );
 
 }
 
 if(page==="matches"){
 
-return(
-
-<>
-<BackButton onClick={goHome} />
-<Matches/>
-</>
-
-
-);
+  return renderWithBack(
+    <Matches/>
+  );
 
 }
 
 if(page==="settings"){
 
-return(
-
-<>
-
-<BackButton onClick={goHome} />
-
-<Settings/>
-
-</>
-
-);
+  return renderWithBack(
+    <Settings/>
+  );
 
 }
 
 if(page==="notifications"){
 
-return(
-
-<>
-
-<BackButton onClick={goHome} />
-
-<Notifications/>
-
-</>
-
-);
+  return renderWithBack(
+    <Notifications/>
+  );
 
 }
 
@@ -1034,6 +1074,328 @@ goHome={goHome}
 goSeasons={()=>setPage("seasons")}
 
 />
+
+);
+
+}
+
+if(page==="season-results"){
+
+return(
+
+<>
+
+<BackButton
+onClick={()=>setPage("seasons")}
+>
+
+← Retour aux saisons
+
+</BackButton>
+
+<Page>
+
+<h1 className="page-title">
+
+🏆 Classement final
+
+</h1>
+
+<Card>
+
+<h2>
+
+🏆 {selectedSeason?.name}
+
+</h2>
+
+<p
+style={{
+opacity:.7,
+marginTop:"8px"
+}}
+>
+
+📅{" "}
+
+{selectedSeason &&
+new Date(
+selectedSeason.start_date
+).toLocaleDateString("fr-FR")
+}
+
+{" → "}
+
+{selectedSeason &&
+new Date(
+selectedSeason.end_date
+).toLocaleDateString("fr-FR")
+}
+
+</p>
+
+</Card>
+
+
+<Card>
+
+{loadingResults ? (
+
+<p>
+Chargement du classement...
+</p>
+
+) : seasonResults.length===0 ? (
+
+<p>
+
+Aucun résultat enregistré pour cette saison.
+
+</p>
+
+) : (
+
+seasonResults.map((player,index)=>(
+
+<div
+  key={`${player.player_name}-${index}`}
+  style={{
+    padding:"18px",
+    marginBottom:"14px",
+    borderRadius:"16px",
+    background:"rgba(255,255,255,.035)",
+    border:"1px solid rgba(255,255,255,.12)",
+    boxShadow:"0 4px 12px rgba(0,0,0,.18)"
+  }}
+>
+
+  {/* Joueur + score */}
+  <div
+    style={{
+      display:"flex",
+      justifyContent:"space-between",
+      alignItems:"center",
+      gap:"12px"
+    }}
+  >
+
+    <div
+      style={{
+        fontSize:"18px",
+        fontWeight:"700",
+        minWidth:0
+      }}
+    >
+
+      {
+        player.rank===1
+          ? "🥇"
+          : player.rank===2
+          ? "🥈"
+          : player.rank===3
+          ? "🥉"
+          : `#${player.rank}`
+      }
+
+      {" "}
+
+      {player.player_name}
+
+    </div>
+
+    <div
+      style={{
+        fontSize:"20px",
+        fontWeight:"700",
+        whiteSpace:"nowrap"
+      }}
+    >
+      {player.score}/100
+    </div>
+
+  </div>
+
+
+  {/* Résultats sportifs */}
+  <div
+    style={{
+      display:"grid",
+      gridTemplateColumns:"repeat(2,1fr)",
+      gap:"8px",
+      marginTop:"14px"
+    }}
+  >
+
+    <div
+      style={{
+        fontSize:"13px",
+        opacity:.8
+      }}
+    >
+      ⚽ <b>{player.played}</b> match{player.played>1 ? "s" : ""}
+    </div>
+
+    <div
+      style={{
+        fontSize:"13px",
+        opacity:.8
+      }}
+    >
+      🟢 <b>{player.wins}</b> victoire{player.wins>1 ? "s" : ""}
+    </div>
+
+    <div
+      style={{
+        fontSize:"13px",
+        opacity:.8
+      }}
+    >
+      ⚪ <b>{player.draws}</b> nul{player.draws>1 ? "s" : ""}
+    </div>
+
+    <div
+      style={{
+        fontSize:"13px",
+        opacity:.8
+      }}
+    >
+      🔴 <b>{player.losses}</b> défaite{player.losses>1 ? "s" : ""}
+    </div>
+
+  </div>
+
+
+  {/* Assiduité */}
+  <div
+    style={{
+      marginTop:"14px",
+      paddingTop:"12px",
+      borderTop:"1px solid rgba(255,255,255,.06)"
+    }}
+  >
+
+    <div
+      style={{
+        display:"grid",
+        gridTemplateColumns:"repeat(2,1fr)",
+        gap:"8px"
+      }}
+    >
+
+      <div
+        style={{
+          fontSize:"13px",
+          opacity:.8
+        }}
+      >
+        📅 Présence
+        <br/>
+        <b>{player.present}</b>
+      </div>
+
+      <div
+        style={{
+          fontSize:"13px",
+          opacity:.8
+        }}
+      >
+        ❌ Absences
+        <br/>
+        <b>{player.absent}</b>
+      </div>
+
+    </div>
+
+
+    <div
+      style={{
+        marginTop:"10px",
+        fontSize:"13px",
+        opacity:.8
+      }}
+    >
+      🎯 Fiabilité : <b>{player.reliability}/100</b>
+    </div>
+
+  </div>
+
+
+  {/* Composantes du score */}
+  <div
+    style={{
+      marginTop:"14px",
+      paddingTop:"12px",
+      borderTop:"1px solid rgba(255,255,255,.06)"
+    }}
+  >
+
+    <div
+      style={{
+        fontSize:"13px",
+        opacity:.65,
+        marginBottom:"8px"
+      }}
+    >
+      📊 Composantes du score
+    </div>
+
+
+    <div
+      style={{
+        display:"grid",
+        gridTemplateColumns:"repeat(2,1fr)",
+        gap:"8px"
+      }}
+    >
+
+      <div
+        style={{
+          fontSize:"13px",
+          opacity:.8
+        }}
+      >
+        ⭐ Expérience
+        <br/>
+        <b>{player.experience}/100</b>
+      </div>
+
+      <div
+        style={{
+          fontSize:"13px",
+          opacity:.8
+        }}
+      >
+        📈 Performance
+        <br/>
+        <b>{player.performance}/100</b>
+      </div>
+
+      <div
+        style={{
+          fontSize:"13px",
+          opacity:.8
+        }}
+      >
+        📅 Participation
+        <br/>
+        <b>{player.participation}/100</b>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+))
+
+)}
+
+</Card>
+
+</Page>
+
+</>
 
 );
 
@@ -1054,6 +1416,8 @@ allSeasons={allSeasons}
 loadingSeason={loadingSeason}
 
 closeSeason={closeSeason}
+
+viewResults={viewSeasonResults}
 
 />
 
@@ -1077,116 +1441,17 @@ return(
     changeLogo={changeLogo}
 />
 
-<MenuButton
-    icon="➕"
-    title="Créer un match"
-    onClick={() => setPage("create")}
+<DashboardMenu
+    setPage={setPage}
+    unreadCount={unreadCount}
 />
 
-<MenuButton
-    icon="📅"
-    title="Matchs"
-    onClick={() => setPage("matches")}
+<DashboardStats
+  stats={stats}
+  reliability={reliability}
 />
 
-<MenuButton
-    icon="👥"
-    title="Membres"
-    onClick={() => setPage("members")}
-/>
-
-<MenuButton
-    icon="📊"
-    title="Statistiques saison"
-    onClick={() => setPage("stats")}
-/>
-
-<MenuButton
-    icon="🏆"
-    title="Classement saison"
-    onClick={() => setPage("ranking")}
-/>
-
-<MenuButton
-    icon="🔔"
-    title="Notifications"
-    badge={unreadCount}
-    onClick={() => setPage("notifications")}
-/>
-
-<Section title="📈 Tableau de bord">
-
-<p>
-<b>📅 Matchs créés :</b> {stats.created}
-</p>
-
-<p style={{ marginTop: 8 }}>
-<b>✅ Présences :</b> {stats.present}
-</p>
-
-<p style={{ marginTop: 8 }}>
-<b>❌ Absences :</b> {stats.absent}
-</p>
-
-<p style={{ marginTop: 8 }}>
-<b>📊 Taux de présence :</b> {stats.rate}%
-</p>
-
-<p style={{ marginTop: 8 }}>
-<b>🎯 Fiabilité :</b> {reliability()}
-</p>
-
-</Section>
-
-<div
-style={{
-display:"flex",
-gap:"12px",
-alignItems:"stretch"
-}}
->
-
-<MenuButton
-icon="🏟"
-title="Clubs"
-onClick={() => setPage("club")}
-style={{
-flex:1,
-marginBottom:0
-}}
-/>
-
-<MenuButton
-icon="⚙"
-title="Paramètres"
-onClick={() => setPage("settings")}
-style={{
-flex:1,
-marginBottom:0
-}}
-/>
-
-</div>
-
-<div
-style={{
-marginTop:"20px",
-paddingTop:"20px",
-borderTop:"1px solid rgba(255,255,255,.08)"
-}}
->
-
-<Button
-variant="secondary"
-fullWidth
-onClick={() => setPage("admin")}
->
-
-👑 Administration
-
-</Button>
-
-</div>
+<DashboardActions setPage={setPage} />
 
 </Page>
 

@@ -83,9 +83,7 @@ return;
 
 const {
 
-data:seasons,
-
-error:seasonError
+  data: seasons
 
 }
 
@@ -93,22 +91,13 @@ error:seasonError
 
 await supabase
 
-.from(
+.from("seasons")
 
-"seasons"
-
-)
-
-.select(
-"*"
-)
+.select("*")
 
 .eq(
-
-"club_id",
-
-profile.active_club_id
-
+  "club_id",
+  profile.active_club_id
 );
 
 const season=
@@ -130,6 +119,12 @@ return;
 
 }
 
+console.log("🕐 DATE SAISIE :", date);
+console.log(
+  "🕐 DATE ISO ENVOYÉE À SUPABASE :",
+  new Date(date).toISOString()
+);
+
 const {
 
 data,
@@ -148,7 +143,7 @@ title,
 location,
 
 match_date:
-date,
+new Date(date).toISOString(),
 
 club_id:
 profile.active_club_id,
@@ -193,7 +188,11 @@ await createNotification({
 
     title: "Nouveau match",
 
-    message: `${profile.display_name} a créé un nouveau match.`,
+    message:
+    `Un nouveau match vient d'être créé : "${title}".\n📅 ${new Date(date).toLocaleDateString("fr-FR")} à ${new Date(date).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit"
+    })}`,
 
     action: "match",
 

@@ -4,6 +4,7 @@ import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import { createNotification } from "../services/notifications";
 
 export default function Matches() {
 
@@ -40,254 +41,174 @@ const levelLabels={
 
 };
 
-useEffect(()=>{
+function formatMatchDate(dateString) {
+    const date = new Date(dateString);
 
-load();
-
-},[reload]);
-
-async function load(){
-
-const {
-data:{user}
-}
-=
-await supabase.auth.getUser();
-
-setUser(user);
-
-if(!user)
-return;
-
-const {
-data:member
-}
-=
-await supabase
-
-.from("club_members")
-
-.select(`
-club_id,
-role
-`)
-
-.eq(
-"profile_id",
-user.id)
-
-.single();
-
-if(!member)
-return;
-
-setClubRole(
-member.role
-);
-
-const {
-
-data:levels
-
+    return `${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString(
+        "fr-FR",
+        {
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    )}`;
 }
 
-=
+useEffect(() => {
+
+  let cancelled = false;
+
+  async function load() {
+
+    const {
+      data: {
+        user
+      }
+    } = await supabase.auth.getUser();
+
+    if (cancelled) {
+      return;
+    }
+
+    setUser(user);
+
+    if (!user) {
+      return;
+    }
+
+    const {
+      data: member
+    } = await supabase
+      .from("club_members")
+      .select(`
+        club_id,
+        role
+      `)
+      .eq("profile_id", user.id)
+      .single();
+
+    if (cancelled) {
+      return;
+    }
+
+    if (!member) {
+      return;
+    }
+
+    setClubRole(member.role);
+
+    const {
+      data: levels
+    } = await supabase
+      .from("club_members")
+      .select("profile_id, level")
+      .eq("club_id", member.club_id);
+
+    if (cancelled) {
+      return;
+    }
+
+    const map = {};
+
+    (levels || []).forEach(m => {
+      map[m.profile_id] = m.level || 3;
+    });
+
+    setMemberLevels(map);
+
+    const {
+      data
+    } = await supabase
+      .from("matches")
+      .select(`
+        *,
+        seasons(
+          active
+        ),
+        attendances(
+          id,
+          profile_id,
+          response,
+          team,
+          created_at,
+          guest_name,
+          guest_level,
+          profiles(
+            display_name
+          )
+        )
+      `)
+      .eq("club_id", member.club_id)
+      .order("match_date");
+
+    if (cancelled) {
+      return;
+    }
+
+    setMatches(data || []);
+
+    const restored = {};
+
+    (data || []).forEach(match => {
+
+      const white = [];
+      const black = [];
+
+      (match.attendances || []).forEach(a => {
 
-await supabase
+        if (a.team === "white") {
 
-.from(
+          white.push({
+            name: playerName(a),
+            level: a.guest_name
+              ? Number(a.guest_level || 3)
+              : 3
+          });
 
-"club_members"
+        }
 
-)
+        if (a.team === "black") {
 
-.select(
+          black.push({
+            name: playerName(a),
+            level: a.guest_name
+              ? Number(a.guest_level || 3)
+              : 3
+          });
 
-"profile_id, level"
+        }
 
-)
+      });
 
-.eq(
+      if (white.length || black.length) {
 
-"club_id",
+        restored[match.id] = {
+          A: white,
+          B: black,
+          scoreA: white.reduce(
+            (s, p) => s + p.level,
+            0
+          ),
+          scoreB: black.reduce(
+            (s, p) => s + p.level,
+            0
+          )
+        };
 
-member.club_id
+      }
 
-);
+    });
 
-const map={};
+    setTeams(restored);
 
-(levels||[]).forEach(
+  }
 
-m=>{
+  load();
 
-map[m.profile_id]=
+  return () => {
+    cancelled = true;
+  };
 
-m.level
-
-||
-
-3;
-
-}
-
-);
-
-setMemberLevels(map);
-
-const {
-data
-}
-=
-await supabase
-
-.from("matches")
-
-.select(`
-*,
-seasons(
-active
-),
-attendances(
-id,
-profile_id,
-response,
-team,
-created_at,
-guest_name,
-guest_level,
-profiles(
-display_name
-)
-)
-`)
-
-.eq(
-"club_id",
-member.club_id)
-
-.order(
-"match_date");
-
-setMatches(
-data||[]
-);
-
-const restored={};
-
-(data||[])
-
-.forEach(
-
-match=>{
-
-const white=[];
-
-const black=[];
-
-(match.attendances||[])
-
-.forEach(
-
-a=>{
-
-if(
-a.team==="white"
-){
-
-white.push({
-
-name:
-playerName(a),
-
-level:
-
-a.guest_name
-
-?
-
-Number(a.guest_level || 3)
-
-:
-
-3
-
-});
-
-}
-
-if(
-a.team==="black"
-){
-
-black.push({
-
-name:
-playerName(a),
-
-level:
-
-a.guest_name
-
-?
-
-Number(a.guest_level || 3)
-
-:
-
-3
-
-});
-
-}
-
-}
-
-);
-
-if(
-white.length
-||
-black.length
-){
-
-restored[
-match.id
-]={
-
-A:white,
-
-B:black,
-
-scoreA:
-
-white.reduce(
-(s,p)=>
-s+p.level,
-0
-),
-
-scoreB:
-
-black.reduce(
-(s,p)=>
-s+p.level,
-0
-)
-
-};
-
-}
-
-}
-
-);
-
-setTeams(
-restored
-);
-
-}
+}, [reload]);
 
 function seasonLocked(match){
 
@@ -450,29 +371,187 @@ setReload(v=>!v);
 
 async function removeMatch(id){
 
-const ok=
-window.confirm(
-"Supprimer ce match ?"
-);
+    const ok =
+        window.confirm(
+            "Supprimer ce match ?"
+        );
 
-if(!ok)
-return;
+    if(!ok)
+        return;
 
-await supabase
 
-.from(
-"matches"
-)
+    const {
+        data: match,
+        error: matchError
+    } = await supabase
+        .from("matches")
+        .select(`
+    id,
+    title,
+    club_id,
+    match_date
+`)
+        .eq("id", id)
+        .single();
 
-.delete()
 
-.eq(
-"id",
-id);
+    if(matchError){
 
-setReload(
-v=>!v
-);
+        console.error(
+            "Erreur récupération match :",
+            matchError
+        );
+
+        alert(
+            matchError.message
+        );
+
+        return;
+
+    }
+
+
+    const {
+        data: attendances,
+        error: attendancesError
+    } = await supabase
+        .from("attendances")
+        .select(`
+            profile_id,
+            response
+        `)
+        .eq("match_id", id)
+        .in(
+            "response",
+            [
+                "present",
+                "absent"
+            ]
+        );
+
+
+    if(attendancesError){
+
+        console.error(
+            "Erreur récupération participants :",
+            attendancesError
+        );
+
+        alert(
+            attendancesError.message
+        );
+
+        return;
+
+    }
+
+
+    const recipientIds =
+        (attendances || [])
+            .map(
+                attendance =>
+                    attendance.profile_id
+            )
+            .filter(Boolean);
+
+
+    const {
+        data: {
+            user
+        }
+    } = await supabase.auth.getUser();
+
+
+    if(!user){
+
+        alert(
+            "Utilisateur non connecté."
+        );
+
+        return;
+
+    }
+
+
+    const {
+        error: deleteError
+    } = await supabase
+        .from("matches")
+        .delete()
+        .eq(
+            "id",
+            id
+        );
+
+
+    if(deleteError){
+
+        console.error(
+            "Erreur suppression match :",
+            deleteError
+        );
+
+        alert(
+            deleteError.message
+        );
+
+        return;
+
+    }
+
+
+    try{
+
+        if(
+            recipientIds.length > 0
+        ){
+
+            await createNotification({
+
+                clubId:
+                    match.club_id,
+
+                createdBy:
+                    user.id,
+
+                createdByName:
+                    "Foot Five",
+
+                type:
+                    "match_cancelled",
+
+                title:
+                    "❌ Match annulé",
+
+                message:
+    `Le match "${match.title}" a été annulé.\n📅 ${formatMatchDate(match.match_date)}`,
+
+                action:
+                    "home",
+
+                actionId:
+                    null,
+
+                recipientIds
+
+            });
+
+        }
+
+    }
+    catch(notificationError){
+
+        console.error(
+            "❌ Erreur notification annulation :",
+            notificationError
+        );
+
+    }
+
+
+    setReload(
+        v => !v
+    );
 
 }
 
@@ -888,6 +967,67 @@ return;
 
 }
 
+try {
+
+    const recipientIds = participants(list)
+        .map(p => p.profile_id)
+        .filter(Boolean);
+
+   if (recipientIds.length > 0 && user) {
+
+    const {
+        data: matchData,
+        error: matchError
+    } = await supabase
+        .from("matches")
+        .select("club_id")
+        .eq("id", matchId)
+        .single();
+
+    if (matchError) {
+        throw matchError;
+    }
+
+    await createNotification({
+
+        clubId: matchData.club_id,
+
+        createdBy: user.id,
+
+            createdByName:
+                user.user_metadata?.display_name
+                || "Foot Five",
+
+            type:
+                "teams_ready",
+
+            title:
+                "👕 Équipes constituées",
+
+            message:
+                "Les équipes de ton prochain match sont prêtes.",
+
+            action:
+                "match",
+
+            actionId:
+                matchId,
+
+            recipientIds
+
+        });
+
+    }
+
+} catch (notificationError) {
+
+    console.error(
+        "❌ Erreur notification équipes :",
+        notificationError
+    );
+
+}
+
 setTeams(
 
 prev=>({
@@ -910,87 +1050,343 @@ scoreB
 
 }
 
-async function saveResult(matchId){
+async function saveResult(matchId) {
 
-const white=
+    const white =
+        Number(scoreWhite[matchId] || 0);
 
-Number(
-scoreWhite[matchId]
-||0
-);
+    const black =
+        Number(scoreBlack[matchId] || 0);
 
-const black=
+    if (
+        white === 0 &&
+        black === 0
+    ) {
+        alert("Saisir un score");
+        return;
+    }
 
-Number(
-scoreBlack[matchId]
-||0
-);
+    let winner = "draw";
 
-if(
+    if (white > black) {
+        winner = "white";
+    }
 
-white===0
+    if (black > white) {
+        winner = "black";
+    }
 
-&&
 
-black===0
+    /*
+     * =====================================================
+     * ENREGISTREMENT DU RÉSULTAT
+     * =====================================================
+     */
 
-){
+    const {
+        error: resultError
+    } = await supabase
+        .from("matches")
+        .update({
+            score_white: white,
+            score_black: black,
+            winner,
+            status: "finished"
+        })
+        .eq("id", matchId);
 
-alert(
-"Saisir un score"
-);
 
-return;
+    if (resultError) {
 
-}
+        console.error(
+            "❌ Erreur enregistrement résultat :",
+            resultError
+        );
 
-let winner="draw";
+        alert(resultError.message);
 
-if(
-white>black
-){
+        return;
+    }
 
-winner="white";
 
-}
+    /*
+     * =====================================================
+     * RÉCUPÉRATION DU MATCH
+     * =====================================================
+     */
 
-if(
-black>white
-){
+    const {
+        data: match,
+        error: matchError
+    } = await supabase
+        .from("matches")
+        .select(`
+            id,
+            title,
+            club_id
+        `)
+        .eq("id", matchId)
+        .single();
 
-winner="black";
 
-}
+    if (matchError) {
 
-await supabase
+        console.error(
+            "❌ Erreur récupération match :",
+            matchError
+        );
 
-.from(
-"matches"
-)
+        alert(
+            "Résultat enregistré, mais impossible de créer la notification."
+        );
 
-.update({
+        setReload(v => !v);
 
-score_white: white,
+        return;
+    }
 
-score_black: black,
 
-winner,
+    /*
+     * =====================================================
+     * PARTICIPANTS
+     * =====================================================
+     */
 
-status: "finished"
+    const matchData =
+        matches.find(
+            m => m.id === matchId
+        );
 
-})
+    const participantsList =
+        participants(
+            matchData?.attendances || []
+        );
 
-.eq(
-"id",
-matchId);
 
-alert(
-"Résultat enregistré"
-);
+    /*
+     * =====================================================
+     * NOTIFICATIONS PERSONNALISÉES
+     * =====================================================
+     */
 
-setReload(
-v=>!v
-);
+    try {
+
+        if (
+            participantsList.length > 0 &&
+            user
+        ) {
+
+            /*
+             * -------------------------------------------------
+             * MATCH NUL
+             * -------------------------------------------------
+             */
+
+            if (winner === "draw") {
+
+                const recipientIds =
+                    participantsList
+                        .map(
+                            p => p.profile_id
+                        )
+                        .filter(Boolean);
+
+                if (
+                    recipientIds.length > 0
+                ) {
+
+                    await createNotification({
+
+                        clubId:
+                            match.club_id,
+
+                        createdBy:
+                            user.id,
+
+                        createdByName:
+                            user.user_metadata?.display_name
+                            || "Foot Five",
+
+                        type:
+                            "match_result",
+
+                        title:
+                            "🤝 Match nul",
+
+                        message:
+                            `Le match "${match.title}" est terminé.\n` +
+                            `⚪ ${white} - ${black} ⚫\n` +
+                            `🤝 Les deux équipes se quittent sur un match nul.`,
+
+                        action:
+                            "match",
+
+                        actionId:
+                            matchId,
+
+                        recipientIds
+
+                    });
+
+                }
+
+            }
+
+
+            /*
+             * -------------------------------------------------
+             * VICTOIRE / DÉFAITE
+             * -------------------------------------------------
+             */
+
+            else {
+
+                const winnerIds =
+                    participantsList
+                        .filter(
+                            p =>
+                                p.team === winner
+                        )
+                        .map(
+                            p =>
+                                p.profile_id
+                        )
+                        .filter(Boolean);
+
+
+                const loserIds =
+                    participantsList
+                        .filter(
+                            p =>
+                                p.team &&
+                                p.team !== winner
+                        )
+                        .map(
+                            p =>
+                                p.profile_id
+                        )
+                        .filter(Boolean);
+
+
+                /*
+                 * -------------------------------
+                 * NOTIFICATION DES GAGNANTS
+                 * -------------------------------
+                 */
+
+                if (
+                    winnerIds.length > 0
+                ) {
+
+                    await createNotification({
+
+                        clubId:
+                            match.club_id,
+
+                        createdBy:
+                            user.id,
+
+                        createdByName:
+                            user.user_metadata?.display_name
+                            || "Foot Five",
+
+                        type:
+                            "match_result",
+
+                        title:
+                            "🏆 VICTOIRE !",
+
+                        message:
+                            `Ton équipe s'impose ${white} - ${black} !\n` +
+                            `🔥 Bravo à toute l'équipe !`,
+
+                        action:
+                            "match",
+
+                        actionId:
+                            matchId,
+
+                        recipientIds:
+                            winnerIds
+
+                    });
+
+                }
+
+
+                /*
+                 * -------------------------------
+                 * NOTIFICATION DES PERDANTS
+                 * -------------------------------
+                 */
+
+                if (
+                    loserIds.length > 0
+                ) {
+
+                    await createNotification({
+
+                        clubId:
+                            match.club_id,
+
+                        createdBy:
+                            user.id,
+
+                        createdByName:
+                            user.user_metadata?.display_name
+                            || "Foot Five",
+
+                        type:
+                            "match_result",
+
+                        title:
+                            "😔 Défaite",
+
+                        message:
+                            `Ton équipe s'incline ${white} - ${black}.\n` +
+                            `💪 On fera mieux au prochain match !`,
+
+                        action:
+                            "match",
+
+                        actionId:
+                            matchId,
+
+                        recipientIds:
+                            loserIds
+
+                    });
+
+                }
+
+            }
+
+        }
+
+    }
+    catch (notificationError) {
+
+        console.error(
+            "❌ Erreur notification résultat :",
+            notificationError
+        );
+
+    }
+
+
+    /*
+     * =====================================================
+     * FIN
+     * =====================================================
+     */
+
+    alert(
+        "Résultat enregistré"
+    );
+
+    setReload(
+        v => !v
+    );
 
 }
 
@@ -1108,112 +1504,6 @@ v=>!v
 
 }
 
-function sendWhatsapp(match){
-
-const t=
-teams[match.id];
-
-if(!t)
-return;
-
-const d=
-new Date(
-match.match_date
-);
-
-const formattedDate=
-
-d.toLocaleDateString(
-"fr-FR"
-)
-
-+
-
-" à "
-
-+
-
-d.toLocaleTimeString(
-"fr-FR",{
-
-hour:"2-digit",
-
-minute:"2-digit"
-
-});
-
-const safe=(name)=>
-name
-&&
-name!=="undefined"
-?
-name
-:
-"Joueur";
-
-let text="";
-
-text+="Bonjour à tous,\n\n";
-
-text+=
-"Les équipes pour le Five du "
-+
-formattedDate
-+
-" :\n\n";
-
-text+=
-"Equipe BLANC :\n";
-
-t.A.forEach(
-
-(p)=>{
-
-text+=
-"• "
-+
-safe(
-p.name
-)
-+
-"\n";
-
-}
-
-);
-
-text+="\n";
-
-text+=
-"Equipe FONCÉ :\n";
-
-t.B.forEach(
-
-(p)=>{
-
-text+=
-"• "
-+
-safe(
-p.name
-)
-+
-"\n";
-
-}
-
-);
-
-window.open(
-
-`https://wa.me/?text=${encodeURIComponent(text)}`,
-
-"_blank"
-
-);
-
-}
-
 const activeMatches=
 
 matches
@@ -1302,9 +1592,9 @@ fontSize:"28px"
 
 <p style={{marginBottom:"8px"}}>
 
-<b>🕒 Date :</b>{" "}
+    <b>🕒 Date :</b>{" "}
 
-{new Date(m.match_date).toLocaleString()}
+    {formatMatchDate(m.match_date)}
 
 </p>
 
@@ -1428,6 +1718,8 @@ fontWeight:"600"
 
 </span>
 
+{canSeeLevels() && (
+
 <span
 style={{
 fontSize:"14px",
@@ -1438,6 +1730,8 @@ opacity:.7
 • {levelLabels[playerLevel(p)]}
 
 </span>
+
+)}
 
 </div>
 
@@ -1848,6 +2142,8 @@ borderRadius:"10px"
 
 ❌ {playerName(p)}
 
+{canSeeLevels() && (
+
 <div
 style={{
 marginTop:"4px",
@@ -1859,6 +2155,8 @@ opacity:.7
 {levelLabels[playerLevel(p)]}
 
 </div>
+
+)}
 
 </div>
 
@@ -1918,6 +2216,8 @@ borderRadius:"10px"
 
 ⚽ {playerName(p)}
 
+{canSeeLevels() && (
+
 <div
 style={{
 marginTop:"4px",
@@ -1929,6 +2229,8 @@ opacity:.7
 {levelLabels[playerLevel(p)]}
 
 </div>
+
+)}
 
 </div>
 
@@ -2036,22 +2338,6 @@ borderRadius:"10px"
 )
 
 }
-
-<Button
-
-variant="success"
-
-style={{
-marginTop:"12px"
-}}
-
-onClick={()=>sendWhatsapp(m)}
-
->
-
-📤 Partager sur WhatsApp
-
-</Button>
 
 <hr/>
 
@@ -2302,13 +2588,7 @@ marginBottom:"12px"
 }}
 >
 
-📅 {
-
-new Date(m.match_date)
-
-.toLocaleDateString("fr-FR")
-
-}
+📅 {formatMatchDate(m.match_date)}
 
 </p>
 
