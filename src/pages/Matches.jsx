@@ -216,42 +216,288 @@ return match.seasons && !match.seasons.active;
 
 }
 
-async function answer(
-matchId,
-response
-){
+async function answer(matchId, response) {
 
-await supabase
+  /*
+   * =====================================================
+   * ÉTAT AVANT MODIFICATION
+   * =====================================================
+   */
 
-.from(
-"attendances"
-)
+  const currentMatch = matches.find(
+    m => m.id === matchId
+  );
 
-.upsert(
+  if (!currentMatch) {
+    console.error(
+      "❌ Match introuvable :",
+      matchId
+    );
+    return;
+  }
 
-{
+  const currentAttendances =
+    currentMatch.attendances || [];
 
-match_id:matchId,
+  const currentPresent =
+    present(currentAttendances);
 
-profile_id:user.id,
+  /*
+   * Réponse actuelle du joueur
+   */
 
-response
+  const currentPlayer =
+    currentAttendances.find(
+      a =>
+        a.profile_id === user?.id
+    );
 
-},
+  const previousResponse =
+    currentPlayer?.response || null;
 
-{
 
-onConflict:
-"match_id,profile_id"
+  /*
+   * =====================================================
+   * ÉTAT AVANT MODIFICATION
+   * =====================================================
+   */
 
-}
+  /*
+   * Le joueur était-il dans les 10 participants
+   * avant sa réponse ?
+   */
 
-);
+  const wasParticipant =
+    currentPresent
+      .slice(0, 10)
+      .some(
+        a =>
+          a.profile_id === user?.id
+      );
 
-setReload(
-v=>!v
-);
 
+  /*
+   * Le joueur était-il dans la liste d'attente ?
+   */
+
+  /*
+   * Premier joueur en attente AVANT le désistement.
+   *
+   * C'est lui qui sera automatiquement promu
+   * si un participant des 10 premiers se désiste.
+   */
+
+  const waitingBefore =
+    currentPresent.slice(10);
+
+  const promotedPlayer =
+    waitingBefore[0] || null;
+
+
+  /*
+   * =====================================================
+   * ENREGISTREMENT DE LA NOUVELLE RÉPONSE
+   * =====================================================
+   */
+
+  let error;
+
+
+  /*
+   * -----------------------------------------------------
+   * ABSENT → PRÉSENT
+   * -----------------------------------------------------
+   *
+   * Le joueur revient dans le match.
+   *
+   * Il doit être considéré comme une nouvelle inscription
+   * et donc être placé à la fin de la file.
+   */
+
+  if (
+    response === "present" &&
+    previousResponse === "absent"
+  ) {
+
+    const result =
+      await supabase
+        .from("attendances")
+        .update({
+          response: "present",
+          created_at:
+            new Date().toISOString()
+        })
+        .eq(
+          "match_id",
+          matchId
+        )
+        .eq(
+          "profile_id",
+          user.id
+        );
+
+    error =
+      result.error;
+
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * AUTRES CAS
+   * -----------------------------------------------------
+   *
+   * Nouveau joueur ou changement de réponse classique.
+   */
+
+  else {
+
+    const result =
+      await supabase
+        .from("attendances")
+        .upsert(
+          {
+            match_id: matchId,
+            profile_id: user.id,
+            response
+          },
+          {
+            onConflict:
+              "match_id,profile_id"
+          }
+        );
+
+    error =
+      result.error;
+  }
+
+
+  /*
+   * =====================================================
+   * ERREUR
+   * =====================================================
+   */
+
+  if (error) {
+
+    console.error(
+      "❌ Erreur enregistrement réponse :",
+      error
+    );
+
+    return;
+  }
+
+
+  /*
+   * =====================================================
+   * PROMOTION AUTOMATIQUE
+   * =====================================================
+   *
+   * Si un joueur des 10 premiers se désiste
+   * et qu'il existe quelqu'un en attente,
+   * le premier joueur en attente devient
+   * automatiquement participant.
+   */
+
+  if (
+    response === "absent" &&
+    wasParticipant &&
+    promotedPlayer
+  ) {
+
+    console.log(
+      "🎉 Promotion joueur :",
+      promotedPlayer.profile_id ||
+      promotedPlayer.guest_name ||
+      "joueur"
+    );
+
+
+    /*
+     * ===================================================
+     * NOTIFICATION DU JOUEUR PROMU
+     * ===================================================
+     *
+     * Un invité n'a pas de profile_id et ne peut donc
+     * pas recevoir de notification push.
+     *
+     * Dans ce cas, aucune notification n'est créée.
+     */
+
+    if (
+      promotedPlayer.profile_id
+    ) {
+
+      try {
+
+        await createNotification({
+
+          clubId:
+            currentMatch.club_id,
+
+          createdBy:
+            user.id,
+
+          createdByName:
+            user.user_metadata?.display_name ||
+            "Foot Five",
+
+          type:
+            "player_promoted",
+
+          title:
+            "🎉 Tu es maintenant inscrit !",
+
+          message:
+            `Une place vient de se libérer pour le match "${currentMatch.title}". ` +
+            `Tu es maintenant dans les 10 participants. ⚽`,
+
+          action:
+            "match",
+
+          actionId:
+            matchId,
+
+          recipientIds: [
+            promotedPlayer.profile_id
+          ]
+
+        });
+
+        console.log(
+          "📨 Notification de promotion envoyée"
+        );
+
+      } catch (
+        notificationError
+      ) {
+
+        /*
+         * Une erreur de notification ne doit
+         * jamais empêcher le changement de
+         * réponse du joueur.
+         */
+
+        console.error(
+          "❌ Erreur notification promotion :",
+          notificationError
+        );
+
+      }
+    }
+  }
+
+
+  /*
+   * =====================================================
+   * RECHARGEMENT
+   * =====================================================
+   */
+
+  setReload(
+    v => !v
+  );
 }
 
 async function addGuest(matchId){
