@@ -25,16 +25,26 @@ self.addEventListener("notificationclick", (event) => {
   }
 
   if (
-    payload.action === "match" &&
-    payload.actionId
-  ) {
-    event.waitUntil(
-      clients.openWindow(
-        `/match/${payload.actionId}`
-      )
-    );
-    return;
-  }
+  payload.action === "match" &&
+  payload.actionId
+) {
+
+  const view =
+    payload.type === "teams_ready"
+      ? "teams"
+      : "vote";
+
+  const url =
+    `/match/${encodeURIComponent(
+      payload.actionId
+    )}?view=${view}`;
+
+  event.waitUntil(
+    clients.openWindow(url)
+  );
+
+  return;
+}
 
   event.waitUntil(
     clients.openWindow("/")

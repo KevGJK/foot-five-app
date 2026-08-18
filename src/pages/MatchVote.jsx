@@ -3,253 +3,627 @@ import { supabase } from "../lib/supabase";
 
 export default function MatchVote(){
 
-const [match,setMatch]=useState(null);
+  const [match,setMatch] = useState(null);
+  const [user,setUser] = useState(null);
+  const [loading,setLoading] = useState(true);
 
-const [user,setUser]=useState(null);
+  const matchId =
+    window.location.pathname
+      .split("/")
+      .pop();
 
-const [loading,setLoading]=useState(true);
+  // Nouveau :
+  // permet de savoir si la page doit afficher
+  // le vote ou les équipes
+  const view =
+    new URLSearchParams(
+      window.location.search
+    ).get("view");
 
-const matchId=
-window.location.pathname
-.split("/")
-.pop();
+  const [teams,setTeams] = useState({
+    white: [],
+    black: []
+  });
 
-useEffect(() => {
+  useEffect(() => {
 
-  let cancelled = false;
+    let cancelled = false;
 
-  async function load() {
+    async function load() {
 
-    const {
-      data: {
-        user
+      const {
+        data: {
+          user
+        }
+      } = await supabase
+        .auth
+        .getUser();
+
+      if (cancelled) {
+        return;
       }
-    } = await supabase
-      .auth
-      .getUser();
 
-    if (cancelled) {
-      return;
+      setUser(user);
+
+      /*
+       * ------------------------------------------------
+       * MODE ÉQUIPES
+       * ------------------------------------------------
+       */
+
+      if (view === "teams") {
+
+        const {
+          data,
+          error
+        } = await supabase
+          .from("matches")
+          .select(`
+            *,
+            attendances(
+              id,
+              profile_id,
+              team,
+              response,
+              guest_name,
+              guest_level,
+              profiles(
+                display_name
+              )
+            )
+          `)
+          .eq(
+            "id",
+            matchId
+          )
+          .single();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (error) {
+
+          console.error(
+            "Erreur chargement équipes :",
+            error
+          );
+
+          setLoading(false);
+
+          return;
+
+        }
+
+        setMatch(data);
+
+        const white = [];
+        const black = [];
+
+        (data?.attendances || [])
+          .forEach(player => {
+
+            if (
+              player.team === "white"
+            ) {
+
+              white.push(player);
+
+            }
+
+            if (
+              player.team === "black"
+            ) {
+
+              black.push(player);
+
+            }
+
+          });
+
+        setTeams({
+          white,
+          black
+        });
+
+        setLoading(false);
+
+        return;
+
+      }
+
+      /*
+       * ------------------------------------------------
+       * MODE VOTE NORMAL
+       * ------------------------------------------------
+       */
+
+      const {
+        data
+      } = await supabase
+        .from("matches")
+        .select("*")
+        .eq(
+          "id",
+          matchId
+        )
+        .single();
+
+      if (cancelled) {
+        return;
+      }
+
+      setMatch(data);
+      setLoading(false);
+
     }
 
-    setUser(user);
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+
+  }, [matchId, view]);
+
+
+  /*
+   * ------------------------------------------------
+   * VOTE
+   * ------------------------------------------------
+   */
+
+  async function vote(response){
+
+    if (!user) {
+
+      alert(
+        "Connecte-toi avant de voter"
+      );
+
+      return;
+
+    }
 
     const {
-      data
+      error
     } = await supabase
-      .from("matches")
-      .select("*")
-      .eq(
-        "id",
-        matchId
-      )
-      .single();
 
-    if (cancelled) {
+      .from("attendances")
+
+      .upsert({
+
+        match_id:
+          matchId,
+
+        profile_id:
+          user.id,
+
+        response
+
+      }, {
+
+        onConflict:
+          "match_id,profile_id"
+
+      });
+
+    if (error) {
+
+      alert(
+        error.message
+      );
+
       return;
+
     }
 
-    setMatch(data);
-    setLoading(false);
+    alert(
+      "Vote enregistré"
+    );
+
+    window.location.href =
+      "/";
 
   }
 
-  load();
 
-  return () => {
-    cancelled = true;
-  };
+  /*
+   * ------------------------------------------------
+   * CHARGEMENT
+   * ------------------------------------------------
+   */
 
-}, [matchId]);
+  if (loading) {
 
-async function vote(response){
+    return (
 
-if(
-!user
-){
+      <div
+        style={{
+          padding:30
+        }}
+      >
 
-alert(
-"Connecte-toi avant de voter"
-);
+        Chargement…
 
-return;
+      </div>
 
-}
+    );
 
-await supabase
+  }
 
-.from(
-"attendances"
-)
 
-.upsert({
+  /*
+   * ------------------------------------------------
+   * MATCH INTROUVABLE
+   * ------------------------------------------------
+   */
 
-match_id:
-matchId,
+  if (!match) {
 
-profile_id:
-user.id,
+    return (
 
-response
+      <div
+        style={{
+          padding:30
+        }}
+      >
 
-},
+        Match introuvable
 
-{
+      </div>
 
-onConflict:
-"match_id,profile_id"
+    );
 
-});
+  }
 
-alert(
-"Vote enregistré"
-);
 
-window.location.href=
-"/";
+  /*
+   * ------------------------------------------------
+   * MODE ÉQUIPES
+   * ------------------------------------------------
+   */
 
-}
+  if (view === "teams") {
 
-if(
-loading
-){
+    function playerName(player){
 
-return(
+      if (
+        player.guest_name
+      ) {
 
-<div
-style={{
-padding:30
-}}
->
+        return player.guest_name;
 
-Chargement…
+      }
 
-</div>
+      return (
+        player.profiles?.display_name
+        ||
+        "Joueur"
+      );
 
-);
+    }
 
-}
+    return (
 
-if(
-!match
-){
+      <div
 
-return(
+        style={{
 
-<div
-style={{
-padding:30
-}}
->
+          padding:30,
 
-Match introuvable
+          maxWidth:600,
 
-</div>
+          margin:"auto"
 
-);
+        }}
 
-}
+      >
 
-return(
+        <h1>
 
-<div
+          ⚽ {match.title}
 
-style={{
+        </h1>
 
-padding:30,
+        <p>
 
-maxWidth:600,
+          📍 {match.location}
 
-margin:"auto"
+        </p>
 
-}}
+        <p>
 
->
+          🕒 {
 
-<h1>
+            new Date(
+              match.match_date
+            ).toLocaleString()
 
-⚽ {match.title}
+          }
 
-</h1>
+        </p>
 
-<p>
+        <hr
+          style={{
+            margin:"25px 0"
+          }}
+        />
 
-📍 {match.location}
+        <h2
+          style={{
+            textAlign:"center"
+          }}
+        >
 
-</p>
+          🏆 Équipes constituées
 
-<p>
+        </h2>
 
-🕒 {
 
-new Date(
-match.match_date
-)
+        {/* ÉQUIPE BLANC */}
 
-.toLocaleString()
+        <div
+          style={{
+            border:"2px solid #ddd",
+            borderRadius:15,
+            padding:20,
+            marginTop:20
+          }}
+        >
 
-}
+          <h2>
 
-</p>
+            ⚪ Équipe BLANC
 
-<br/>
+          </h2>
 
-<button
+          {
+            teams.white.length === 0
 
-style={{
+              ?
 
-width:"100%",
+              <p>
+                Aucune équipe constituée.
+              </p>
 
-padding:15,
+              :
 
-fontSize:18,
+              <ol>
 
-marginBottom:10
+                {
+                  teams.white.map(
+                    player => (
 
-}}
+                      <li
+                        key={
+                          player.id
+                        }
+                        style={{
+                          marginBottom:8,
+                          fontSize:17
+                        }}
+                      >
 
-onClick={()=>
+                        {
+                          playerName(
+                            player
+                          )
+                        }
 
-vote(
-"present"
-)
+                      </li>
 
-}
+                    )
+                  )
 
->
+                }
 
-✅ Je participe
+              </ol>
 
-</button>
+          }
 
-<button
+        </div>
 
-style={{
 
-width:"100%",
+        {/* ÉQUIPE NOIRE */}
 
-padding:15,
+        <div
+          style={{
+            border:"2px solid #222",
+            borderRadius:15,
+            padding:20,
+            marginTop:20
+          }}
+        >
 
-fontSize:18
+          <h2>
 
-}}
+            ⚫ Équipe FONCÉ
 
-onClick={()=>
+          </h2>
 
-vote(
-"absent"
-)
+          {
+            teams.black.length === 0
 
-}
+              ?
 
->
+              <p>
+                Aucune équipe constituée.
+              </p>
 
-❌ Je ne participe pas
+              :
 
-</button>
+              <ol>
 
-</div>
+                {
+                  teams.black.map(
+                    player => (
 
-);
+                      <li
+                        key={
+                          player.id
+                        }
+                        style={{
+                          marginBottom:8,
+                          fontSize:17
+                        }}
+                      >
+
+                        {
+                          playerName(
+                            player
+                          )
+                        }
+
+                      </li>
+
+                    )
+                  )
+
+                }
+
+              </ol>
+
+          }
+
+        </div>
+
+
+        <button
+
+          style={{
+
+            width:"100%",
+
+            padding:15,
+
+            fontSize:17,
+
+            marginTop:25,
+
+            borderRadius:10,
+
+            cursor:"pointer"
+
+          }}
+
+          onClick={() => {
+
+            window.location.href =
+              "/";
+
+          }}
+
+        >
+
+          🏠 Retour à l'accueil
+
+        </button>
+
+      </div>
+
+    );
+
+  }
+
+
+  /*
+   * ------------------------------------------------
+   * MODE VOTE NORMAL
+   * ------------------------------------------------
+   */
+
+  return (
+
+    <div
+
+      style={{
+
+        padding:30,
+
+        maxWidth:600,
+
+        margin:"auto"
+
+      }}
+
+    >
+
+      <h1>
+
+        ⚽ {match.title}
+
+      </h1>
+
+      <p>
+
+        📍 {match.location}
+
+      </p>
+
+      <p>
+
+        🕒 {
+
+          new Date(
+            match.match_date
+          ).toLocaleString()
+
+        }
+
+      </p>
+
+      <br/>
+
+      <button
+
+        style={{
+
+          width:"100%",
+
+          padding:15,
+
+          fontSize:18,
+
+          marginBottom:10
+
+        }}
+
+        onClick={() =>
+          vote("present")
+        }
+
+      >
+
+        ✅ Je participe
+
+      </button>
+
+
+      <button
+
+        style={{
+
+          width:"100%",
+
+          padding:15,
+
+          fontSize:18
+
+        }}
+
+        onClick={() =>
+          vote("absent")
+        }
+
+      >
+
+        ❌ Je ne participe pas
+
+      </button>
+
+    </div>
+
+  );
 
 }
