@@ -42,15 +42,29 @@ const levelLabels={
 };
 
 function formatMatchDate(dateString) {
+
     const date = new Date(dateString);
 
-    return `${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString(
-        "fr-FR",
-        {
-            hour: "2-digit",
-            minute: "2-digit"
-        }
-    )}`;
+    const dateText =
+        date.toLocaleDateString(
+            "fr-FR",
+            {
+                weekday: "long",
+                day: "numeric",
+                month: "long"
+            }
+        );
+
+    const timeText =
+        date.toLocaleTimeString(
+            "fr-FR",
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+
+    return `${dateText} à ${timeText}`;
 }
 
 useEffect(() => {
@@ -213,6 +227,19 @@ useEffect(() => {
 function seasonLocked(match){
 
 return match.seasons && !match.seasons.active;
+
+}
+
+function getMatchLocationText(match) {
+
+  if (
+    !match?.location ||
+    !match.location.trim()
+  ) {
+    return "";
+  }
+
+  return `📍 ${match.location.trim()}`;
 
 }
 
@@ -511,6 +538,28 @@ try {
         user.user_metadata?.display_name ||
         "Un joueur";
 
+const matchDate =
+  formatMatchDate(
+    currentMatch.match_date
+  );
+
+const locationText =
+  getMatchLocationText(
+    currentMatch
+  );
+
+const isWaiting =
+  currentPresent.length >= 10;
+
+const message =
+  `${playerDisplayName} vient de rejoindre le match du ${matchDate}.` +
+  (locationText
+    ? `\n${locationText}`
+    : "") +
+  (isWaiting
+    ? `\n⏳ Il est maintenant en liste d'attente.`
+    : "");
+
       await createNotification({
 
         clubId:
@@ -530,7 +579,7 @@ try {
           "👤 Nouveau joueur",
 
         message:
-          `${playerDisplayName} vient de rejoindre le match "${currentMatch.title}".`,
+  message,
 
         action:
           "match",
@@ -589,7 +638,19 @@ try {
           "👋 Désistement",
 
         message:
-          `${playerDisplayName} s'est désisté du match "${currentMatch.title}".`,
+  `${playerDisplayName} s'est désisté du match du ${formatMatchDate(currentMatch.match_date)}.` +
+  (
+    getMatchLocationText(currentMatch)
+      ? `\n${getMatchLocationText(currentMatch)}`
+      : ""
+  ) +
+  (
+    wasParticipant && promotedPlayer
+      ? `\n🎉 ${promotedPlayer.guest_name || promotedPlayer.profiles?.display_name || "Un joueur"} a été automatiquement promu.`
+      : wasParticipant
+        ? `\n🟢 1 place est maintenant disponible.`
+        : ""
+  ),
 
         action:
           "match",
@@ -681,8 +742,13 @@ catch (notificationError) {
             "🎉 Tu es maintenant inscrit !",
 
           message:
-            `Une place vient de se libérer pour le match "${currentMatch.title}". ` +
-            `Tu es maintenant dans les 10 participants. ⚽`,
+  `Une place vient de se libérer pour le match du ${formatMatchDate(currentMatch.match_date)}.` +
+  (
+    getMatchLocationText(currentMatch)
+      ? `\n${getMatchLocationText(currentMatch)}`
+      : ""
+  ) +
+  `\nTu es maintenant dans les 10 participants. ⚽`,
 
           action:
             "match",
