@@ -24,15 +24,44 @@ self.addEventListener("notificationclick", (event) => {
     return;
   }
 
-  if (
+if (
   payload.action === "match" &&
   payload.actionId
 ) {
 
-  const view =
+  let view = "vote";
+
+  /*
+   * ------------------------------------------------
+   * DÉTERMINATION DE L'ÉCRAN À OUVRIR
+   * ------------------------------------------------
+   */
+
+  if (
     payload.type === "teams_ready"
-      ? "teams"
-      : "vote";
+  ) {
+
+    view = "teams";
+
+  }
+
+  else if (
+    payload.type === "PLAYER_JOINED" ||
+    payload.type === "PLAYER_LEFT" ||
+    payload.type === "player_promoted" ||
+    payload.type === "match_result"
+  ) {
+
+    view = "details";
+
+  }
+
+
+  /*
+   * ------------------------------------------------
+   * OUVERTURE DU MATCH
+   * ------------------------------------------------
+   */
 
   const url =
     `/match/${encodeURIComponent(

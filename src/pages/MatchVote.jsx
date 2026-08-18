@@ -51,7 +51,10 @@ export default function MatchVote(){
        * ------------------------------------------------
        */
 
-      if (view === "teams") {
+      if (
+  view === "teams" ||
+  view === "details"
+) {
 
         const {
           data,
@@ -98,71 +101,73 @@ export default function MatchVote(){
 
         setMatch(data);
 
-const white = [];
-const black = [];
+setMatch(data);
 
-/*
- * ------------------------------------------------
- * PARTICIPANTS RÉELS DU MATCH
- * ------------------------------------------------
- *
- * Même logique que dans Matches.jsx :
- * les 10 premiers joueurs ayant répondu
- * "present" sont les participants.
- *
- * Les joueurs suivants sont en liste d'attente,
- * même s'ils possèdent encore un ancien
- * team = "white" ou "black".
- */
+if (view === "teams") {
 
-const participants =
-  (data?.attendances || [])
-    .filter(
-      player =>
-        player.response === "present"
-    )
-    .sort(
-      (a, b) =>
-        new Date(a.created_at) -
-        new Date(b.created_at)
-    )
-    .slice(0, 10);
+  const white = [];
+  const black = [];
+
+  /*
+   * ------------------------------------------------
+   * PARTICIPANTS RÉELS DU MATCH
+   * ------------------------------------------------
+   *
+   * Même logique que dans Matches.jsx :
+   * les 10 premiers joueurs "present"
+   * sont les participants.
+   */
+
+  const participants =
+    (data?.attendances || [])
+      .filter(
+        player =>
+          player.response === "present"
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.created_at) -
+          new Date(b.created_at)
+      )
+      .slice(0, 10);
 
 
-/*
- * ------------------------------------------------
- * RÉPARTITION DES 10 PARTICIPANTS
- * ------------------------------------------------
- */
+  /*
+   * ------------------------------------------------
+   * RÉPARTITION DES 10 PARTICIPANTS
+   * ------------------------------------------------
+   */
 
-participants.forEach(player => {
+  participants.forEach(player => {
 
-  if (
-    player.team === "white"
-  ) {
+    if (
+      player.team === "white"
+    ) {
 
-    white.push(player);
+      white.push(player);
 
-  }
+    }
 
-  if (
-    player.team === "black"
-  ) {
+    if (
+      player.team === "black"
+    ) {
 
-    black.push(player);
+      black.push(player);
 
-  }
+    }
 
-});
+  });
 
-        setTeams({
-          white,
-          black
-        });
+  setTeams({
+    white,
+    black
+  });
 
-        setLoading(false);
+}
 
-        return;
+setLoading(false);
+
+return;
 
       }
 
@@ -521,6 +526,266 @@ participants.forEach(player => {
           }
 
         </div>
+
+
+        <button
+
+          style={{
+
+            width:"100%",
+
+            padding:15,
+
+            fontSize:17,
+
+            marginTop:25,
+
+            borderRadius:10,
+
+            cursor:"pointer"
+
+          }}
+
+          onClick={() => {
+
+            window.location.href =
+              "/";
+
+          }}
+
+        >
+
+          🏠 Retour à l'accueil
+
+        </button>
+
+      </div>
+
+    );
+
+  }
+
+
+  /*
+   * ------------------------------------------------
+   * MODE DÉTAILS DU MATCH
+   * ------------------------------------------------
+   */
+
+  if (view === "details") {
+
+    function playerName(player) {
+
+      if (
+        player.guest_name
+      ) {
+
+        return player.guest_name;
+
+      }
+
+      return (
+        player.profiles?.display_name ||
+        "Joueur"
+      );
+
+    }
+
+    const presentPlayers =
+      (match.attendances || [])
+        .filter(
+          player =>
+            player.response === "present"
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.created_at) -
+            new Date(b.created_at)
+        );
+
+    const participants =
+      presentPlayers.slice(0, 10);
+
+    const waitingPlayers =
+      presentPlayers.slice(10);
+
+    return (
+
+      <div
+
+        style={{
+
+          padding:30,
+
+          maxWidth:600,
+
+          margin:"auto"
+
+        }}
+
+      >
+
+        <h1>
+
+          ⚽ {match.title}
+
+        </h1>
+
+        <p>
+
+          📅 {
+
+            new Date(
+              match.match_date
+            ).toLocaleDateString(
+              "fr-FR",
+              {
+                weekday:"long",
+                day:"numeric",
+                month:"long"
+              }
+            )
+
+          }
+
+        </p>
+
+        <p>
+
+          🕒 {
+
+            new Date(
+              match.match_date
+            ).toLocaleTimeString(
+              "fr-FR",
+              {
+                hour:"2-digit",
+                minute:"2-digit"
+              }
+            )
+
+          }
+
+        </p>
+
+        {
+          match.location && (
+
+            <p>
+
+              📍 {match.location}
+
+            </p>
+
+          )
+        }
+
+        <hr
+          style={{
+            margin:"25px 0"
+          }}
+        />
+
+        <h2>
+
+          👥 Participants
+          {" "}
+          ({participants.length}/10)
+
+        </h2>
+
+        {
+          participants.length === 0
+
+            ?
+
+            <p>
+              Aucun joueur inscrit.
+            </p>
+
+            :
+
+            <ol>
+
+              {
+                participants.map(
+                  player => (
+
+                    <li
+                      key={player.id}
+                      style={{
+                        marginBottom:8,
+                        fontSize:17
+                      }}
+                    >
+
+                      {
+                        playerName(
+                          player
+                        )
+                      }
+
+                    </li>
+
+                  )
+                )
+              }
+
+            </ol>
+        }
+
+
+        {
+          waitingPlayers.length > 0 && (
+
+            <>
+
+              <hr
+                style={{
+                  margin:"25px 0"
+                }}
+              />
+
+              <h2>
+
+                ⏳ Liste d'attente
+                {" "}
+                ({waitingPlayers.length})
+
+              </h2>
+
+              <ol>
+
+                {
+                  waitingPlayers.map(
+                    player => (
+
+                      <li
+                        key={player.id}
+                        style={{
+                          marginBottom:8,
+                          fontSize:17
+                        }}
+                      >
+
+                        {
+                          playerName(
+                            player
+                          )
+                        }
+
+                      </li>
+
+                    )
+                  )
+                }
+
+              </ol>
+
+            </>
+
+          )
+        }
 
 
         <button
