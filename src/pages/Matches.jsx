@@ -216,6 +216,90 @@ return match.seasons && !match.seasons.active;
 
 }
 
+async function getMatchManagementRecipients(match) {
+
+  if (!match?.club_id) {
+    return [];
+  }
+
+  /*
+   * -----------------------------------------------------
+   * ORGANISATEUR DU MATCH
+   * -----------------------------------------------------
+   */
+
+  const recipientIds = [];
+
+  if (match.organizer_id) {
+    recipientIds.push(match.organizer_id);
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * PROPRIÉTAIRES ET ADMINISTRATEURS DU CLUB
+   * -----------------------------------------------------
+   */
+
+  const {
+    data: managers,
+    error
+  } = await supabase
+    .from("club_members")
+    .select("profile_id, role")
+    .eq("club_id", match.club_id)
+    .in("role", ["owner", "admin"]);
+
+
+  if (error) {
+
+    console.error(
+      "❌ Erreur récupération administrateurs du club :",
+      error
+    );
+
+    return [
+      ...new Set(
+        recipientIds.filter(Boolean)
+      )
+    ];
+
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * AJOUT DES ADMINISTRATEURS
+   * -----------------------------------------------------
+   */
+
+  (managers || []).forEach(
+    manager => {
+
+      if (manager.profile_id) {
+        recipientIds.push(
+          manager.profile_id
+        );
+      }
+
+    }
+  );
+
+
+  /*
+   * -----------------------------------------------------
+   * SUPPRESSION DES DOUBLONS
+   * -----------------------------------------------------
+   */
+
+  return [
+    ...new Set(
+      recipientIds.filter(Boolean)
+    )
+  ];
+
+}
+
 async function answer(matchId, response) {
 
   /*
@@ -388,6 +472,153 @@ async function answer(matchId, response) {
     return;
   }
 
+/*
+ * =====================================================
+ * NOTIFICATION ORGANISATEUR / ADMINISTRATEURS
+ * =====================================================
+ */
+
+try {
+
+  /*
+   * ---------------------------------------------------
+   * JOUEUR QUI REJOINT LE MATCH
+   * ---------------------------------------------------
+   *
+   * Cela couvre :
+   *
+   * - nouveau joueur → présent
+   * - joueur absent → présent
+   *
+   * Dans les deux cas, sa nouvelle position
+   * est calculée ensuite par created_at.
+   */
+
+  if (
+    response === "present" &&
+    previousResponse !== "present"
+  ) {
+
+    const recipientIds =
+      await getMatchManagementRecipients(
+        currentMatch
+      );
+
+    if (recipientIds.length > 0) {
+
+      const playerDisplayName =
+        currentPlayer?.guest_name ||
+        user.user_metadata?.display_name ||
+        "Un joueur";
+
+      await createNotification({
+
+        clubId:
+          currentMatch.club_id,
+
+        createdBy:
+          user.id,
+
+        createdByName:
+          user.user_metadata?.display_name ||
+          "Foot Five",
+
+        type:
+          "PLAYER_JOINED",
+
+        title:
+          "👤 Nouveau joueur",
+
+        message:
+          `${playerDisplayName} vient de rejoindre le match "${currentMatch.title}".`,
+
+        action:
+          "match",
+
+        actionId:
+          matchId,
+
+        recipientIds
+
+      });
+
+    }
+
+  }
+
+
+  /*
+   * ---------------------------------------------------
+   * JOUEUR QUI SE DÉSISTE
+   * ---------------------------------------------------
+   */
+
+  if (
+    response === "absent" &&
+    previousResponse === "present"
+  ) {
+
+    const recipientIds =
+      await getMatchManagementRecipients(
+        currentMatch
+      );
+
+    if (recipientIds.length > 0) {
+
+      const playerDisplayName =
+        currentPlayer?.guest_name ||
+        user.user_metadata?.display_name ||
+        "Un joueur";
+
+      await createNotification({
+
+        clubId:
+          currentMatch.club_id,
+
+        createdBy:
+          user.id,
+
+        createdByName:
+          user.user_metadata?.display_name ||
+          "Foot Five",
+
+        type:
+          "PLAYER_LEFT",
+
+        title:
+          "👋 Désistement",
+
+        message:
+          `${playerDisplayName} s'est désisté du match "${currentMatch.title}".`,
+
+        action:
+          "match",
+
+        actionId:
+          matchId,
+
+        recipientIds
+
+      });
+
+    }
+
+  }
+
+}
+catch (notificationError) {
+
+  /*
+   * Une erreur de notification ne doit jamais
+   * empêcher la modification de la participation.
+   */
+
+  console.error(
+    "❌ Erreur notification participation :",
+    notificationError
+  );
+
+}
 
   /*
    * =====================================================
