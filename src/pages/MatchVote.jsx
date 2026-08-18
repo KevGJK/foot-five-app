@@ -61,16 +61,17 @@ export default function MatchVote(){
           .select(`
             *,
             attendances(
-              id,
-              profile_id,
-              team,
-              response,
-              guest_name,
-              guest_level,
-              profiles(
-                display_name
-              )
-            )
+  id,
+  profile_id,
+  team,
+  response,
+  created_at,
+  guest_name,
+  guest_level,
+  profiles(
+    display_name
+  )
+)
           `)
           .eq(
             "id",
@@ -97,29 +98,62 @@ export default function MatchVote(){
 
         setMatch(data);
 
-        const white = [];
-        const black = [];
+const white = [];
+const black = [];
 
-        (data?.attendances || [])
-          .forEach(player => {
+/*
+ * ------------------------------------------------
+ * PARTICIPANTS RÉELS DU MATCH
+ * ------------------------------------------------
+ *
+ * Même logique que dans Matches.jsx :
+ * les 10 premiers joueurs ayant répondu
+ * "present" sont les participants.
+ *
+ * Les joueurs suivants sont en liste d'attente,
+ * même s'ils possèdent encore un ancien
+ * team = "white" ou "black".
+ */
 
-            if (
-              player.team === "white"
-            ) {
+const participants =
+  (data?.attendances || [])
+    .filter(
+      player =>
+        player.response === "present"
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.created_at) -
+        new Date(b.created_at)
+    )
+    .slice(0, 10);
 
-              white.push(player);
 
-            }
+/*
+ * ------------------------------------------------
+ * RÉPARTITION DES 10 PARTICIPANTS
+ * ------------------------------------------------
+ */
 
-            if (
-              player.team === "black"
-            ) {
+participants.forEach(player => {
 
-              black.push(player);
+  if (
+    player.team === "white"
+  ) {
 
-            }
+    white.push(player);
 
-          });
+  }
+
+  if (
+    player.team === "black"
+  ) {
+
+    black.push(player);
+
+  }
+
+});
 
         setTeams({
           white,
