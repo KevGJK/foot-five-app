@@ -37,24 +37,27 @@ if (
    * ------------------------------------------------
    */
 
-  if (
-    payload.type === "teams_ready"
-  ) {
+const notificationType =
+  String(payload.type || "").toLowerCase();
 
-    view = "teams";
+if (
+  notificationType === "teams_ready"
+) {
 
-  }
+  view = "teams";
 
-  else if (
-    payload.type === "PLAYER_JOINED" ||
-    payload.type === "PLAYER_LEFT" ||
-    payload.type === "player_promoted" ||
-    payload.type === "match_result"
-  ) {
+}
 
-    view = "details";
+else if (
+  notificationType === "player_joined" ||
+  notificationType === "player_left" ||
+  notificationType === "player_promoted" ||
+  notificationType === "match_result"
+) {
 
-  }
+  view = "details";
+
+}
 
 
   /*
