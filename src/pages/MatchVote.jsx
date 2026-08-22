@@ -565,6 +565,259 @@ return;
 
   }
 
+/*
+ * ------------------------------------------------
+ * MODE RÉSULTAT DU MATCH
+ * ------------------------------------------------
+ */
+
+if (view === "result") {
+
+  function playerName(player) {
+
+    if (player.guest_name) {
+
+      return player.guest_name;
+
+    }
+
+    return (
+      player.profiles?.display_name ||
+      "Joueur"
+    );
+
+  }
+
+  const participants =
+    (match.attendances || [])
+      .filter(
+        player =>
+          player.response === "present"
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.created_at) -
+          new Date(b.created_at)
+      )
+      .slice(0, 10);
+
+  return (
+
+    <div
+      style={{
+        padding:30,
+        maxWidth:600,
+        margin:"auto"
+      }}
+    >
+
+      <h1>
+
+        🏆 Résultat du match
+
+      </h1>
+
+      <h2
+        style={{
+          textAlign:"center",
+          marginTop:25
+        }}
+      >
+
+        ⚽ {match.title}
+
+      </h2>
+
+      <p
+        style={{
+          textAlign:"center"
+        }}
+      >
+
+        📅 {
+          new Date(
+            match.match_date
+          ).toLocaleDateString(
+            "fr-FR",
+            {
+              weekday:"long",
+              day:"numeric",
+              month:"long"
+            }
+          )
+        }
+
+      </p>
+
+      <p
+        style={{
+          textAlign:"center"
+        }}
+      >
+
+        🕒 {
+          new Date(
+            match.match_date
+          ).toLocaleTimeString(
+            "fr-FR",
+            {
+              hour:"2-digit",
+              minute:"2-digit"
+            }
+          )
+        }
+
+      </p>
+
+      <hr
+        style={{
+          margin:"25px 0"
+        }}
+      />
+
+      <div
+        style={{
+          textAlign:"center",
+          fontSize:42,
+          fontWeight:"800",
+          margin:"25px 0"
+        }}
+      >
+
+        {match.score_white}
+
+        <span
+          style={{
+            margin:"0 18px",
+            opacity:.6
+          }}
+        >
+          -
+        </span>
+
+        {match.score_black}
+
+      </div>
+
+      <div
+        style={{
+          textAlign:"center",
+          fontSize:24,
+          fontWeight:"700",
+          marginBottom:30
+        }}
+      >
+
+        {
+          match.winner === "draw"
+
+            ?
+
+            "🤝 Match nul"
+
+            :
+
+            match.winner === "white"
+
+              ?
+
+              "🏆 Équipe BLANCHE victorieuse"
+
+              :
+
+              "🏆 Équipe FONCÉ victorieuse"
+        }
+
+      </div>
+
+      <hr
+        style={{
+          margin:"25px 0"
+        }}
+      />
+
+      <h2>
+
+        👥 Participants
+
+      </h2>
+
+      <ol>
+
+        {
+          participants.map(
+            player => (
+
+              <li
+                key={player.id}
+                style={{
+                  marginBottom:8,
+                  fontSize:17
+                }}
+              >
+
+                {
+                  playerName(player)
+                }
+
+                {
+                  player.team === match.winner &&
+                  match.winner !== "draw"
+
+                  ?
+
+                  " 🏆"
+
+                  :
+
+                  ""
+                }
+
+              </li>
+
+            )
+          )
+        }
+
+      </ol>
+
+      <button
+
+        style={{
+
+          width:"100%",
+
+          padding:15,
+
+          fontSize:17,
+
+          marginTop:25,
+
+          borderRadius:10,
+
+          cursor:"pointer"
+
+        }}
+
+        onClick={() => {
+
+          window.location.href =
+            "/";
+
+        }}
+
+      >
+
+        🏠 Retour à l'accueil
+
+      </button>
+
+    </div>
+
+  );
+
+}
+
 
   /*
    * ------------------------------------------------

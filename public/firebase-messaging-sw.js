@@ -10,8 +10,6 @@ firebase.initializeApp({
   appId: "1:1019133606169:web:be054941c34cfa20fa2d88",
 });
 
-const messaging = firebase.messaging();
-
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
@@ -49,16 +47,22 @@ if (
 }
 
 else if (
+  notificationType === "match_result"
+) {
+
+  view = "result";
+
+}
+
+else if (
   notificationType === "player_joined" ||
   notificationType === "player_left" ||
-  notificationType === "player_promoted" ||
-  notificationType === "match_result"
+  notificationType === "player_promoted"
 ) {
 
   view = "details";
 
 }
-
 
   /*
    * ------------------------------------------------
@@ -80,19 +84,5 @@ else if (
 
   event.waitUntil(
     clients.openWindow("/")
-  );
-});
-
-messaging.onBackgroundMessage((payload) => {
-  console.log("📩 Background message :", payload);
-
-  self.registration.showNotification(
-    payload.notification.title,
-    {
-      body: payload.notification.body,
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
-      data: payload.data,
-    }
   );
 });

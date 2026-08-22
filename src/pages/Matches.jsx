@@ -230,6 +230,25 @@ return match.seasons && !match.seasons.active;
 
 }
 
+function isManager(){
+
+  return (
+    clubRole === "owner" ||
+    clubRole === "admin"
+  );
+
+}
+
+function canManageMatch(match){
+
+  return (
+    clubRole === "owner" ||
+    clubRole === "admin" ||
+    match?.organizer_id === user?.id
+  );
+
+}
+
 function getMatchLocationText(match) {
 
   if (
@@ -799,16 +818,26 @@ catch (notificationError) {
 
 async function addGuest(matchId){
 
-const name=
-guestName[matchId];
+  if(!isManager()){
+
+    alert(
+      "🔒 Seul le propriétaire ou un administrateur du club peut ajouter un invité."
+    );
+
+    return;
+
+  }
+
+const name =
+  guestName[matchId];
 
 if(!name){
 
-alert(
-"Nom obligatoire"
-);
+  alert(
+    "Nom obligatoire"
+  );
 
-return;
+  return;
 
 }
 
@@ -866,11 +895,21 @@ setEditGuestLevel(Number(attendance.guest_level || 3));
 
 async function saveGuest(){
 
-await supabase
+  if(!isManager()){
 
-.from("attendances")
+    alert(
+      "🔒 Seul le propriétaire ou un administrateur du club peut modifier un invité."
+    );
 
-.update({
+    return;
+
+  }
+
+  await supabase
+
+  .from("attendances")
+
+  .update({
 
 guest_name:editGuestName,
 
@@ -888,7 +927,17 @@ setReload(v=>!v);
 
 async function removeGuest(attendanceId){
 
-const ok=window.confirm(
+  if(!isManager()){
+
+    alert(
+      "🔒 Seul le propriétaire ou un administrateur du club peut supprimer un invité."
+    );
+
+    return;
+
+  }
+
+  const ok=window.confirm(
 
 "Retirer cet invité du match ?"
 
@@ -914,14 +963,18 @@ setReload(v=>!v);
 
 async function removeMatch(id){
 
-    const ok =
-        window.confirm(
-            "Supprimer ce match ?"
+    const matchToDelete = matches.find(
+        m => m.id === id
+    );
+
+    if(!matchToDelete || !canManageMatch(matchToDelete)){
+
+        alert(
+            "🔒 Vous n'avez pas l'autorisation de supprimer ce match."
         );
 
-    if(!ok)
         return;
-
+}
 
     const {
         data: match,
@@ -1265,6 +1318,20 @@ return clubRole==="owner" || clubRole==="admin";
 
 async function compose(matchId,list){
 
+const match = matches.find(
+  m => m.id === matchId
+);
+
+if(!match || !canManageMatch(match)){
+
+  alert(
+    "🔒 Vous n'avez pas l'autorisation de gérer ce match."
+  );
+
+  return;
+
+}
+
 const players=[];
 
 for(
@@ -1594,6 +1661,20 @@ scoreB
 }
 
 async function saveResult(matchId) {
+
+const matchToManage = matches.find(
+  m => m.id === matchId
+);
+
+if(!matchToManage || !canManageMatch(matchToManage)){
+
+    alert(
+        "🔒 Vous n'avez pas l'autorisation de valider ce résultat."
+    );
+
+    return;
+
+}
 
     const white =
         Number(scoreWhite[matchId] || 0);
@@ -1984,17 +2065,13 @@ if (match && seasonLocked(match)) {
     return;
 }
 
-if(
+if(!isManager()){
 
-clubRole
+  alert(
+    "🔒 Seul le propriétaire ou un administrateur du club peut réouvrir un match."
+  );
 
-!==
-
-"owner"
-
-){
-
-return;
+  return;
 
 }
 
@@ -2280,7 +2357,9 @@ opacity:.7
 
 {
 
-p.guest_name && editingGuest !== p.id && (
+p.guest_name &&
+editingGuest !== p.id &&
+isManager() && (
 
 <div
 style={{
@@ -2477,7 +2556,11 @@ marginBottom:10
 
 variant="secondary"
 
-disabled={!!m.winner || seasonLocked(m)}
+disabled={
+  !!m.winner ||
+  seasonLocked(m) ||
+  !canManageMatch(m)
+}
 
 onClick={async()=>{
 
@@ -2527,6 +2610,12 @@ teams[m.id]
 
 
 </div>
+
+{
+
+isManager() && (
+
+<>
 
 <hr/>
 
@@ -2631,6 +2720,12 @@ onClick={()=>addGuest(m.id)}
 ➕ Ajouter un invité
 
 </Button>
+
+</>
+
+)
+
+}
 
 <hr/>
 
@@ -2884,6 +2979,12 @@ borderRadius:"10px"
 
 <hr/>
 
+{
+
+canManageMatch(m) && (
+
+<>
+
 <h3
 style={{
 marginTop:"26px",
@@ -2943,7 +3044,11 @@ setScoreBlack({
 
 variant="success"
 
-disabled={!!m.winner || seasonLocked(m)}
+disabled={
+  !!m.winner ||
+  seasonLocked(m) ||
+  !canManageMatch(m)
+}
 
 onClick={()=>saveResult(m.id)}
 
@@ -2957,6 +3062,11 @@ marginTop:"12px"
 
 </Button>
 
+</>
+
+)
+
+}
 
 {
 
@@ -2984,7 +3094,8 @@ m.score_black
 
 {
 
-clubRole==="owner" && !seasonLocked(m)
+isManager() &&
+!seasonLocked(m)
 
 &&
 
@@ -3018,7 +3129,10 @@ marginTop:"10px"
 
 variant="danger"
 
-disabled={seasonLocked(m)}
+disabled={
+  seasonLocked(m) ||
+  !canManageMatch(m)
+}
 
 onClick={()=>removeMatch(m.id)}
 

@@ -107,7 +107,7 @@ member.role
 );
 
 const {
-data:club
+  data:club
 }
 =
 await supabase
@@ -115,23 +115,34 @@ await supabase
 .from("clubs")
 
 .select(
-"invite_code,name"
+  "invite_code,name"
 )
 
 .eq(
-"id",
-member.club_id
+  "id",
+  member.club_id
 )
 
 .single();
 
-setInviteCode(
-club?.invite_code||""
+setClubName(
+  club?.name || ""
 );
 
-setClubName(
-club?.name||""
-);
+if(
+  member.role === "owner" ||
+  member.role === "admin"
+){
+
+  setInviteCode(
+    club?.invite_code || ""
+  );
+
+} else {
+
+  setInviteCode("");
+
+}
 
 const {
 data
@@ -298,42 +309,66 @@ return clubRole==="owner";
 
 }
 
-async function invite(){
+function canInvite(){
 
-const link=
-`https://foot-five-app.vercel.app/join/${inviteCode}`;
-
-const text=
-
-`⚽ Rejoins mon club ${clubName} sur Foot Five
-
-${link}`;
-
-if(
-
-navigator.share
-
-){
-
-await navigator.share({
-
-title:"Foot Five",
-
-text
-
-});
-
-return;
+  return (
+    clubRole === "owner" ||
+    clubRole === "admin"
+  );
 
 }
 
-await navigator.clipboard.writeText(
-text
-);
+async function invite(){
 
-alert(
-"📤 Lien copié"
-);
+  if(!canInvite()){
+
+    alert(
+      "🔒 Seul le propriétaire ou un administrateur du club peut inviter un nouveau membre."
+    );
+
+    return;
+
+  }
+
+  if(!inviteCode){
+
+    alert(
+      "❌ Code d'invitation indisponible."
+    );
+
+    return;
+
+  }
+
+  const link =
+    `https://foot-five-app.vercel.app/join/${inviteCode}`;
+
+  const text =
+    `⚽ Rejoins mon club ${clubName} sur Foot Five
+
+${link}`;
+
+  if(navigator.share){
+
+    await navigator.share({
+
+      title:"Foot Five",
+
+      text
+
+    });
+
+    return;
+
+  }
+
+  await navigator.clipboard.writeText(
+    text
+  );
+
+  alert(
+    "📤 Lien copié"
+  );
 
 }
 
@@ -361,62 +396,64 @@ return(
 
 </h1>
 
-<Card>
-
-<h2
-style={{
-marginTop:"-10px",
-marginBottom:"18px"
-}}
->
-
-🔑 Code d'invitation
-
-</h2>
-
-<p
-style={{
-
-fontSize:26,
-
-fontWeight:"700",
-
-textAlign:"center",
-
-padding:"16px",
-
-borderRadius:"14px",
-
-background:"rgba(255,255,255,.04)",
-
-border:"1px solid rgba(255,255,255,.10)",
-
-letterSpacing:"4px",
-
-marginBottom:"20px"
-
-}}
->
-
 {
-inviteCode
+  canInvite() && (
+
+    <Card>
+
+      <h2
+        style={{
+          marginTop:"-10px",
+          marginBottom:"18px"
+        }}
+      >
+
+        🔑 Code d'invitation
+
+      </h2>
+
+      <p
+        style={{
+
+          fontSize:26,
+
+          fontWeight:"700",
+
+          textAlign:"center",
+
+          padding:"16px",
+
+          borderRadius:"14px",
+
+          background:"rgba(255,255,255,.04)",
+
+          border:"1px solid rgba(255,255,255,.10)",
+
+          letterSpacing:"4px",
+
+          marginBottom:"20px"
+
+        }}
+      >
+
+        {inviteCode}
+
+      </p>
+
+      <br/>
+
+      <Button
+        onClick={invite}
+      >
+
+        📤 Inviter un joueur
+
+      </Button>
+
+    </Card>
+
+  )
 }
-
-</p>
-
-<br/>
-
-<Button
-
-onClick={invite}
-
->
-
-📤 Inviter un joueur
-
-</Button>
-
-</Card>
 
 {
 

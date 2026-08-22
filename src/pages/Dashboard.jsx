@@ -14,6 +14,7 @@ import Settings from "./Settings";
 import Notifications from "./Notifications";
 import DashboardHeader from "../components/ui/DashboardHeader";
 import { useStatistics } from "../hooks/useStatistics";
+import { createNotification } from "../services/notifications";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import { useNotifications } from "../hooks/useNotifications";
@@ -28,7 +29,9 @@ const [page,setPage]=useState("loading");
 
 const {stats,loadStats} = useStatistics();
 const {club,setClub,logoUrl,setLogoUrl} = useClub();
-
+const isManager =
+  club?.role === "owner" ||
+  club?.role === "admin";
 const [showLogo,setShowLogo]=useState(false);
 const [logoInput,setLogoInput]=useState(null);
 const [activeSeason,setActiveSeason]=useState(null);
@@ -503,10 +506,18 @@ async function closeSeason(){
     .eq("club_id",activeSeason.club_id)
     .single();
 
-  if(!member || member.role!=="owner"){
-    alert("Seul le propriétaire du club peut clôturer une saison.");
-    return;
-  }
+if(
+  !member ||
+  (
+    member.role !== "owner" &&
+    member.role !== "admin"
+  )
+){
+  alert(
+    "Seul le propriétaire ou un administrateur du club peut clôturer une saison."
+  );
+  return;
+}
 
   const ok = window.confirm(
     `Clôturer définitivement la saison ${activeSeason.name} ?`
@@ -884,19 +895,19 @@ participation:r.participation
   const seasonName =
     `${start.getFullYear()}-${end.getFullYear()}`;
 
-  const {
-    error:createError
-  } = await supabase
-    .from("seasons")
-    .insert({
-      club_id:member.club_id,
-      name:seasonName,
-      start_date:
-        start.toISOString().slice(0,10),
-      end_date:
-        end.toISOString().slice(0,10),
-      active:true
-    });
+const {
+  error:createError
+} = await supabase
+  .from("seasons")
+  .insert({
+    club_id:member.club_id,
+    name:seasonName,
+    start_date:
+      start.toISOString().slice(0,10),
+    end_date:
+      end.toISOString().slice(0,10),
+    active:true
+  });
 
   if(createError){
 
@@ -909,6 +920,147 @@ ${createError.message}`
     await loadSeason();
 
     return;
+  }
+
+  /*
+   * --------------------------------------------------
+   * NOTIFICATIONS DE SAISON
+   * --------------------------------------------------
+   *
+   * Les notifications ne sont créées qu'après :
+   *
+   * 1. la clôture réussie de l'ancienne saison
+   * 2. la création réussie de la nouvelle saison
+   *
+   * Elles sont envoyées à tous les membres du club.
+   */
+
+  const recipientIds =
+    (members || [])
+      .map(
+        member =>
+          member.profile_id
+      )
+      .filter(Boolean);
+
+  const currentMember =
+    (members || [])
+      .find(
+        member =>
+          member.profile_id === user.id
+      );
+
+  const createdByName =
+    currentMember?.profiles?.display_name ||
+    user.user_metadata?.display_name ||
+    "Foot Five Manager";
+
+
+  /*
+   * --------------------------------------------------
+   * NOTIFICATION : FIN DE SAISON
+   * --------------------------------------------------
+   */
+
+  if(recipientIds.length > 0){
+
+    try {
+
+      await createNotification({
+
+        clubId:
+          member.club_id,
+
+        createdBy:
+          user.id,
+
+        createdByName,
+
+        type:
+          "season_closed",
+
+        title:
+          "🏁 Fin de saison",
+
+        message:
+          `La saison ${activeSeason.name} est terminée. Consultez les résultats de la saison.`,
+
+        action:
+          null,
+
+        actionId:
+          null,
+
+        recipientIds
+
+      });
+
+    } catch(notificationError){
+
+      /*
+       * Une erreur de notification ne doit pas
+       * annuler la clôture de saison.
+       */
+
+      console.error(
+        "Erreur notification fin de saison :",
+        notificationError
+      );
+
+    }
+
+
+    /*
+     * ------------------------------------------------
+     * NOTIFICATION : NOUVELLE SAISON
+     * ------------------------------------------------
+     */
+
+    try {
+
+      await createNotification({
+
+        clubId:
+          member.club_id,
+
+        createdBy:
+          user.id,
+
+        createdByName,
+
+        type:
+          "new_season",
+
+        title:
+          "⚽ Nouvelle saison",
+
+        message:
+          `La saison ${seasonName} est maintenant ouverte.`,
+
+        action:
+          null,
+
+        actionId:
+          null,
+
+        recipientIds
+
+      });
+
+    } catch(notificationError){
+
+      /*
+       * Une erreur de notification ne doit pas
+       * empêcher la nouvelle saison de fonctionner.
+       */
+
+      console.error(
+        "Erreur notification nouvelle saison :",
+        notificationError
+      );
+
+    }
+
   }
 
   await loadSeason();
@@ -1065,17 +1217,42 @@ if(page==="notifications"){
 
 if(page==="admin"){
 
-return(
+  if(!isManager){
 
-<Administration
+    return renderWithBack(
 
-goHome={goHome}
+      <Page>
 
-goSeasons={()=>setPage("seasons")}
+        <Card>
 
-/>
+          <h2 className="section-title">
+            🔒 Accès réservé
+          </h2>
 
-);
+          <p>
+            Cette section est réservée au propriétaire
+            et aux administrateurs du club.
+          </p>
+
+        </Card>
+
+      </Page>
+
+    );
+
+  }
+
+  return(
+
+    <Administration
+
+      goHome={goHome}
+
+      goSeasons={()=>setPage("seasons")}
+
+    />
+
+  );
 
 }
 
@@ -1403,25 +1580,51 @@ seasonResults.map((player,index)=>(
 
 if(page==="seasons"){
 
-return(
+  if(!isManager){
 
-<Seasons
+    return renderWithBack(
 
-goBack={()=>setPage("admin")}
+      <Page>
 
-activeSeason={activeSeason}
+        <Card>
 
-allSeasons={allSeasons}
+          <h2 className="section-title">
+            🔒 Accès réservé
+          </h2>
 
-loadingSeason={loadingSeason}
+          <p>
+            La gestion et l'historique des saisons sont
+            réservés au propriétaire et aux administrateurs
+            du club.
+          </p>
 
-closeSeason={closeSeason}
+        </Card>
 
-viewResults={viewSeasonResults}
+      </Page>
 
-/>
+    );
 
-);
+  }
+
+  return(
+
+    <Seasons
+
+      goBack={()=>setPage("admin")}
+
+      activeSeason={activeSeason}
+
+      allSeasons={allSeasons}
+
+      loadingSeason={loadingSeason}
+
+      closeSeason={closeSeason}
+
+      viewResults={viewSeasonResults}
+
+    />
+
+  );
 
 }
 
@@ -1451,7 +1654,10 @@ return(
   reliability={reliability}
 />
 
-<DashboardActions setPage={setPage} />
+<DashboardActions
+  setPage={setPage}
+  clubRole={club?.role}
+/>
 
 </Page>
 
