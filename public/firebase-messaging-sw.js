@@ -10,6 +10,8 @@ firebase.initializeApp({
   appId: "1:1019133606169:web:be054941c34cfa20fa2d88",
 });
 
+firebase.messaging();
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
