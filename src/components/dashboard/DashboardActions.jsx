@@ -1,7 +1,10 @@
 import MenuButton from "../ui/MenuButton";
 import Button from "../ui/Button";
 
-export default function DashboardActions({ setPage }) {
+export default function DashboardActions({
+  setPage,
+  clubRole
+}) {
 
   return (
 
@@ -37,16 +40,18 @@ export default function DashboardActions({ setPage }) {
 
       </div>
 
-      <Button
-  variant="secondary"
-  fullWidth
-  onClick={() => setPage("admin")}
-  style={{
-    marginTop: "12px"
-  }}
->
-  👑 Administration
-</Button>
+{(clubRole === "owner" || clubRole === "admin") && (
+  <Button
+    variant="secondary"
+    fullWidth
+    onClick={() => setPage("admin")}
+    style={{
+      marginTop: "12px"
+    }}
+  >
+    👑 Administration
+  </Button>
+)}
 
     </>
 

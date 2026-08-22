@@ -5,234 +5,454 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import BackButton from "../components/ui/BackButton";
+import { createNotification } from "../services/notifications";
 
 export default function JoinClub({
+  goHome
+}) {
 
-goHome
+  const initialCode =
+    window.location.pathname
+      .split("/")[2] || "";
 
-}){
+  const [code, setCode] = useState(initialCode);
 
-const initialCode =
-  window.location.pathname
-    .split("/")[2] || "";
+  const [loading, setLoading] = useState(false);
 
-const [code,setCode]=useState(initialCode);
+  async function join() {
 
-const [loading,setLoading]=useState(false);
+    if (loading) {
+      return;
+    }
 
-async function join(){
+    setLoading(true);
 
-if(
-loading
-)
-return;
+    try {
 
-setLoading(true);
+      /*
+       * --------------------------------------------------
+       * UTILISATEUR CONNECTÉ
+       * --------------------------------------------------
+       */
 
-const {
-data:{user}
-}
-=
-await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
 
-if(!user){
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-setLoading(false);
 
-return;
+      /*
+       * --------------------------------------------------
+       * RECHERCHE DU CLUB
+       * --------------------------------------------------
+       */
 
-}
+      const normalizedCode =
+        code.trim().toUpperCase();
 
-const {
+      const {
+        data: club,
+        error: clubError
+      } = await supabase
 
-data:club
+        .from("clubs")
 
-}
-=
-await supabase
+        .select("*")
 
-.from("clubs")
+        .eq(
+          "invite_code",
+          normalizedCode
+        )
 
-.select("*")
+        .single();
 
-.eq(
-"invite_code",
-code
-)
 
-.single();
+      if (clubError || !club) {
 
-if(!club){
+        setLoading(false);
 
-setLoading(false);
+        alert("Code invalide");
 
-alert(
-"Code invalide"
-);
+        return;
 
-return;
+      }
 
-}
 
-const { error } =
-await supabase
-.from("club_members")
-.upsert(
-{
-club_id:club.id,
-profile_id:user.id,
-role:"player"
-},
-{
-onConflict:"club_id,profile_id"
-}
-);
+      /*
+       * --------------------------------------------------
+       * VÉRIFICATION :
+       * L'UTILISATEUR EST-IL DÉJÀ MEMBRE ?
+       * --------------------------------------------------
+       */
 
-if(error){
+      const {
+        data: existingMember,
+        error: existingMemberError
+      } = await supabase
 
-setLoading(false);
+        .from("club_members")
 
-alert(error.message);
+        .select("profile_id")
 
-return;
+        .eq(
+          "club_id",
+          club.id
+        )
 
-}
+        .eq(
+          "profile_id",
+          user.id
+        )
 
-if(error){
+        .maybeSingle();
 
-setLoading(false);
 
-alert(
-error.message
-);
+      if (existingMemberError) {
 
-return;
+        throw existingMemberError;
 
-}
+      }
 
-const {
+      const alreadyMember =
+        !!existingMember;
 
-data:profile
 
-}
+      /*
+       * --------------------------------------------------
+       * AJOUT AU CLUB
+       * --------------------------------------------------
+       */
 
-=
+      const {
+        error: joinError
+      } = await supabase
 
-await supabase
+        .from("club_members")
 
-.from(
-"profiles"
-)
+        .upsert(
 
-.select(
-"active_club_id"
-)
+          {
+            club_id: club.id,
+            profile_id: user.id,
+            role: "player"
+          },
 
-.eq(
-"id",
-user.id
-)
+          {
+            onConflict:
+              "club_id,profile_id"
+          }
 
-.single();
+        );
 
-if(
 
-!profile?.active_club_id
+      if (joinError) {
 
-){
+        throw joinError;
 
-await supabase
+      }
 
-.from(
-"profiles"
-)
 
-.update({
+      /*
+       * --------------------------------------------------
+       * RÉCUPÉRATION DU PROFIL
+       * --------------------------------------------------
+       */
 
-active_club_id:
-club.id
+      const {
+        data: profile,
+        error: profileError
+      } = await supabase
 
-})
+        .from("profiles")
 
-.eq(
-"id",
-user.id
+        .select(
+          "active_club_id,display_name"
+        )
 
-);
+        .eq(
+          "id",
+          user.id
+        )
 
-}
+        .single();
 
-setLoading(false);
 
-alert(
-"✅ Club rejoint"
-);
+      if (profileError) {
 
-window.location.href="/";
+        throw profileError;
 
-}
+      }
 
-return(
 
-<>
+      /*
+       * --------------------------------------------------
+       * DÉFINITION DU CLUB ACTIF
+       * --------------------------------------------------
+       */
 
-<BackButton onClick={goHome} />
+      if (!profile?.active_club_id) {
 
-<Page>
+        const {
+          error: activeClubError
+        } = await supabase
 
+          .from("profiles")
 
-<h1 className="page-title">
+          .update({
+            active_club_id: club.id
+          })
 
-➕ Rejoindre un club
+          .eq(
+            "id",
+            user.id
+          );
 
-</h1>
 
-<p
-style={{
-opacity:.75,
-marginBottom:"20px",
-textAlign:"center"
-}}
->
+        if (activeClubError) {
 
-Saisissez le code d'invitation communiqué par le propriétaire du club.
+          throw activeClubError;
 
-</p>
+        }
 
-<Card>
+      }
 
-<Input
 
-placeholder="Code d'invitation"
+      /*
+       * --------------------------------------------------
+       * NOTIFICATION :
+       * NOUVEAU MEMBRE
+       * --------------------------------------------------
+       *
+       * On ne crée la notification que si le joueur
+       * vient réellement de rejoindre le club.
+       */
 
-value={code}
+      if (!alreadyMember) {
 
-onChange={(e)=>setCode(e.target.value)}
+        const {
+          data: managers,
+          error: managersError
+        } = await supabase
 
-/>
+          .from("club_members")
 
-<Button
+          .select(
+            "profile_id,role"
+          )
 
-loading={loading}
+          .eq(
+            "club_id",
+            club.id
+          )
 
-onClick={join}
+          .in(
+            "role",
+            ["owner", "admin"]
+          );
 
-style={{
-marginTop:"20px"
-}}
 
->
+        if (managersError) {
 
-🔗 Rejoindre le club
+          /*
+           * La notification est secondaire.
+           * Une erreur ici ne doit pas empêcher
+           * le joueur de rejoindre le club.
+           */
 
-</Button>
+          console.error(
+            "Erreur récupération administrateurs :",
+            managersError
+          );
 
-</Card>
+        } else {
 
-</Page>
+          const recipientIds =
+            (managers || [])
 
-</>
+              .map(
+                member =>
+                  member.profile_id
+              )
 
-);
+              .filter(Boolean)
+
+              .filter(
+                profileId =>
+                  profileId !== user.id
+              );
+
+
+          if (
+            recipientIds.length > 0
+          ) {
+
+            const displayName =
+              profile?.display_name ||
+              user.user_metadata?.display_name ||
+              "Un nouveau membre";
+
+
+            try {
+
+              await createNotification({
+
+                clubId:
+                  club.id,
+
+                createdBy:
+                  user.id,
+
+                createdByName:
+                  displayName,
+
+                type:
+                  "new_member",
+
+                title:
+                  "👤 Nouveau membre",
+
+                message:
+                  `${displayName} vient de rejoindre le club.`,
+
+                action:
+                  null,
+
+                actionId:
+                  null,
+
+                recipientIds
+
+              });
+
+            } catch (
+              notificationError
+            ) {
+
+              /*
+               * Une erreur de notification
+               * ne doit pas empêcher l'adhésion.
+               */
+
+              console.error(
+                "Erreur notification nouveau membre :",
+                notificationError
+              );
+
+            }
+
+          }
+
+        }
+
+      }
+
+
+      /*
+       * --------------------------------------------------
+       * FIN
+       * --------------------------------------------------
+       */
+
+      setLoading(false);
+
+      alert(
+        "✅ Club rejoint"
+      );
+
+      window.location.href = "/";
+
+
+    } catch (error) {
+
+      console.error(
+        "Erreur rejoindre club :",
+        error
+      );
+
+      setLoading(false);
+
+      alert(
+        error?.message ||
+        "Impossible de rejoindre le club"
+      );
+
+    }
+
+  }
+
+
+  return (
+
+    <>
+
+      <BackButton
+        onClick={goHome}
+      />
+
+      <Page>
+
+        <h1 className="page-title">
+
+          ➕ Rejoindre un club
+
+        </h1>
+
+
+        <p
+          style={{
+            opacity: .75,
+            marginBottom: "20px",
+            textAlign: "center"
+          }}
+        >
+
+          Saisissez le code d'invitation communiqué par le propriétaire du club.
+
+        </p>
+
+
+        <Card>
+
+          <Input
+
+            placeholder="Code d'invitation"
+
+            value={code}
+
+            onChange={
+              e =>
+                setCode(e.target.value)
+            }
+
+          />
+
+
+          <Button
+
+            loading={loading}
+
+            onClick={join}
+
+            style={{
+              marginTop: "20px"
+            }}
+
+          >
+
+            🔗 Rejoindre le club
+
+          </Button>
+
+        </Card>
+
+      </Page>
+
+    </>
+
+  );
 
 }
