@@ -10,81 +10,135 @@ firebase.initializeApp({
   appId: "1:1019133606169:web:be054941c34cfa20fa2d88",
 });
 
-firebase.messaging();
+const messaging = firebase.messaging();
+
+/*
+ * =====================================================
+ * NOTIFICATION EN ARRIÈRE-PLAN
+ * =====================================================
+ */
+
+messaging.onBackgroundMessage((payload) => {
+
+  console.log(
+    "📱 FCM reçu en arrière-plan :",
+    payload
+  );
+
+  const data = payload.data || {};
+
+  const notification = payload.notification || {};
+
+  const title =
+    data.title ||
+    notification.title ||
+    "Foot Five Manager";
+
+  const body =
+    data.message ||
+    data.body ||
+    notification.body ||
+    "Nouvelle notification";
+
+  const notificationData = {
+    type: data.type || "",
+    action: data.action || "",
+    actionId: data.actionId || "",
+  };
+
+  self.registration.showNotification(
+    title,
+    {
+      body,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: notificationData,
+      tag: data.actionId || data.type || "foot-five",
+      renotify: true
+    }
+  );
+
+});
+
+
+/*
+ * =====================================================
+ * CLIC SUR LA NOTIFICATION
+ * =====================================================
+ */
 
 self.addEventListener("notificationclick", (event) => {
+
   event.notification.close();
 
-  const payload = event.notification.data;
+  const payload =
+    event.notification.data || {};
 
-  if (!payload) {
+  /*
+   * -----------------------------------------------------
+   * NOTIFICATION LIÉE À UN MATCH
+   * -----------------------------------------------------
+   */
+
+  if (
+    payload.action === "match" &&
+    payload.actionId
+  ) {
+
+    let view = "vote";
+
+    const notificationType =
+      String(
+        payload.type || ""
+      ).toLowerCase();
+
+    if (
+      notificationType === "teams_ready"
+    ) {
+
+      view = "teams";
+
+    }
+
+    else if (
+      notificationType === "match_result"
+    ) {
+
+      view = "result";
+
+    }
+
+    else if (
+      notificationType === "player_joined" ||
+      notificationType === "player_left" ||
+      notificationType === "player_promoted"
+    ) {
+
+      view = "details";
+
+    }
+
+    const url =
+      `/match/${encodeURIComponent(
+        payload.actionId
+      )}?view=${view}`;
+
     event.waitUntil(
-      clients.openWindow("/")
+      clients.openWindow(url)
     );
+
     return;
   }
 
-if (
-  payload.action === "match" &&
-  payload.actionId
-) {
-
-  let view = "vote";
 
   /*
-   * ------------------------------------------------
-   * DÉTERMINATION DE L'ÉCRAN À OUVRIR
-   * ------------------------------------------------
+   * -----------------------------------------------------
+   * NOTIFICATION SANS MATCH
+   * -----------------------------------------------------
    */
-
-const notificationType =
-  String(payload.type || "").toLowerCase();
-
-if (
-  notificationType === "teams_ready"
-) {
-
-  view = "teams";
-
-}
-
-else if (
-  notificationType === "match_result"
-) {
-
-  view = "result";
-
-}
-
-else if (
-  notificationType === "player_joined" ||
-  notificationType === "player_left" ||
-  notificationType === "player_promoted"
-) {
-
-  view = "details";
-
-}
-
-  /*
-   * ------------------------------------------------
-   * OUVERTURE DU MATCH
-   * ------------------------------------------------
-   */
-
-  const url =
-    `/match/${encodeURIComponent(
-      payload.actionId
-    )}?view=${view}`;
-
-  event.waitUntil(
-    clients.openWindow(url)
-  );
-
-  return;
-}
 
   event.waitUntil(
     clients.openWindow("/")
   );
+
 });
