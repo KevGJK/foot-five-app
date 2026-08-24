@@ -36,8 +36,13 @@ export default function JoinClub({
        */
 
       const {
-        data: { user }
+        data: { user },
+        error: userError
       } = await supabase.auth.getUser();
+
+      if (userError) {
+        throw userError;
+      }
 
       if (!user) {
         setLoading(false);
@@ -47,119 +52,93 @@ export default function JoinClub({
 
       /*
        * --------------------------------------------------
-       * RECHERCHE DU CLUB
+       * REJOINDRE LE CLUB
        * --------------------------------------------------
+       *
+       * La recherche du club, la vérification de
+       * l'adhésion et l'inscription sont maintenant
+       * effectuées côté Supabase via une fonction
+       * SECURITY DEFINER.
+       *
+       * Cela nous permettra ensuite d'activer RLS
+       * sur clubs et club_members sans exposer ces
+       * opérations au client.
        */
 
       const normalizedCode =
         code.trim().toUpperCase();
 
-      const {
-        data: club,
-        error: clubError
-      } = await supabase
-
-        .from("clubs")
-
-        .select("*")
-
-        .eq(
-          "invite_code",
-          normalizedCode
-        )
-
-        .single();
-
-
-      if (clubError || !club) {
+      if (!normalizedCode) {
 
         setLoading(false);
 
-        alert("Code invalide");
+        alert(
+          "Veuillez saisir un code d'invitation."
+        );
 
         return;
-
       }
 
 
-      /*
-       * --------------------------------------------------
-       * VÉRIFICATION :
-       * L'UTILISATEUR EST-IL DÉJÀ MEMBRE ?
-       * --------------------------------------------------
-       */
-
       const {
-        data: existingMember,
-        error: existingMemberError
-      } = await supabase
-
-        .from("club_members")
-
-        .select("profile_id")
-
-        .eq(
-          "club_id",
-          club.id
-        )
-
-        .eq(
-          "profile_id",
-          user.id
-        )
-
-        .maybeSingle();
-
-
-      if (existingMemberError) {
-
-        throw existingMemberError;
-
-      }
-
-      const alreadyMember =
-        !!existingMember;
-
-
-      /*
-       * --------------------------------------------------
-       * AJOUT AU CLUB
-       * --------------------------------------------------
-       */
-
-      const {
+        data: joinData,
         error: joinError
-      } = await supabase
-
-        .from("club_members")
-
-        .upsert(
-
-          {
-            club_id: club.id,
-            profile_id: user.id,
-            role: "player"
-          },
-
-          {
-            onConflict:
-              "club_id,profile_id"
-          }
-
-        );
+      } = await supabase.rpc(
+        "join_club_by_code",
+        {
+          p_invite_code:
+            normalizedCode
+        }
+      );
 
 
       if (joinError) {
-
         throw joinError;
-
       }
+
+
+      /*
+       * --------------------------------------------------
+       * RÉSULTAT DE LA FONCTION
+       * --------------------------------------------------
+       */
+
+      const result =
+        Array.isArray(joinData)
+          ? joinData[0]
+          : joinData;
+
+
+      if (!result) {
+
+        setLoading(false);
+
+        alert(
+          "Impossible de rejoindre le club."
+        );
+
+        return;
+      }
+
+
+      const clubId =
+        result.club_id;
+
+      const clubName =
+        result.club_name;
+
+      const alreadyMember =
+        !result.joined_now;
 
 
       /*
        * --------------------------------------------------
        * RÉCUPÉRATION DU PROFIL
        * --------------------------------------------------
+       *
+       * Cette lecture reste autorisée par les policies
+       * actuelles et nous permet de conserver le nom
+       * utilisé dans la notification.
        */
 
       const {
@@ -190,159 +169,100 @@ export default function JoinClub({
 
       /*
        * --------------------------------------------------
-       * DÉFINITION DU CLUB ACTIF
-       * --------------------------------------------------
-       */
-
-      if (!profile?.active_club_id) {
-
-        const {
-          error: activeClubError
-        } = await supabase
-
-          .from("profiles")
-
-          .update({
-            active_club_id: club.id
-          })
-
-          .eq(
-            "id",
-            user.id
-          );
-
-
-        if (activeClubError) {
-
-          throw activeClubError;
-
-        }
-
-      }
-
-
-      /*
-       * --------------------------------------------------
        * NOTIFICATION :
        * NOUVEAU MEMBRE
        * --------------------------------------------------
        *
-       * On ne crée la notification que si le joueur
-       * vient réellement de rejoindre le club.
+       * La notification est créée uniquement si
+       * l'utilisateur vient réellement de rejoindre
+       * le club.
        */
 
       if (!alreadyMember) {
 
-        const {
-          data: managers,
-          error: managersError
-        } = await supabase
-
-          .from("club_members")
-
-          .select(
-            "profile_id,role"
+        const managerIds =
+          Array.isArray(
+            result.manager_ids
           )
-
-          .eq(
-            "club_id",
-            club.id
-          )
-
-          .in(
-            "role",
-            ["owner", "admin"]
-          );
+            ? result.manager_ids
+            : [];
 
 
-        if (managersError) {
+        const recipientIds =
+          managerIds
 
-          /*
-           * La notification est secondaire.
-           * Une erreur ici ne doit pas empêcher
-           * le joueur de rejoindre le club.
-           */
+            .filter(Boolean)
 
-          console.error(
-            "Erreur récupération administrateurs :",
-            managersError
-          );
-
-        } else {
-
-          const recipientIds =
-            (managers || [])
-
-              .map(
-                member =>
-                  member.profile_id
-              )
-
-              .filter(Boolean)
-
-              .filter(
-                profileId =>
-                  profileId !== user.id
-              );
+            .filter(
+              profileId =>
+                profileId !== user.id
+            );
 
 
-          if (
-            recipientIds.length > 0
+        if (
+          recipientIds.length > 0
+        ) {
+
+          const displayName =
+            profile?.display_name ||
+            user.user_metadata?.display_name ||
+            "Un nouveau membre";
+
+
+          try {
+
+            await createNotification({
+
+              clubId:
+
+                clubId,
+
+              createdBy:
+
+                user.id,
+
+              createdByName:
+
+                displayName,
+
+              type:
+
+                "new_member",
+
+              title:
+
+                "👤 Nouveau membre",
+
+              message:
+
+                `${displayName} vient de rejoindre le club.`,
+
+              action:
+
+                null,
+
+              actionId:
+
+                null,
+
+              recipientIds
+
+            });
+
+          } catch (
+            notificationError
           ) {
 
-            const displayName =
-              profile?.display_name ||
-              user.user_metadata?.display_name ||
-              "Un nouveau membre";
+            /*
+             * La notification est secondaire.
+             * Une erreur ici ne doit jamais empêcher
+             * l'adhésion au club.
+             */
 
-
-            try {
-
-              await createNotification({
-
-                clubId:
-                  club.id,
-
-                createdBy:
-                  user.id,
-
-                createdByName:
-                  displayName,
-
-                type:
-                  "new_member",
-
-                title:
-                  "👤 Nouveau membre",
-
-                message:
-                  `${displayName} vient de rejoindre le club.`,
-
-                action:
-                  null,
-
-                actionId:
-                  null,
-
-                recipientIds
-
-              });
-
-            } catch (
+            console.error(
+              "Erreur notification nouveau membre :",
               notificationError
-            ) {
-
-              /*
-               * Une erreur de notification
-               * ne doit pas empêcher l'adhésion.
-               */
-
-              console.error(
-                "Erreur notification nouveau membre :",
-                notificationError
-              );
-
-            }
+            );
 
           }
 
@@ -360,7 +280,9 @@ export default function JoinClub({
       setLoading(false);
 
       alert(
-        "✅ Club rejoint"
+        alreadyMember
+          ? "✅ Vous êtes déjà membre de ce club."
+          : `✅ Club "${clubName}" rejoint`
       );
 
       window.location.href = "/";
@@ -375,10 +297,38 @@ export default function JoinClub({
 
       setLoading(false);
 
-      alert(
+      const message =
         error?.message ||
-        "Impossible de rejoindre le club"
-      );
+        "Impossible de rejoindre le club";
+
+
+      if (
+        message.includes(
+          "invalid_invite_code"
+        )
+      ) {
+
+        alert(
+          "Code d'invitation invalide."
+        );
+
+      } else if (
+        message.includes(
+          "not_authenticated"
+        )
+      ) {
+
+        alert(
+          "Vous devez être connecté pour rejoindre un club."
+        );
+
+      } else {
+
+        alert(
+          message
+        );
+
+      }
 
     }
 
