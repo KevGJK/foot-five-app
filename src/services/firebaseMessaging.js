@@ -19,9 +19,7 @@ let messagingInstance = null;
 
 async function getMessagingInstance() {
 
-  if (
-    !(await isSupported())
-  ) {
+  if (!(await isSupported())) {
 
     throw new Error(
       "Firebase Messaging n'est pas supporté sur cet appareil."
@@ -117,153 +115,171 @@ export async function listenToForegroundMessages() {
         );
 
 
-        /*
-         * -------------------------------------------------
-         * VÉRIFICATION DES AUTORISATIONS
-         * -------------------------------------------------
-         */
+        try {
 
-        if (
-          Notification.permission !== "granted"
-        ) {
+          /*
+           * -------------------------------------------------
+           * AUTORISATION
+           * -------------------------------------------------
+           */
+
+          if (
+            Notification.permission !== "granted"
+          ) {
+
+            console.log(
+              "🔕 Permission de notification non accordée"
+            );
+
+            return;
+
+          }
+
+
+          /*
+           * -------------------------------------------------
+           * DONNÉES REÇUES
+           * -------------------------------------------------
+           */
+
+          const data =
+            payload.data || {};
+
+
+          const notification =
+            payload.notification || {};
+
 
           console.log(
-            "🔕 Permission de notification non accordée"
+            "📦 Données détaillées de la notification :",
+            {
+              data,
+              notification
+            }
           );
 
-          return;
+
+          /*
+           * -------------------------------------------------
+           * TITRE
+           * -------------------------------------------------
+           */
+
+          const title =
+            data.title ||
+            notification.title ||
+            "Foot Five";
+
+
+          /*
+           * -------------------------------------------------
+           * MESSAGE
+           * -------------------------------------------------
+           */
+
+          const body =
+            data.message ||
+            data.body ||
+            notification.body ||
+            "";
+
+
+          /*
+           * -------------------------------------------------
+           * TAG
+           * -------------------------------------------------
+           */
+
+          const notificationTag =
+
+            data.type &&
+            data.actionId
+
+              ? `${data.type}-${data.actionId}`
+
+              : data.type ||
+                "foot-five";
+
+
+          console.log(
+            "🔔 Tentative d'affichage de la notification :",
+            {
+              title,
+              body,
+              tag: notificationTag
+            }
+          );
+
+
+          /*
+           * -------------------------------------------------
+           * SERVICE WORKER
+           * -------------------------------------------------
+           */
+
+          const registration =
+            await navigator.serviceWorker.ready;
+
+
+          console.log(
+            "✅ Service Worker prêt pour la notification :",
+            registration.scope
+          );
+
+
+          /*
+           * -------------------------------------------------
+           * AFFICHAGE
+           * -------------------------------------------------
+           */
+
+          await registration.showNotification(
+
+            title,
+
+            {
+
+              body,
+
+              icon:
+                "/icon-192.png",
+
+              badge:
+                "/icon-192.png",
+
+              data,
+
+              tag:
+                notificationTag,
+
+              renotify:
+                true,
+
+            }
+
+          );
+
+
+          console.log(
+            "🔔 Notification affichée au premier plan :",
+            {
+              title,
+              body,
+              data,
+              tag: notificationTag,
+            }
+          );
+
 
         }
+        catch (error) {
 
+          console.error(
+            "❌ Erreur affichage notification foreground :",
+            error
+          );
 
-        /*
-         * -------------------------------------------------
-         * SERVICE WORKER ACTIF
-         * -------------------------------------------------
-         */
-
-        const registration =
-          await navigator.serviceWorker.ready;
-
-
-        /*
-         * -------------------------------------------------
-         * DONNÉES DU MESSAGE
-         * -------------------------------------------------
-         */
-
-        const data =
-          payload.data || {};
-
-
-        const notification =
-          payload.notification || {};
-
-
-        /*
-         * -------------------------------------------------
-         * TITRE
-         *
-         * Les notifications personnalisées de l'application
-         * peuvent transmettre le titre dans payload.data.
-         * -------------------------------------------------
-         */
-
-        const title =
-          data.title ||
-          notification.title ||
-          "Foot Five";
-
-
-        /*
-         * -------------------------------------------------
-         * MESSAGE
-         *
-         * Notre système utilise principalement data.message.
-         * On conserve également les autres formats possibles.
-         * -------------------------------------------------
-         */
-
-        const body =
-          data.message ||
-          data.body ||
-          notification.body ||
-          "";
-
-
-        /*
-         * -------------------------------------------------
-         * TAG UNIQUE
-         *
-         * Évite qu'une notification concernant le résultat
-         * soit remplacée par une autre notification du même
-         * match.
-         * -------------------------------------------------
-         */
-
-        const notificationTag =
-
-          data.type &&
-          data.actionId
-
-            ? `${data.type}-${data.actionId}`
-
-            : data.type ||
-              "foot-five";
-
-
-        /*
-         * -------------------------------------------------
-         * AFFICHAGE DE LA NOTIFICATION
-         * -------------------------------------------------
-         */
-
-        await registration.showNotification(
-
-          title,
-
-          {
-
-            body,
-
-            icon:
-              "/icon-192.png",
-
-            badge:
-              "/icon-192.png",
-
-
-            data,
-
-
-            tag:
-              notificationTag,
-
-
-            renotify:
-              true,
-
-          }
-
-        );
-
-
-        /*
-         * -------------------------------------------------
-         * LOG DE CONTRÔLE
-         * -------------------------------------------------
-         */
-
-        console.log(
-          "🔔 Notification affichée au premier plan :",
-          {
-            title,
-            body,
-            data,
-            tag:
-              notificationTag,
-          }
-        );
+        }
 
       }
     );
