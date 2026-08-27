@@ -23,6 +23,8 @@ const [expanded,setExpanded]=useState(null);
 const [scoreWhite,setScoreWhite]=useState({});
 const [scoreBlack,setScoreBlack]=useState({});
 
+const [resultConfirmation, setResultConfirmation] = useState(null);
+
 const levelLabels={
 
 1:"1️⃣ Débutant",
@@ -1660,6 +1662,57 @@ scoreB
 
 }
 
+function askResultConfirmation(matchId) {
+
+  const match =
+    matches.find(
+      m => m.id === matchId
+    );
+
+  if (
+    !match ||
+    !canManageMatch(match)
+  ) {
+
+    alert(
+      "🔒 Vous n'avez pas l'autorisation de valider ce résultat."
+    );
+
+    return;
+
+  }
+
+  const white =
+    Number(
+      scoreWhite[matchId] || 0
+    );
+
+  const black =
+    Number(
+      scoreBlack[matchId] || 0
+    );
+
+  if (
+    white === 0 &&
+    black === 0
+  ) {
+
+    alert(
+      "Saisir un score"
+    );
+
+    return;
+
+  }
+
+  setResultConfirmation({
+    matchId,
+    white,
+    black
+  });
+
+}
+
 async function saveResult(matchId) {
 
 const matchToManage = matches.find(
@@ -2139,7 +2192,6 @@ catch (notificationError) {
     );
 
 }
-
 
     /*
      * =====================================================
@@ -3193,7 +3245,7 @@ disabled={
   !canManageMatch(m)
 }
 
-onClick={()=>saveResult(m.id)}
+onClick={() => askResultConfirmation(m.id)}
 
 style={{
 marginTop:"12px"
@@ -3485,6 +3537,318 @@ m.winner==="black"
 
 )
 
+}
+
+{
+  resultConfirmation && (
+
+    <div
+      style={{
+
+        position: "fixed",
+
+        top: 0,
+
+        left: 0,
+
+        right: 0,
+
+        bottom: 0,
+
+        background:
+          "rgba(0,0,0,.75)",
+
+        display: "flex",
+
+        alignItems: "center",
+
+        justifyContent: "center",
+
+        padding: "20px",
+
+        zIndex: 9999
+
+      }}
+    >
+
+      <div
+        style={{
+
+          width: "100%",
+
+          maxWidth: "420px",
+
+          background: "#1f1f1f",
+
+          borderRadius: "20px",
+
+          padding: "24px",
+
+          boxShadow:
+            "0 20px 60px rgba(0,0,0,.5)",
+
+          border:
+            "1px solid rgba(255,255,255,.12)"
+
+        }}
+      >
+
+        <h2
+          style={{
+
+            textAlign: "center",
+
+            marginTop: 0,
+
+            marginBottom: "20px"
+
+          }}
+        >
+
+          ⚠️ Confirmer le résultat
+
+        </h2>
+
+
+        <p
+          style={{
+
+            textAlign: "center",
+
+            opacity: .8,
+
+            marginBottom: "20px"
+
+          }}
+        >
+
+          Vous êtes sur le point
+          d'enregistrer définitivement
+          le résultat du match.
+
+        </p>
+
+
+        <div
+          style={{
+
+            display: "flex",
+
+            justifyContent: "space-between",
+
+            alignItems: "center",
+
+            padding: "20px",
+
+            borderRadius: "16px",
+
+            background:
+              "rgba(255,255,255,.05)",
+
+            marginBottom: "20px"
+
+          }}
+        >
+
+          <div
+            style={{
+
+              textAlign: "center",
+
+              flex: 1
+
+            }}
+          >
+
+            <div
+              style={{
+
+                fontSize: "14px",
+
+                opacity: .7,
+
+                marginBottom: "6px"
+
+              }}
+            >
+
+              ⚪ Les Blancs
+
+            </div>
+
+            <div
+              style={{
+
+                fontSize: "32px",
+
+                fontWeight: "700"
+
+              }}
+            >
+
+              {
+                resultConfirmation.white
+              }
+
+            </div>
+
+          </div>
+
+
+          <div
+            style={{
+
+              fontSize: "24px",
+
+              fontWeight: "700",
+
+              opacity: .7
+
+            }}
+          >
+
+            -
+
+          </div>
+
+
+          <div
+            style={{
+
+              textAlign: "center",
+
+              flex: 1
+
+            }}
+          >
+
+            <div
+              style={{
+
+                fontSize: "14px",
+
+                opacity: .7,
+
+                marginBottom: "6px"
+
+              }}
+            >
+
+              ⚫ Les Foncés
+
+            </div>
+
+            <div
+              style={{
+
+                fontSize: "32px",
+
+                fontWeight: "700"
+
+              }}
+            >
+
+              {
+                resultConfirmation.black
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <p
+          style={{
+
+            textAlign: "center",
+
+            fontSize: "14px",
+
+            opacity: .7,
+
+            marginBottom: "24px"
+
+          }}
+        >
+
+          Confirmez-vous ce résultat ?
+
+        </p>
+
+
+        <div
+          style={{
+
+            display: "flex",
+
+            gap: "12px"
+
+          }}
+        >
+
+          <Button
+
+            variant="secondary"
+
+            onClick={() => {
+
+              setResultConfirmation(
+                null
+              );
+
+            }}
+
+            style={{
+
+              flex: 1
+
+            }}
+
+          >
+
+            Annuler
+
+          </Button>
+
+
+          <Button
+
+            onClick={async () => {
+
+              const matchId =
+                resultConfirmation.matchId;
+
+              setResultConfirmation(
+                null
+              );
+
+              await saveResult(
+                matchId
+              );
+
+            }}
+
+            style={{
+
+              flex: 1
+
+            }}
+
+          >
+
+            ✅ Confirmer
+
+          </Button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )
 }
 
 </Page>
