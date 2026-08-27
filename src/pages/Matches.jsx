@@ -1770,20 +1770,78 @@ if(!matchToManage || !canManageMatch(matchToManage)){
     }
 
 
-    /*
-     * =====================================================
-     * PARTICIPANTS
-     * =====================================================
-     */
+/*
+ * =====================================================
+ * PARTICIPANTS ET ÉQUIPES
+ * =====================================================
+ *
+ * On relit directement les présences depuis Supabase.
+ *
+ * Cela garantit que les équipes utilisées pour les
+ * notifications correspondent bien à la composition
+ * réellement enregistrée en base.
+ */
 
-    const matchData =
-        matches.find(
-            m => m.id === matchId
-        );
+const {
+    data: attendancesData,
+    error: attendancesError
+} = await supabase
+    .from("attendances")
+    .select(`
+        profile_id,
+        response,
+        team,
+        created_at
+    `)
+    .eq(
+        "match_id",
+        matchId
+    );
 
-    const participantsList =
-        participants(
-            matchData?.attendances || []
+
+if (attendancesError) {
+
+    console.error(
+        "❌ Erreur récupération participants pour résultat :",
+        attendancesError
+    );
+
+    alert(
+        "Résultat enregistré, mais impossible de récupérer les participants."
+    );
+
+    setReload(
+        v => !v
+    );
+
+    return;
+
+}
+
+
+/*
+ * On applique exactement la même logique que dans
+ * le reste de l'application :
+ *
+ * - uniquement les joueurs présents ;
+ * - tri par ordre d'inscription ;
+ * - les 10 premiers participants.
+ */
+
+const participantsList =
+    (attendancesData || [])
+        .filter(
+            attendance =>
+                attendance.response === "present"
+        )
+        .sort(
+            (a, b) =>
+                new Date(a.created_at) -
+                new Date(b.created_at)
+        )
+        .slice(
+            0,
+            10
         );
 
 
