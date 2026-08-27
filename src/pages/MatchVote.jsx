@@ -177,23 +177,38 @@ return;
        * ------------------------------------------------
        */
 
-      const {
-        data
-      } = await supabase
-        .from("matches")
-        .select("*")
-        .eq(
-          "id",
-          matchId
-        )
-        .single();
+const {
+  data,
+  error
+} = await supabase
+  .from("matches")
+  .select("*")
+  .eq(
+    "id",
+    matchId
+  )
+  .maybeSingle();
 
-      if (cancelled) {
-        return;
-      }
+if (cancelled) {
+  return;
+}
 
-      setMatch(data);
-      setLoading(false);
+if (error) {
+
+  console.error(
+    "Erreur chargement match :",
+    error
+  );
+
+  setMatch(null);
+  setLoading(false);
+
+  return;
+
+}
+
+setMatch(data);
+setLoading(false);
 
     }
 
