@@ -1845,215 +1845,300 @@ const participantsList =
         );
 
 
-    /*
-     * =====================================================
-     * NOTIFICATIONS PERSONNALISÉES
-     * =====================================================
-     */
+/*
+ * =====================================================
+ * NOTIFICATIONS PERSONNALISÉES
+ * =====================================================
+ */
 
-    try {
+try {
+
+    console.log(
+        "🏁 Début notifications résultat"
+    );
+
+    console.log(
+        "👥 Participants détectés :",
+        participantsList
+    );
+
+    console.log(
+        "👤 Utilisateur actuel :",
+        user?.id
+    );
+
+
+    if (!user) {
+
+        throw new Error(
+            "Utilisateur non connecté lors de la création de la notification."
+        );
+
+    }
+
+
+    if (
+        participantsList.length === 0
+    ) {
+
+        throw new Error(
+            "Aucun participant détecté pour ce match."
+        );
+
+    }
+
+
+    if (
+        winner === "draw"
+    ) {
+
+        const recipientIds =
+            participantsList
+                .map(
+                    p => p.profile_id
+                )
+                .filter(Boolean);
+
+
+        console.log(
+            "🤝 Destinataires match nul :",
+            recipientIds
+        );
+
 
         if (
-            participantsList.length > 0 &&
-            user
+            recipientIds.length === 0
         ) {
 
-            /*
-             * -------------------------------------------------
-             * MATCH NUL
-             * -------------------------------------------------
-             */
+            throw new Error(
+                "Aucun destinataire valide pour le match nul."
+            );
 
-            if (winner === "draw") {
-
-                const recipientIds =
-                    participantsList
-                        .map(
-                            p => p.profile_id
-                        )
-                        .filter(Boolean);
-
-                if (
-                    recipientIds.length > 0
-                ) {
-
-                    await createNotification({
-
-                        clubId:
-                            match.club_id,
-
-                        createdBy:
-                            user.id,
-
-                        createdByName:
-                            user.user_metadata?.display_name
-                            || "Foot Five",
-
-                        type:
-                            "match_result",
-
-                        title:
-                            "🤝 Match nul",
-
-                        message:
-                            `Le match "${match.title}" est terminé.\n` +
-                            `⚪ ${white} - ${black} ⚫\n` +
-                            `🤝 Les deux équipes se quittent sur un match nul.`,
-
-                        action:
-                            "match",
-
-                        actionId:
-                            matchId,
-
-                        recipientIds
-
-                    });
-
-                }
-
-            }
+        }
 
 
-            /*
-             * -------------------------------------------------
-             * VICTOIRE / DÉFAITE
-             * -------------------------------------------------
-             */
+        await createNotification({
 
-            else {
+            clubId:
+                match.club_id,
 
-                const winnerIds =
-                    participantsList
-                        .filter(
-                            p =>
-                                p.team === winner
-                        )
-                        .map(
-                            p =>
-                                p.profile_id
-                        )
-                        .filter(Boolean);
+            createdBy:
+                user.id,
 
+            createdByName:
+                user.user_metadata?.display_name ||
+                "Foot Five",
 
-                const loserIds =
-                    participantsList
-                        .filter(
-                            p =>
-                                p.team &&
-                                p.team !== winner
-                        )
-                        .map(
-                            p =>
-                                p.profile_id
-                        )
-                        .filter(Boolean);
+            type:
+                "match_result",
 
+            title:
+                "🤝 Match nul",
 
-                /*
-                 * -------------------------------
-                 * NOTIFICATION DES GAGNANTS
-                 * -------------------------------
-                 */
+            message:
+                `Le match "${match.title}" est terminé.\n` +
+                `⚪ ${white} - ${black} ⚫\n` +
+                `🤝 Les deux équipes se quittent sur un match nul.`,
 
-                if (
-                    winnerIds.length > 0
-                ) {
+            action:
+                "match",
 
-                    await createNotification({
+            actionId:
+                matchId,
 
-                        clubId:
-                            match.club_id,
+            recipientIds
 
-                        createdBy:
-                            user.id,
-
-                        createdByName:
-                            user.user_metadata?.display_name
-                            || "Foot Five",
-
-                        type:
-                            "match_result",
-
-                        title:
-                            "🏆 VICTOIRE !",
-
-                        message:
-                            `Ton équipe s'impose ${white} - ${black} !\n` +
-                            `🔥 Bravo à toute l'équipe !`,
-
-                        action:
-                            "match",
-
-                        actionId:
-                            matchId,
-
-                        recipientIds:
-                            winnerIds
-
-                    });
-
-                }
+        });
 
 
-                /*
-                 * -------------------------------
-                 * NOTIFICATION DES PERDANTS
-                 * -------------------------------
-                 */
+        console.log(
+            "✅ Notification match nul créée"
+        );
 
-                if (
-                    loserIds.length > 0
-                ) {
+    }
 
-                    await createNotification({
+    else {
 
-                        clubId:
-                            match.club_id,
+        const winnerIds =
+            participantsList
+                .filter(
+                    p =>
+                        p.team === winner
+                )
+                .map(
+                    p =>
+                        p.profile_id
+                )
+                .filter(Boolean);
 
-                        createdBy:
-                            user.id,
 
-                        createdByName:
-                            user.user_metadata?.display_name
-                            || "Foot Five",
+        const loserIds =
+            participantsList
+                .filter(
+                    p =>
+                        p.team &&
+                        p.team !== winner
+                )
+                .map(
+                    p =>
+                        p.profile_id
+                )
+                .filter(Boolean);
 
-                        type:
-                            "match_result",
 
-                        title:
-                            "😔 Défaite",
+        console.log(
+            "🏆 Équipe gagnante :",
+            winner
+        );
 
-                        message:
-                            `Ton équipe s'incline ${white} - ${black}.\n` +
-                            `💪 On fera mieux au prochain match !`,
+        console.log(
+            "🏆 Destinataires victoire :",
+            winnerIds
+        );
 
-                        action:
-                            "match",
+        console.log(
+            "😔 Destinataires défaite :",
+            loserIds
+        );
 
-                        actionId:
-                            matchId,
 
-                        recipientIds:
-                            loserIds
+        /*
+         * -------------------------------------------------
+         * VICTOIRE
+         * -------------------------------------------------
+         */
 
-                    });
+        if (
+            winnerIds.length > 0
+        ) {
 
-                }
+            await createNotification({
 
-            }
+                clubId:
+                    match.club_id,
+
+                createdBy:
+                    user.id,
+
+                createdByName:
+                    user.user_metadata?.display_name ||
+                    "Foot Five",
+
+                type:
+                    "match_result",
+
+                title:
+                    "🏆 VICTOIRE !",
+
+                message:
+                    `Ton équipe s'impose ${white} - ${black} !\n` +
+                    `🔥 Bravo à toute l'équipe !`,
+
+                action:
+                    "match",
+
+                actionId:
+                    matchId,
+
+                recipientIds:
+                    winnerIds
+
+            });
+
+
+            console.log(
+                "✅ Notification victoire créée"
+            );
+
+        }
+
+
+        /*
+         * -------------------------------------------------
+         * DÉFAITE
+         * -------------------------------------------------
+         */
+
+        if (
+            loserIds.length > 0
+        ) {
+
+            await createNotification({
+
+                clubId:
+                    match.club_id,
+
+                createdBy:
+                    user.id,
+
+                createdByName:
+                    user.user_metadata?.display_name ||
+                    "Foot Five",
+
+                type:
+                    "match_result",
+
+                title:
+                    "😔 Défaite",
+
+                message:
+                    `Ton équipe s'incline ${white} - ${black}.\n` +
+                    `💪 On fera mieux au prochain match !`,
+
+                action:
+                    "match",
+
+                actionId:
+                    matchId,
+
+                recipientIds:
+                    loserIds
+
+            });
+
+
+            console.log(
+                "✅ Notification défaite créée"
+            );
+
+        }
+
+
+        /*
+         * Aucun destinataire
+         */
+
+        if (
+            winnerIds.length === 0 &&
+            loserIds.length === 0
+        ) {
+
+            throw new Error(
+                "Aucun destinataire valide trouvé dans les équipes."
+            );
 
         }
 
     }
-    catch (notificationError) {
 
-        console.error(
-            "❌ Erreur notification résultat :",
-            notificationError
-        );
 
-    }
+}
+catch (notificationError) {
+
+    console.error(
+        "❌ Erreur notification résultat complète :",
+        notificationError
+    );
+
+    alert(
+        "Le résultat a été enregistré, mais la notification n'a pas pu être créée.\n\n" +
+        (
+            notificationError?.message ||
+            "Erreur inconnue"
+        )
+    );
+
+}
 
 
     /*
