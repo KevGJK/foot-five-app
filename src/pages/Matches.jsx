@@ -2199,10 +2199,6 @@ catch (notificationError) {
      * =====================================================
      */
 
-    alert(
-        "Résultat enregistré"
-    );
-
     setReload(
         v => !v
     );
@@ -2211,111 +2207,223 @@ catch (notificationError) {
 
 function myResult(match){
 
-const me=
+  const me =
+    match.attendances?.find(
+      a =>
+        a.profile_id === user?.id
+    );
 
-match.attendances?.find(
+  if(!me){
 
-a=>
+    return "⚪ Non joué";
 
-a.profile_id
+  }
 
-===
+  if(
+    match.winner === "draw"
+  ){
 
-user?.id
+    return "🟡 Match nul";
 
-);
+  }
 
-if(
-!me
-){
+  if(
+    me.team === match.winner
+  ){
 
-return "⚪ Non joué";
+    return "🟢 Victoire";
 
-}
+  }
 
-if(
-
-me.team
-
-===
-
-match.winner
-
-){
-
-return "🟢 Victoire";
-
-}
-
-return "🔴 Défaite";
+  return "🔴 Défaite";
 
 }
 
 async function reopenMatch(matchId){
 
-const match = matches.find(m => m.id === matchId);
+  const match =
+    matches.find(
+      m => m.id === matchId
+    );
 
-if (match && seasonLocked(match)) {
-    alert("Cette saison est clôturée. Les matchs ne peuvent plus être réouverts.");
+  if(!match){
+
+    alert(
+      "❌ Match introuvable."
+    );
+
     return;
-}
 
-if(!isManager()){
+  }
 
-  alert(
-    "🔒 Seul le propriétaire ou un administrateur du club peut réouvrir un match."
-  );
 
-  return;
+  /*
+   * =====================================================
+   * SAISON CLÔTURÉE
+   * =====================================================
+   */
 
-}
+  if(seasonLocked(match)){
 
-const ok=
+    alert(
+      "🔒 Cette saison est clôturée. Le match ne peut plus être réouvert."
+    );
 
-window.confirm(
+    return;
+
+  }
+
+
+  /*
+   * =====================================================
+   * AUTORISATION
+   * =====================================================
+   */
+
+  if(!isManager()){
+
+    alert(
+      "🔒 Seul le propriétaire ou un administrateur du club peut réouvrir un match."
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * =====================================================
+   * CONFIRMATION
+   * =====================================================
+   */
+
+  const ok =
+    window.confirm(
 
 `⚠️ Réouvrir ce match ?
 
-Le classement et les statistiques
-pourront changer.`
+Le résultat sera annulé.
 
-);
+Le score et le vainqueur seront supprimés.
 
-if(
-!ok
-){
+Le classement et les statistiques seront recalculés en tenant compte de cette annulation.
 
-return;
+Vous pourrez ensuite saisir et valider un nouveau résultat.
 
-}
+Confirmer la réouverture du match ?`
 
-await supabase
+    );
 
-.from(
-"matches"
-)
 
-.update({
+  if(!ok){
 
-winner:null,
+    return;
 
-score_white:null,
+  }
 
-score_black:null
 
-})
+  /*
+   * =====================================================
+   * RÉOUVERTURE DU MATCH
+   * =====================================================
+   */
 
-.eq(
-"id",
-matchId);
+  const {
+    error
+  } = await supabase
 
-alert(
-"Match réouvert"
-);
+    .from(
+      "matches"
+    )
 
-setReload(
-v=>!v
-);
+    .update({
+
+      winner:
+        null,
+
+      score_white:
+        null,
+
+      score_black:
+        null,
+
+      status:
+        "open"
+
+    })
+
+    .eq(
+      "id",
+      matchId
+    );
+
+
+  /*
+   * =====================================================
+   * ERREUR
+   * =====================================================
+   */
+
+  if(error){
+
+    console.error(
+      "❌ Erreur réouverture match :",
+      error
+    );
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * =====================================================
+   * NETTOYAGE LOCAL
+   * =====================================================
+   */
+
+  setScoreWhite(
+    prev => ({
+
+      ...prev,
+
+      [matchId]:
+        ""
+
+    })
+  );
+
+
+  setScoreBlack(
+    prev => ({
+
+      ...prev,
+
+      [matchId]:
+        ""
+
+    })
+  );
+
+
+  /*
+   * =====================================================
+   * FIN
+   * =====================================================
+   */
+
+  alert(
+    "🔓 Match réouvert avec succès."
+  );
+
+
+  setReload(
+    v => !v
+  );
 
 }
 
@@ -3263,59 +3371,6 @@ marginTop:"12px"
 
 }
 
-{
-
-m.winner
-
-&&
-
-<div>
-
-<p>
-
-Score :
-
-{
-m.score_white
-}
-
--
-
-{
-m.score_black
-}
-
-</p>
-
-{
-
-isManager() &&
-!seasonLocked(m)
-
-&&
-
-<Button
-
-variant="secondary"
-
-onClick={()=>reopenMatch(m.id)}
-
-style={{
-marginTop:"10px"
-}}
-
->
-
-🔓 Réouvrir le match
-
-</Button>
-
-}
-
-</div>
-
-}
-
 </>
 
 }
@@ -3527,6 +3582,41 @@ m.winner==="black"
 
 </div>
 
+{
+
+isManager() &&
+!seasonLocked(m)
+
+&&
+
+<Button
+
+variant="secondary"
+
+onClick={(event)=>{
+
+  event.stopPropagation();
+
+  reopenMatch(
+    m.id
+  );
+
+}}
+
+style={{
+
+marginTop:"16px"
+
+}}
+
+>
+
+🔓 Réouvrir le match
+
+</Button>
+
+}
+
 </div>
 
 }
@@ -3623,11 +3713,10 @@ m.winner==="black"
         >
 
           Vous êtes sur le point
-          d'enregistrer définitivement
+          d'enregistrer
           le résultat du match.
 
         </p>
-
 
         <div
           style={{
