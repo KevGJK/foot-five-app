@@ -245,33 +245,27 @@ const inviteCode=
 generateCode();
 
 const {
-
-data:club,
-
-error
-
+  data: club,
+  error
 }
-
 =
-
 await supabase
-
 .from(
-"clubs"
+  "clubs"
 )
-
 .insert({
 
-name:
-clubName,
+  name:
+    clubName.trim(),
 
-invite_code:
-inviteCode
+  invite_code:
+    inviteCode,
+
+  owner_id:
+    user.id
 
 })
-
 .select()
-
 .single();
 
 if(error){
