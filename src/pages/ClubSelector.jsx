@@ -64,9 +64,13 @@ useEffect(() => {
       `)
       .eq("profile_id", user.id);
 
-      console.log(
-  "CLUBS RÉCUPÉRÉS :",
-  data
+   console.table(
+  (data || []).map(item => ({
+    role: item.role,
+    club: item.clubs,
+    club_id: item.clubs?.id,
+    club_name: item.clubs?.name
+  }))
 );
 
     if (cancelled) {
