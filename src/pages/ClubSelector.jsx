@@ -64,13 +64,20 @@ useEffect(() => {
       `)
       .eq("profile_id", user.id);
 
+      console.log(
+  "CLUBS RÉCUPÉRÉS :",
+  data
+);
+
     if (cancelled) {
       return;
     }
 
     setClubs(
-      data || []
-    );
+  (data || []).filter(
+    item => item.clubs
+  )
+);
 
   }
 
