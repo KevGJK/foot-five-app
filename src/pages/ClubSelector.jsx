@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { createNotification } from "../services/notifications";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -368,6 +369,306 @@ window.location.reload();
 
 }
 
+async function leaveClub(membership){
+
+  const club =
+  membership.clubs;
+
+  if (
+    membership.role === "owner"
+  ){
+
+    alert(
+      "Le propriétaire ne peut pas quitter son propre club."
+    );
+
+    return;
+
+  }
+
+  const ok =
+  window.confirm(
+    `Quitter le club "${club.name}" ?`
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  const {
+    data: {
+      user
+    }
+  } =
+  await supabase.auth.getUser();
+
+  if (!user) {
+    return;
+  }
+
+
+  /*
+   * ----------------------------------------
+   * RÉCUPÉRATION DU PROFIL
+   * ----------------------------------------
+   */
+
+  const {
+    data: profile,
+    error: profileError
+  } =
+  await supabase
+  .from("profiles")
+  .select("display_name")
+  .eq(
+    "id",
+    user.id
+  )
+  .single();
+
+
+  if (profileError) {
+
+    console.error(
+      "Erreur récupération profil :",
+      profileError
+    );
+
+  }
+
+
+  /*
+   * ----------------------------------------
+   * RÉCUPÉRATION DES OWNERS ET ADMINS
+   * ----------------------------------------
+   *
+   * Cette opération doit être effectuée
+   * avant la suppression de l'adhésion.
+   */
+
+  const {
+    data: managers,
+    error: managersError
+  } =
+  await supabase
+  .from("club_members")
+  .select(
+    "profile_id"
+  )
+  .eq(
+    "club_id",
+    club.id
+  )
+  .in(
+    "role",
+    [
+      "owner",
+      "admin"
+    ]
+  );
+
+
+  if (managersError) {
+
+    console.error(
+      "Erreur récupération responsables :",
+      managersError
+    );
+
+  } else {
+
+    const recipientIds =
+    (managers || [])
+
+      .map(
+        manager =>
+          manager.profile_id
+      )
+
+      .filter(Boolean)
+
+      .filter(
+        profileId =>
+          profileId !== user.id
+      );
+
+
+    /*
+     * ----------------------------------------
+     * NOTIFICATION :
+     * MEMBRE PARTI
+     * ----------------------------------------
+     */
+
+    if (
+      recipientIds.length > 0
+    ) {
+
+      const displayName =
+        profile?.display_name ||
+        user.user_metadata?.display_name ||
+        "Un membre";
+
+
+      try {
+
+        await createNotification({
+
+          clubId:
+            club.id,
+
+          createdBy:
+            user.id,
+
+          createdByName:
+            displayName,
+
+          type:
+            "member_left",
+
+          title:
+            "👋 Membre parti",
+
+          message:
+            `${displayName} a quitté le club.`,
+
+          action:
+            null,
+
+          actionId:
+            null,
+
+          recipientIds
+
+        });
+
+      } catch (
+        notificationError
+      ) {
+
+        /*
+         * La notification est secondaire.
+         * Une erreur ici ne doit jamais
+         * empêcher le départ du membre.
+         */
+
+        console.error(
+          "Erreur notification départ membre :",
+          notificationError
+        );
+
+      }
+
+    }
+
+  }
+
+
+  /*
+   * ----------------------------------------
+   * CHOIX DU NOUVEAU CLUB ACTIF
+   * ----------------------------------------
+   */
+
+  const remainingClubs =
+  clubs.filter(
+    item =>
+      item.clubs.id !== club.id
+  );
+
+  const newActiveClub =
+  remainingClubs[0];
+
+
+  /*
+   * ----------------------------------------
+   * CHANGEMENT DU CLUB ACTIF
+   * ----------------------------------------
+   */
+
+  if (
+    club.id === activeClub
+  ){
+
+    const {
+      error: activeClubError
+    } =
+    await supabase
+    .from("profiles")
+    .update({
+
+      active_club_id:
+      newActiveClub
+        ? newActiveClub.clubs.id
+        : null
+
+    })
+    .eq(
+      "id",
+      user.id
+    );
+
+
+    if (activeClubError) {
+
+      alert(
+        activeClubError.message
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  /*
+   * ----------------------------------------
+   * SUPPRESSION DE L'ADHÉSION
+   * ----------------------------------------
+   */
+
+  const {
+    error
+  } =
+  await supabase
+  .from("club_members")
+  .delete()
+  .eq(
+    "club_id",
+    club.id
+  )
+  .eq(
+    "profile_id",
+    user.id
+  );
+
+
+  if (error) {
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * ----------------------------------------
+   * FIN
+   * ----------------------------------------
+   */
+
+  alert(
+    `Vous avez quitté le club "${club.name}".`
+  );
+
+  window.location.reload();
+
+}
+
 return(
 
 <Page>
@@ -401,21 +702,11 @@ clubs.map(
 
 key={c.clubs.id}
 
-onClick={()=>
-
-switchClub(
-c.clubs
-)
-
-}
-
 style={{
 
 padding:"16px",
 
 marginBottom:"12px",
-
-cursor:"pointer",
 
 border:
 
@@ -443,7 +734,35 @@ c.clubs.id===activeClub
 
 "rgba(255,255,255,.02)",
 
-transition:"all .2s"
+transition:"all .2s",
+
+display:"flex",
+
+alignItems:"center",
+
+justifyContent:"space-between",
+
+gap:"12px"
+
+}}
+
+>
+
+<div
+
+onClick={()=>
+
+switchClub(
+c.clubs
+)
+
+}
+
+style={{
+
+cursor:"pointer",
+
+flex:1
 
 }}
 
@@ -488,6 +807,54 @@ c.role==="admin"
 :
 
 "⚽ Joueur"
+
+}
+
+</div>
+
+{
+
+c.role !== "owner" && (
+
+<button
+
+onClick={
+
+(e)=>{
+
+e.stopPropagation();
+
+leaveClub(c);
+
+}
+
+}
+
+title="Quitter le club"
+
+style={{
+
+background:"transparent",
+
+border:"none",
+
+cursor:"pointer",
+
+fontSize:"22px",
+
+padding:"4px",
+
+opacity:.8
+
+}}
+
+>
+
+🚪
+
+</button>
+
+)
 
 }
 

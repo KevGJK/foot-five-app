@@ -2872,72 +2872,76 @@ Annuler
 
 }
 
-<div
-style={{
-display:"flex",
-gap:10,
-marginBottom:10
-}}
->
-
-<Button
-
-variant="secondary"
-
-disabled={
-  !!m.winner ||
-  seasonLocked(m) ||
-  !canManageMatch(m)
-}
-
-onClick={async()=>{
-
-if(teams[m.id]){
-
-const ok=window.confirm(
-
-"Les équipes actuelles seront remplacées. Continuer ?"
-
-);
-
-if(!ok){
-
-return;
-
-}
-
-}
-
-await compose(
-
-m.id,
-
-m.attendances
-
-);
-
-}}
-
->
-
 {
+  canManageMatch(m) && (
 
-teams[m.id]
+    <div
+      style={{
+        display:"flex",
+        gap:10,
+        marginBottom:10
+      }}
+    >
 
-?
+      <Button
 
-"🔄 Recomposer les équipes"
+        variant="secondary"
 
-:
+        disabled={
+          !!m.winner ||
+          seasonLocked(m)
+        }
 
-"⚽ Composer les équipes"
+        onClick={async()=>{
 
+          if(teams[m.id]){
+
+            const ok=window.confirm(
+
+              "Les équipes actuelles seront remplacées. Continuer ?"
+
+            );
+
+            if(!ok){
+
+              return;
+
+            }
+
+          }
+
+          await compose(
+
+            m.id,
+
+            m.attendances
+
+          );
+
+        }}
+
+      >
+
+        {
+
+          teams[m.id]
+
+          ?
+
+          "🔄 Recomposer les équipes"
+
+          :
+
+          "⚽ Composer les équipes"
+
+        }
+
+      </Button>
+
+    </div>
+
+  )
 }
-
-</Button>
-
-
-</div>
 
 {
 
@@ -3400,26 +3404,31 @@ marginTop:"12px"
 
 }
 
-<Button
+{
+  canManageMatch(m) && (
 
-variant="danger"
+    <Button
 
-disabled={
-  seasonLocked(m) ||
-  !canManageMatch(m)
+      variant="danger"
+
+      disabled={
+        seasonLocked(m)
+      }
+
+      onClick={()=>removeMatch(m.id)}
+
+      style={{
+        marginTop:"20px"
+      }}
+
+    >
+
+      🗑 Supprimer le match
+
+    </Button>
+
+  )
 }
-
-onClick={()=>removeMatch(m.id)}
-
-style={{
-marginTop:"20px"
-}}
-
->
-
-🗑 Supprimer le match
-
-</Button>
 
 </Card>
 

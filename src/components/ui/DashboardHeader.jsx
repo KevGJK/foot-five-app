@@ -1,4 +1,3 @@
-import { RiLogoutBoxFill } from "react-icons/ri";
 import Button from "./Button";
 
 export default function DashboardHeader({
@@ -43,37 +42,6 @@ export default function DashboardHeader({
           marginBottom: 24,
         }}
       >
-       <button
-  onClick={async () => {
-    const { supabase } = await import("../../lib/supabase");
-    await supabase.auth.signOut();
-    window.location.reload();
-  }}
-  style={{
-    position: "absolute",
-    right: 0,
-    top: 0,
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    width: "70px",
-    color: "var(--text-secondary)"
-  }}
->
-  <RiLogoutBoxFill size={42} />
-
-  <span
-    style={{
-      fontSize: "11px",
-      marginTop: "4px"
-    }}
-  >
-    Me déconnecter
-  </span>
-</button>
 
         <div
           onClick={() => logoUrl && setShowLogo(true)}
