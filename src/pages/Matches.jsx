@@ -3303,7 +3303,7 @@ marginBottom:"14px"
 
 type="number"
 
-placeholder="Score équipe blanche"
+placeholder="Score Équipe Blanche"
 
 value={scoreWhite[m.id] || ""}
 
@@ -3325,7 +3325,7 @@ setScoreWhite({
 
 type="number"
 
-placeholder="Score équipe foncée"
+placeholder="Score Équipe Foncée"
 
 value={scoreBlack[m.id] || ""}
 
@@ -3761,7 +3761,7 @@ marginTop:"16px"
               }}
             >
 
-              ⚪ Les Blancs
+              ⚪ Équipe Blanche
 
             </div>
 
@@ -3823,7 +3823,7 @@ marginTop:"16px"
               }}
             >
 
-              ⚫ Les Foncés
+              ⚫ Équipe Foncée
 
             </div>
 
