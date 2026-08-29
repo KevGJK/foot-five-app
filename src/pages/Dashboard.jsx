@@ -1221,7 +1221,9 @@ if(page==="settings"){
 if(page==="notifications"){
 
   return renderWithBack(
-    <Notifications/>
+    <Notifications
+      onNotificationsChange={refreshDashboard}
+    />
   );
 
 }

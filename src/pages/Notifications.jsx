@@ -4,7 +4,9 @@ import { supabase } from "../lib/supabase";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 
-export default function Notifications() {
+export default function Notifications({
+  onNotificationsChange
+}) {
 
 const [notifications,setNotifications]=useState([]);
 
@@ -55,7 +57,19 @@ useEffect(() => {
       return;
     }
 
-    setNotifications(data || []);
+    setNotifications(
+
+  (data || []).sort(
+    (a,b) =>
+      new Date(
+        b.notifications?.created_at
+      ) -
+      new Date(
+        a.notifications?.created_at
+      )
+  )
+
+);
 
   }
 
@@ -69,59 +83,311 @@ useEffect(() => {
 
 async function markAsRead(notificationId){
 
-const {
+  const {
+    data: {
+      user
+    }
+  } =
+  await supabase.auth.getUser();
 
-data:{user}
+  if (!user) {
+    console.log(
+      "❌ Aucun utilisateur connecté"
+    );
 
-}=await supabase.auth.getUser();
+    return;
+  }
 
-if(!user)return;
+  console.log(
+    "🔔 Tentative de lecture notification :",
+    notificationId
+  );
 
-const { error } = await supabase
+  console.log(
+    "👤 Utilisateur :",
+    user.id
+  );
 
-.from("notification_users")
+  const readAt =
+    new Date().toISOString();
 
-.update({
+  const {
+    data: updatedRows,
+    error
+  } =
+  await supabase
 
-is_read:true,
+  .from("notification_users")
 
-read_at:new Date().toISOString()
+  .update({
 
-})
+    is_read: true,
 
-.eq("notification_id",notificationId)
+    read_at: readAt
 
-.eq("profile_id",user.id);
+  })
 
-if(error){
+  .eq(
+    "notification_id",
+    notificationId
+  )
 
-console.log(error);
+  .eq(
+    "profile_id",
+    user.id
+  )
 
-return;
+  .select();
+
+  if (error) {
+
+    console.error(
+      "❌ Erreur UPDATE notification :",
+      error
+    );
+
+    return;
+
+  }
+
+  console.log(
+    "✅ Lignes réellement modifiées :",
+    updatedRows
+  );
+
+  if (
+    !updatedRows ||
+    updatedRows.length === 0
+  ) {
+
+    console.error(
+      "⚠️ Aucune ligne n'a été modifiée."
+    );
+
+    return;
+
+  }
+
+  setNotifications((current) =>
+
+    current.map((n) =>
+
+      n.notifications.id === notificationId
+
+      ? {
+
+          ...n,
+
+          is_read: true,
+
+          read_at: readAt
+
+        }
+
+      : n
+
+    )
+
+  );
+
+  console.log(
+    "🔄 Mise à jour du compteur Dashboard"
+  );
+
+  await onNotificationsChange?.();
 
 }
 
-setNotifications((current)=>
+async function deleteNotification(
+  notificationId,
+  wasUnread
+){
 
-current.map((n)=>
+  const ok =
+    window.confirm(
+      "Supprimer cette notification ?"
+    );
 
-n.notifications.id===notificationId
+  if (!ok) {
+    return;
+  }
 
-?{
 
-...n,
+  const {
+    data: {
+      user
+    }
+  } =
+  await supabase.auth.getUser();
 
-is_read:true,
 
-read_at:new Date().toISOString()
+  if (!user) {
+
+    console.log(
+      "❌ Aucun utilisateur connecté"
+    );
+
+    return;
+
+  }
+
+
+  const {
+    data: deletedRows,
+    error
+  } =
+  await supabase
+
+  .from("notification_users")
+
+  .delete()
+
+  .eq(
+    "notification_id",
+    notificationId
+  )
+
+  .eq(
+    "profile_id",
+    user.id
+  )
+
+  .select();
+
+
+  if (error) {
+
+    console.error(
+      "❌ Erreur suppression notification :",
+      error
+    );
+
+    alert(
+      "Impossible de supprimer cette notification."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    !deletedRows ||
+    deletedRows.length === 0
+  ) {
+
+    console.error(
+      "⚠️ Aucune notification supprimée."
+    );
+
+    return;
+
+  }
+
+
+  setNotifications(
+    (current) =>
+
+      current.filter(
+        (n) =>
+
+          n.notifications.id !==
+          notificationId
+      )
+  );
+
+
+  if (wasUnread) {
+
+    await onNotificationsChange?.();
+
+  }
 
 }
 
-:n
+async function deleteAllNotifications(){
 
-)
+  if (
+    notifications.length === 0
+  ) {
+    return;
+  }
 
-);
+
+  const ok =
+    window.confirm(
+      "Supprimer toutes vos notifications ? Cette action est irréversible."
+    );
+
+
+  if (!ok) {
+    return;
+  }
+
+
+  const {
+    data: {
+      user
+    }
+  } =
+  await supabase.auth.getUser();
+
+
+  if (!user) {
+
+    console.log(
+      "❌ Aucun utilisateur connecté"
+    );
+
+    return;
+
+  }
+
+
+  const {
+    data: deletedRows,
+    error
+  } =
+  await supabase
+
+  .from("notification_users")
+
+  .delete()
+
+  .eq(
+    "profile_id",
+    user.id
+  )
+
+  .select();
+
+
+  if (error) {
+
+    console.error(
+      "❌ Erreur suppression de toutes les notifications :",
+      error
+    );
+
+    alert(
+      "Impossible de supprimer les notifications."
+    );
+
+    return;
+
+  }
+
+
+  console.log(
+    "🗑️ Notifications supprimées :",
+    deletedRows
+  );
+
+
+  setNotifications([]);
+
+
+  await onNotificationsChange?.();
 
 }
 
@@ -134,6 +400,48 @@ read_at:new Date().toISOString()
       </h1>
 
       <Card>
+
+      {
+
+notifications.length > 0 && (
+
+<button
+
+onClick={deleteAllNotifications}
+
+style={{
+
+width:"100%",
+
+marginBottom:"18px",
+
+padding:"12px",
+
+borderRadius:"12px",
+
+border:"1px solid rgba(255,255,255,.15)",
+
+background:"rgba(255,255,255,.05)",
+
+color:"white",
+
+cursor:"pointer",
+
+fontSize:"15px",
+
+fontWeight:"700"
+
+}}
+
+>
+
+🗑️ Supprimer toutes les notifications
+
+</button>
+
+)
+
+}
 
        {
 
@@ -174,7 +482,9 @@ onClick={()=>{
 
 if(!n.is_read){
 
-markAsRead(n.notifications.id);
+markAsRead(
+  n.notifications.id
+);
 
 }
 
@@ -188,9 +498,13 @@ transition:"all .2s",
 
 padding:"16px",
 
+paddingRight:"70px",
+
 marginBottom:"12px",
 
 borderRadius:"14px",
+
+position:"relative",
 
 background:
 
@@ -219,6 +533,56 @@ n.is_read
 }}
 
 >
+
+
+<button
+
+onClick={(e)=>{
+
+e.stopPropagation();
+
+deleteNotification(
+
+  n.notifications.id,
+
+  !n.is_read
+
+);
+
+}}
+
+title="Supprimer la notification"
+
+style={{
+
+position:"absolute",
+
+right:"14px",
+
+top:"50%",
+
+transform:"translateY(-50%)",
+
+background:"transparent",
+
+border:"none",
+
+cursor:"pointer",
+
+fontSize:"22px",
+
+padding:"8px",
+
+opacity:.7
+
+}}
+
+>
+
+🗑️
+
+</button>
+
 
 <div
 style={{
@@ -263,6 +627,7 @@ NOUVEAU
 
 </div>
 
+
 <div
 style={{
 marginTop:"6px",
@@ -273,6 +638,7 @@ opacity:.75
 {n.notifications.message}
 
 </div>
+
 
 <div
 style={{
@@ -293,6 +659,7 @@ n.notifications.created_at
 }
 
 </div>
+
 
 </div>
 
