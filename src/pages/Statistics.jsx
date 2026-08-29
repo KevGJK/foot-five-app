@@ -1,344 +1,377 @@
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 
-export default function Statistics(){
+export default function Statistics() {
 
-const [players,setPlayers]=useState([]);
+  const [players, setPlayers] = useState([]);
+  const [myId, setMyId] = useState(null);
+  const [noSeason, setNoSeason] = useState(false);
 
-const [myId,setMyId]=useState(null);
+  useEffect(() => {
 
-useEffect(() => {
+    let cancelled = false;
 
-  let cancelled = false;
+    async function load() {
 
-  async function load() {
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
 
-    const {
-      data: {
-        user
+      if (!user || cancelled) {
+        return;
       }
-    } = await supabase.auth.getUser();
-
-    if (!user || cancelled) {
-      return;
-    }
-
-    const {
-      data: member
-    } = await supabase
-      .from("club_members")
-      .select("club_id")
-      .eq(
-        "profile_id",
-        user.id
-      )
-      .single();
-
-    if (!member || cancelled) {
-      return;
-    }
-
-    const {
-      data: season
-    } = await supabase
-      .from("seasons")
-      .select("id")
-      .eq(
-        "club_id",
-        member.club_id
-      )
-      .eq(
-        "active",
-        true
-      )
-      .single();
-
-    if (!season || cancelled) {
-      return;
-    }
-
-    setMyId(user.id);
-
-    const {
-      data
-    } = await supabase
-      .from("club_members")
-      .select(`
-        profile_id,
-        profiles(display_name)
-      `)
-      .eq(
-        "club_id",
-        member.club_id
-      );
-
-    if (cancelled) {
-      return;
-    }
-
-    const stats = [];
-
-    for (
-      const p
-      of data || []
-    ) {
 
       const {
-        data: matches
+        data: profile
       } = await supabase
-        .from("attendances")
-        .select(`
-          response,
-          match_id,
-          matches(
-            winner,
-            season_id
-          )
-        `)
-        .eq(
-          "profile_id",
-          p.profile_id
-        );
+        .from("profiles")
+        .select("active_club_id")
+        .eq("id", user.id)
+        .single();
 
-      const seasonMatches =
-        (matches || [])
-          .filter(
-            m =>
-              m.matches &&
-              m.matches.season_id ===
-                season.id
-          );
-
-      const present =
-        seasonMatches.filter(
-          x =>
-            x.response === "present"
-        ).length;
-
-      const absent =
-        seasonMatches.filter(
-          x =>
-            x.response === "absent"
-        ).length;
+      if (
+        !profile?.active_club_id ||
+        cancelled
+      ) {
+        return;
+      }
 
       const {
-        count: created
+        data: season
       } = await supabase
-        .from("matches")
-        .select("*", {
-          count: "exact",
-          head: true
-        })
+        .from("seasons")
+        .select("id")
         .eq(
-          "organizer_id",
-          p.profile_id
+          "club_id",
+          profile.active_club_id
         )
         .eq(
-          "season_id",
-          season.id
+          "active",
+          true
+        )
+        .maybeSingle();
+
+      if (cancelled) {
+        return;
+      }
+
+      if (!season) {
+        setNoSeason(true);
+        setPlayers([]);
+        return;
+      }
+
+      setNoSeason(false);
+      setMyId(user.id);
+
+      const {
+        data
+      } = await supabase
+        .from("club_members")
+        .select(`
+          profile_id,
+          profiles(display_name)
+        `)
+        .eq(
+          "club_id",
+          profile.active_club_id
         );
 
-      const rate =
-        present + absent
-          ? Math.round(
-              present /
-              (present + absent) *
-              100
+      if (cancelled) {
+        return;
+      }
+
+      const stats = [];
+
+      for (
+        const p
+        of data || []
+      ) {
+
+        const {
+          data: matches
+        } = await supabase
+          .from("attendances")
+          .select(`
+            response,
+            match_id,
+            matches(
+              winner,
+              season_id
             )
-          : 0;
+          `)
+          .eq(
+            "profile_id",
+            p.profile_id
+          );
 
-      stats.push({
+        const seasonMatches =
+          (matches || [])
+            .filter(
+              m =>
+                m.matches &&
+                m.matches.season_id ===
+                  season.id
+            );
 
-        id:
-          p.profile_id,
+        const present =
+          seasonMatches.filter(
+            x =>
+              x.response === "present"
+          ).length;
 
-        name:
-          p.profiles?.display_name ||
-          "Joueur",
+        const absent =
+          seasonMatches.filter(
+            x =>
+              x.response === "absent"
+          ).length;
 
-        created:
-          created || 0,
+        const {
+          count: created
+        } = await supabase
+          .from("matches")
+          .select("*", {
+            count: "exact",
+            head: true
+          })
+          .eq(
+            "organizer_id",
+            p.profile_id
+          )
+          .eq(
+            "season_id",
+            season.id
+          );
 
-        present,
+        const rate =
+          present + absent
+            ? Math.round(
+                present /
+                (present + absent) *
+                100
+              )
+            : 0;
 
-        absent,
+        stats.push({
 
-        rate
+          id:
+            p.profile_id,
 
-      });
+          name:
+            p.profiles?.display_name ||
+            "Joueur",
 
-    }
+          created:
+            created || 0,
 
-    stats.sort(
-      (a,b) => {
+          present,
 
-        if (a.id === user.id) {
-          return -1;
-        }
+          absent,
 
-        if (b.id === user.id) {
-          return 1;
-        }
+          rate
 
-        return (
-          a.name || ""
-        ).localeCompare(
-          b.name || "",
-          "fr"
-        );
+        });
 
       }
-    );
 
-    if (!cancelled) {
-      setPlayers(stats);
+      stats.sort(
+        (a, b) => {
+
+          if (a.id === user.id) {
+            return -1;
+          }
+
+          if (b.id === user.id) {
+            return 1;
+          }
+
+          return (
+            a.name || ""
+          ).localeCompare(
+            b.name || "",
+            "fr"
+          );
+
+        }
+      );
+
+      if (!cancelled) {
+        setPlayers(stats);
+      }
+
     }
 
-  }
+    load();
 
-  load();
+    return () => {
+      cancelled = true;
+    };
 
-  return () => {
-    cancelled = true;
-  };
+  }, []);
 
-}, []);
+  return (
 
-return(
+    <Page>
 
-<Page>
+      <h1 className="page-title">
 
-<h1 className="page-title">
+        📊 Statistiques de la saison
 
-📊 Statistiques de la saison
+      </h1>
 
-</h1>
+      {
+        noSeason && (
 
-{
+          <Card>
 
-players.map(
+            <p
+              style={{
+                textAlign: "center",
+                margin: "10px 0"
+              }}
+            >
 
-(p,index)=>(
+              🏆 Aucune saison active.
 
-<Card key={index}>
+              <br />
 
-<h3
-style={{
-display:"flex",
-justifyContent:"space-between",
-alignItems:"center",
-marginTop:"-8px",
-marginBottom:"20px"
-}}
->
+              Créez un premier match pour démarrer
+              automatiquement la première saison.
 
-<span
-style={{
-fontWeight:"700",
-fontSize:"20px"
-}}
->
+            </p>
 
-{
+          </Card>
 
-p.id===myId
+        )
+      }
 
-?
+      {
 
-"👤 "+p.name+" (Moi)"
+        players.map(
 
-:
+          (p, index) => (
 
-"👤 "+p.name
+            <Card key={index}>
 
-}
+              <h3
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: "-8px",
+                  marginBottom: "20px"
+                }}
+              >
 
-</span>
+                <span
+                  style={{
+                    fontWeight: "700",
+                    fontSize: "20px"
+                  }}
+                >
 
-</h3>
+                  {
 
-<p>
-<b>📅 Matchs créés :</b> {p.created}
-</p>
+                    p.id === myId
 
-<p style={{marginTop:"8px"}}>
-<b>✅ Présences :</b> {p.present}
-</p>
+                      ?
 
-<p style={{marginTop:"8px"}}>
-<b>❌ Absences :</b> {p.absent}
-</p>
+                      "👤 " + p.name + " (Moi)"
 
-<div
-style={{
-marginTop:"8px",
-marginBottom:"14px"
-}}
->
+                      :
 
-<div
-style={{
-fontSize:"17px",
-opacity:.7
-}}
->
-Taux de présence
-</div>
+                      "👤 " + p.name
 
-<div
-style={{
-fontSize:"30px",
-fontWeight:"700",
-lineHeight:"1"
-}}
->
+                  }
 
-📈 {p.rate}%
+                </span>
 
-</div>
+              </h3>
 
-</div>
+              <p>
+                <b>📅 Matchs créés :</b> {p.created}
+              </p>
 
-<p style={{marginTop:"12px"}}>
+              <p style={{ marginTop: "8px" }}>
+                <b>✅ Présences :</b> {p.present}
+              </p>
 
-<b>🎯 Fiabilité :</b>
+              <p style={{ marginTop: "8px" }}>
+                <b>❌ Absences :</b> {p.absent}
+              </p>
 
-{
+              <div
+                style={{
+                  marginTop: "8px",
+                  marginBottom: "14px"
+                }}
+              >
 
-p.rate>=90
+                <div
+                  style={{
+                    fontSize: "17px",
+                    opacity: .7
+                  }}
+                >
+                  Taux de présence
+                </div>
 
-?
+                <div
+                  style={{
+                    fontSize: "30px",
+                    fontWeight: "700",
+                    lineHeight: "1"
+                  }}
+                >
 
-" 🟢 Excellente"
+                  📈 {p.rate}%
 
-:
+                </div>
 
-p.rate>=70
+              </div>
 
-?
+              <p style={{ marginTop: "12px" }}>
 
-" 🟡 Correcte"
+                <b>🎯 Fiabilité :</b>
 
-:
+                {
 
-" 🔴 À relancer"
+                  p.rate >= 90
 
-}
+                    ?
 
-</p>
+                    " 🟢 Excellente"
 
-</Card>
+                    :
 
-)
+                    p.rate >= 70
 
-)
+                      ?
 
-}
+                      " 🟡 Correcte"
 
-</Page>
+                      :
 
-);
+                      " 🔴 À relancer"
+
+                }
+
+              </p>
+
+            </Card>
+
+          )
+
+        )
+
+      }
+
+    </Page>
+
+  );
 
 }

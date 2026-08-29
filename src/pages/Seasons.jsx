@@ -44,19 +44,15 @@ export default function Seasons({
               </p>
 
               <p style={{ marginTop: 8 }}>
-                <b>📅 Période :</b>{" "}
-                {new Date(
-                  activeSeason.start_date
-                ).toLocaleDateString("fr-FR")}
-                {" → "}
-                {new Date(
-                  activeSeason.end_date
-                ).toLocaleDateString("fr-FR")}
-              </p>
+  <b>📅 Début :</b>{" "}
+  {new Date(
+    activeSeason.start_date
+  ).toLocaleDateString("fr-FR")}
+</p>
 
-              <p style={{ marginTop: 8 }}>
-                🟢 <b>Statut :</b> Saison active
-              </p>
+<p style={{ marginTop: 8 }}>
+  🟢 <b>Statut :</b> Saison en cours
+</p>
             </>
 
           ) : (
@@ -116,22 +112,33 @@ export default function Seasons({
                     🏆 {season.name}
                   </div>
 
-                  <div
-                    style={{
-                      fontSize: "13px",
-                      opacity: .7,
-                      marginTop: "4px"
-                    }}
-                  >
-                    📅{" "}
-                    {new Date(
-                      season.start_date
-                    ).toLocaleDateString("fr-FR")}
-                    {" → "}
-                    {new Date(
-                      season.end_date
-                    ).toLocaleDateString("fr-FR")}
-                  </div>
+                <div
+  style={{
+    fontSize: "13px",
+    opacity: .7,
+    marginTop: "4px"
+  }}
+>
+  {season.active ? (
+    <>
+      📅 Début :{" "}
+      {new Date(
+        season.start_date
+      ).toLocaleDateString("fr-FR")}
+    </>
+  ) : (
+    <>
+      📅{" "}
+      {new Date(
+        season.start_date
+      ).toLocaleDateString("fr-FR")}
+      {" → "}
+      {new Date(
+        season.end_date
+      ).toLocaleDateString("fr-FR")}
+    </>
+  )}
+</div>
 
                 </div>
 

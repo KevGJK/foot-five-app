@@ -91,26 +91,51 @@ useEffect(() => {
       return;
     }
 
-    const {
-      data: member
-    } = await supabase
-      .from("club_members")
-      .select(`
-        club_id,
-        role
-      `)
-      .eq("profile_id", user.id)
-      .single();
+const {
+  data: profile,
+  error: profileError
+} = await supabase
+  .from("profiles")
+  .select("active_club_id")
+  .eq("id", user.id)
+  .single();
 
-    if (cancelled) {
-      return;
-    }
+if (profileError || !profile?.active_club_id) {
+  console.error(
+    "Impossible de récupérer le club actif",
+    profileError
+  );
 
-    if (!member) {
-      return;
-    }
+  return;
+}
 
-    setClubRole(member.role);
+const {
+  data: member,
+  error: memberError
+} = await supabase
+  .from("club_members")
+  .select(`
+    club_id,
+    role
+  `)
+  .eq("profile_id", user.id)
+  .eq("club_id", profile.active_club_id)
+  .single();
+
+if (cancelled) {
+  return;
+}
+
+if (memberError || !member) {
+  console.error(
+    "Impossible de récupérer le membre du club actif",
+    memberError
+  );
+
+  return;
+}
+
+setClubRole(member.role);
 
     const {
       data: levels

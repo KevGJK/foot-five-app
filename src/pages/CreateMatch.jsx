@@ -82,47 +82,95 @@ return;
 }
 
 const {
-
-  data: seasons
-
-}
-
-=
-
+  data: seasons,
+  error: seasonsError
+} =
 await supabase
-
 .from("seasons")
-
 .select("*")
-
 .eq(
   "club_id",
   profile.active_club_id
 );
 
-const season=
+if (seasonsError) {
 
+  alert(
+    seasonsError.message
+  );
+
+  return;
+
+}
+
+let season =
 seasons?.find(
-s=>
-s.active
+  s => s.active
 );
 
-if(
-!season
-){
+if (!date) {
 
-alert(
-"Aucune saison active trouvée"
-);
+  alert(
+    "Veuillez sélectionner une date et une heure"
+  );
 
-return;
+  return;
+
+}
+
+const matchDate =
+new Date(date);
+
+if (!season) {
+
+  const {
+    data: newSeason,
+    error: createSeasonError
+  } =
+  await supabase
+  .from("seasons")
+  .insert({
+
+    club_id:
+    profile.active_club_id,
+
+    name:
+`Saison ${matchDate.getFullYear()}`,
+
+start_date:
+matchDate
+.toISOString()
+.split("T")[0],
+
+    end_date:
+    "2099-12-31",
+
+    active:
+    true
+
+  })
+  .select()
+  .single();
+
+  if (createSeasonError) {
+
+    alert(
+      createSeasonError.message
+    );
+
+    return;
+
+  }
+
+  season =
+  newSeason;
 
 }
 
 console.log("🕐 DATE SAISIE :", date);
 console.log(
   "🕐 DATE ISO ENVOYÉE À SUPABASE :",
-  new Date(date).toISOString()
+matchDate.toISOString()
 );
 
 const {
@@ -143,7 +191,7 @@ title,
 location,
 
 match_date:
-new Date(date).toISOString(),
+matchDate.toISOString(),
 
 club_id:
 profile.active_club_id,
@@ -189,7 +237,7 @@ await createNotification({
     title: "Nouveau match",
 
     message:
-    `Un nouveau match vient d'être créé : "${title}".\n📅 ${new Date(date).toLocaleDateString("fr-FR")} à ${new Date(date).toLocaleTimeString("fr-FR", {
+    `Un nouveau match vient d'être créé : "${title}".\n📅 ${matchDate.toLocaleDateString("fr-FR")} à ${matchDate.toLocaleTimeString("fr-FR", {
         hour: "2-digit",
         minute: "2-digit"
     })}`,
