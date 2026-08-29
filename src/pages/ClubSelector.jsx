@@ -247,12 +247,9 @@ generateCode();
 const {
   data: club,
   error
-}
-=
+} =
 await supabase
-.from(
-  "clubs"
-)
+.from("clubs")
 .insert({
 
   name:
