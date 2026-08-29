@@ -436,133 +436,127 @@ async function leaveClub(membership){
 
   }
 
-
   /*
-   * ----------------------------------------
-   * RÉCUPÉRATION DES OWNERS ET ADMINS
-   * ----------------------------------------
-   *
-   * Cette opération doit être effectuée
-   * avant la suppression de l'adhésion.
-   */
+ * ----------------------------------------
+ * RÉCUPÉRATION DES OWNERS ET ADMINS
+ * ----------------------------------------
+ */
 
-  const {
-    data: managers,
-    error: managersError
-  } =
-  await supabase
-  .from("club_members")
-  .select(
-    "profile_id"
-  )
-  .eq(
-    "club_id",
+const {
+  data: managers,
+  error: managersError
+} =
+await supabase.rpc(
+  "get_club_manager_ids",
+  {
+
+    target_club_id:
     club.id
-  )
-  .in(
-    "role",
-    [
-      "owner",
-      "admin"
-    ]
+
+  }
+);
+
+
+if (managersError) {
+
+  console.error(
+    "Erreur récupération responsables :",
+    managersError
+  );
+
+} else {
+
+  const recipientIds =
+  (managers || [])
+
+    .map(
+      manager =>
+        manager.profile_id
+    )
+
+    .filter(Boolean)
+
+    .filter(
+      profileId =>
+        profileId !== user.id
+    );
+
+
+  console.log(
+    "👥 Responsables trouvés :",
+    managers
   );
 
 
-  if (managersError) {
-
-    console.error(
-      "Erreur récupération responsables :",
-      managersError
-    );
-
-  } else {
-
-    const recipientIds =
-    (managers || [])
-
-      .map(
-        manager =>
-          manager.profile_id
-      )
-
-      .filter(Boolean)
-
-      .filter(
-        profileId =>
-          profileId !== user.id
-      );
+  console.log(
+    "📬 Destinataires notification :",
+    recipientIds
+  );
 
 
-    /*
-     * ----------------------------------------
-     * NOTIFICATION :
-     * MEMBRE PARTI
-     * ----------------------------------------
-     */
+  /*
+   * ----------------------------------------
+   * NOTIFICATION :
+   * MEMBRE PARTI
+   * ----------------------------------------
+   */
 
-    if (
-      recipientIds.length > 0
+  if (
+    recipientIds.length > 0
+  ) {
+
+    const displayName =
+      profile?.display_name ||
+      user.user_metadata?.display_name ||
+      "Un membre";
+
+
+    try {
+
+      await createNotification({
+
+        clubId:
+          club.id,
+
+        createdBy:
+          user.id,
+
+        createdByName:
+          displayName,
+
+        type:
+          "member_left",
+
+        title:
+          "👋 Membre parti",
+
+        message:
+          `${displayName} a quitté le club.`,
+
+        action:
+          null,
+
+        actionId:
+          null,
+
+        recipientIds
+
+      });
+
+    } catch (
+      notificationError
     ) {
 
-      const displayName =
-        profile?.display_name ||
-        user.user_metadata?.display_name ||
-        "Un membre";
-
-
-      try {
-
-        await createNotification({
-
-          clubId:
-            club.id,
-
-          createdBy:
-            user.id,
-
-          createdByName:
-            displayName,
-
-          type:
-            "member_left",
-
-          title:
-            "👋 Membre parti",
-
-          message:
-            `${displayName} a quitté le club.`,
-
-          action:
-            null,
-
-          actionId:
-            null,
-
-          recipientIds
-
-        });
-
-      } catch (
+      console.error(
+        "Erreur notification départ membre :",
         notificationError
-      ) {
-
-        /*
-         * La notification est secondaire.
-         * Une erreur ici ne doit jamais
-         * empêcher le départ du membre.
-         */
-
-        console.error(
-          "Erreur notification départ membre :",
-          notificationError
-        );
-
-      }
+      );
 
     }
 
   }
 
+}
 
   /*
    * ----------------------------------------
