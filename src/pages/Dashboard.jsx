@@ -504,7 +504,7 @@ async function closeSeason(){
     .select("club_id,role")
     .eq("profile_id",user.id)
     .eq("club_id",activeSeason.club_id)
-    .single();
+    .maybeSingle();
 
 if(
   !member ||
@@ -844,18 +844,27 @@ participation:r.participation
     return;
   }
 
-  const {
-    data:closedSeason,
-    error:closeError
-  } = await supabase
-    .from("seasons")
-    .update({
-      active:false,
-      closed_at:new Date().toISOString(),
-      closed_by:user.id
-    })
-    .eq("id",activeSeason.id)
-    .select();
+const closedAt =
+  new Date();
+
+const seasonEndDate =
+  closedAt
+    .toISOString()
+    .slice(0, 10);
+
+const {
+  data:closedSeason,
+  error:closeError
+} = await supabase
+  .from("seasons")
+  .update({
+    active:false,
+    end_date:seasonEndDate,
+    closed_at:closedAt.toISOString(),
+    closed_by:user.id
+  })
+  .eq("id",activeSeason.id)
+  .select();
 
   if(closeError){
     alert(closeError.message);
@@ -874,12 +883,14 @@ participation:r.participation
     return;
   }
 
-  const start =
-    new Date(activeSeason.end_date);
-
-  start.setDate(
-    start.getDate() + 1
+const start =
+  new Date(
+    `${seasonEndDate}T00:00:00`
   );
+
+start.setDate(
+  start.getDate() + 1
+);
 
   const end =
     new Date(start);
