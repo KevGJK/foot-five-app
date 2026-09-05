@@ -1,43 +1,46 @@
 import MenuButton from "../ui/MenuButton";
+import { useLanguage } from "../../i18n/useLanguage";
 
 export default function DashboardMenu({ setPage,unreadCount }) {
+
+const { t } = useLanguage();
 
   return (
     <>
 
       <MenuButton
         icon="➕"
-        title="Créer un match"
+        title={t("createMatch")}
         onClick={() => setPage("create")}
       />
 
       <MenuButton
         icon="📅"
-        title="Matchs"
+        title={t("matches")}
         onClick={() => setPage("matches")}
       />
 
 <MenuButton
     icon="👥"
-    title="Membres"
+    title={t("members")}
     onClick={() => setPage("members")}
 />
 
 <MenuButton
     icon="📊"
-    title="Statistiques saison"
+    title={t("seasonStats")}
     onClick={() => setPage("stats")}
 />
 
 <MenuButton
     icon="🏆"
-    title="Classement saison"
+    title={t("seasonRanking")}
     onClick={() => setPage("ranking")}
 />
 
 <MenuButton
     icon="🔔"
-    title="Notifications"
+    title={t("notifications")}
     badge={unreadCount}
     onClick={() => setPage("notifications")}
 />

@@ -1,7 +1,11 @@
 import { useEffect,useState } from "react";
 import { supabase } from "../lib/supabase";
 
+import { useLanguage } from "../i18n/useLanguage";
+
 export default function PlayerProfile(){
+
+const { t } = useLanguage();
 
 const [player,setPlayer]=useState(null);
 
@@ -76,36 +80,21 @@ useEffect(() => {
         )
         .length;
 
-    let wins = 0;
-    let losses = 0;
+let wins = 0;
+let losses = 0;
 
-    (data || []).forEach(
-      a => {
+(data || []).forEach(a => {
+  if (a.response !== "present") return;
+  if (!a.matches) return;
 
-        if (
-          a.response !== "present"
-        )
-          return;
+  if (a.matches.winner === "draw") return;
 
-        if (
-          !a.matches
-        )
-          return;
-
-        if (
-          a.matches.winner
-        ) {
-
-          wins++;
-
-        } else {
-
-          losses++;
-
-        }
-
-      }
-    );
+  if (a.matches.winner === a.team) {
+    wins++;
+  } else if (a.matches.winner) {
+    losses++;
+  }
+});
 
     const ratio =
       present
@@ -152,7 +141,7 @@ window.history.back()
 
 >
 
-← Retour
+🏠 {t("backToHome")}
 
 </button>
 
@@ -169,54 +158,29 @@ player?.display_name
 <hr/>
 
 <p>
-
-Présences :
-
-{
-stats.present
-}
-
+{t("presence")} :
+{stats.present}
 </p>
 
 <p>
-
-Absences :
-
-{
-stats.absent
-}
-
+{t("absences")} :
+{stats.absent}
 </p>
 
 <p>
-
-Victoires :
-
-{
-stats.wins
-}
-
+{t("wins")} :
+{stats.wins}
 </p>
 
 <p>
-
-Défaites :
-
-{
-stats.losses
-}
-
+{t("losses")} :
+{stats.losses}
 </p>
 
 <p>
-
-Ratio victoire :
-
-{
-stats.ratio
-}
+{t("winRatio")} :
+{stats.ratio}
 %
-
 </p>
 
 </div>

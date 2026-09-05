@@ -3,7 +3,11 @@ import { supabase } from "../lib/supabase";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 
+import { useLanguage } from "../i18n/useLanguage";
+
 export default function Statistics() {
+
+  const { t, language } = useLanguage();
 
   const [players, setPlayers] = useState([]);
   const [myId, setMyId] = useState(null);
@@ -162,8 +166,8 @@ export default function Statistics() {
             p.profile_id,
 
           name:
-            p.profiles?.display_name ||
-            "Joueur",
+  p.profiles?.display_name ||
+  t("player"),
 
           created:
             created || 0,
@@ -189,12 +193,7 @@ export default function Statistics() {
             return 1;
           }
 
-          return (
-            a.name || ""
-          ).localeCompare(
-            b.name || "",
-            "fr"
-          );
+          return (a.name || "").localeCompare(b.name || "", language);
 
         }
       );
@@ -211,7 +210,7 @@ export default function Statistics() {
       cancelled = true;
     };
 
-  }, []);
+    }, [language, t]);
 
   return (
 
@@ -219,7 +218,7 @@ export default function Statistics() {
 
       <h1 className="page-title">
 
-        📊 Statistiques de la saison
+        📊 {t("seasonStats")}
 
       </h1>
 
@@ -235,12 +234,11 @@ export default function Statistics() {
               }}
             >
 
-              🏆 Aucune saison active.
+              🏆 {t("noActiveSeason")}
 
-              <br />
+<br />
 
-              Créez un premier match pour démarrer
-              automatiquement la première saison.
+{t("createFirstMatchForSeason")}
 
             </p>
 
@@ -280,7 +278,7 @@ export default function Statistics() {
 
                       ?
 
-                      "👤 " + p.name + " (Moi)"
+                      "👤 " + p.name + " (" + t("myself") + ")"
 
                       :
 
@@ -293,15 +291,15 @@ export default function Statistics() {
               </h3>
 
               <p>
-                <b>📅 Matchs créés :</b> {p.created}
+                <b>📅 {t("matchesCreated")} :</b> {p.created}
               </p>
 
               <p style={{ marginTop: "8px" }}>
-                <b>✅ Présences :</b> {p.present}
+                <b>✅ {t("presences")} :</b> {p.present}
               </p>
 
               <p style={{ marginTop: "8px" }}>
-                <b>❌ Absences :</b> {p.absent}
+                <b>❌ {t("dashboardAbsences")} :</b>{p.absent}
               </p>
 
               <div
@@ -317,7 +315,7 @@ export default function Statistics() {
                     opacity: .7
                   }}
                 >
-                  Taux de présence
+                  {t("attendanceRate")}
                 </div>
 
                 <div
@@ -336,29 +334,29 @@ export default function Statistics() {
 
               <p style={{ marginTop: "12px" }}>
 
-                <b>🎯 Fiabilité :</b>
+                <b>🎯 {t("reliability")} :</b>
 
                 {
 
-                  p.rate >= 90
+  p.rate >= 90
 
-                    ?
+    ?
 
-                    " 🟢 Excellente"
+    ` ${t("reliabilityExcellent")}`
 
-                    :
+    :
 
-                    p.rate >= 70
+    p.rate >= 70
 
-                      ?
+      ?
 
-                      " 🟡 Correcte"
+      ` ${t("reliabilityGood")}`
 
-                      :
+      :
 
-                      " 🔴 À relancer"
+      ` ${t("reliabilityNeedsAttention")}`
 
-                }
+}
 
               </p>
 

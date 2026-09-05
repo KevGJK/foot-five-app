@@ -3,7 +3,11 @@ import { supabase } from "../lib/supabase";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 
+import { useLanguage } from "../i18n/useLanguage";
+
 export default function Ranking(){
+
+const { t } = useLanguage();
 
 const [ranking,setRanking]=useState([]);
 
@@ -197,23 +201,23 @@ useEffect(() => {
         ).length;
 
       const draws =
-        playerTeams.filter(
-          t => {
+  playerTeams.filter(
+    t => {
 
-            const match =
-              matches?.find(
-                m =>
-                  m.id ===
-                  t.match_id
-              );
+      const match =
+        matches?.find(
+          m =>
+            m.id ===
+            t.match_id
+        );
 
-            return (
-              match &&
-              !match.winner
-            );
+      return (
+        match &&
+        match.winner === "draw"
+      );
 
-          }
-        ).length;
+    }
+  ).length;
 
       const losses =
         Math.max(
@@ -311,7 +315,7 @@ return(
 
 <h1>
 
-🏆 Classement saison
+🏆 {t("seasonRanking")}
 
 </h1>
 
@@ -374,7 +378,7 @@ opacity:.7
 }}
 >
 
-Score global : {r.score}/100
+{t("globalScore")} : {r.score}/100
 
 </span>
 
@@ -392,23 +396,23 @@ lineHeight:"1"
 </div>
 
 <p style={{marginTop:"14px", marginBottom:"10px"}}>
-<b>🎮 Matchs joués :</b> {r.played}
+<b>🎮 {t("playedMatches")} :</b> {r.played}
 </p>
 
 <p style={{marginTop:"6px", marginBottom:"12px"}}>
-<b>📊 Participation :</b> {r.participation}%
+<b>📊 {t("participation")} :</b> {r.participation}%
 </p>
 
 <p style={{marginTop:"6px"}}>
-<b>🟢 Victoires :</b> {r.wins}
+<b>🟢 {t("wins")} :</b> {r.wins}
 </p>
 
 <p style={{marginTop:"6px"}}>
-<b>⚪ Matchs nuls :</b> {r.draws}
+<b>⚪ {t("drawMatches")} :</b> {r.draws}
 </p>
 
 <p style={{marginTop:"6px"}}>
-<b>🔴 Défaites :</b> {r.losses}
+<b>🔴 {t("losses")} :</b> {r.losses}
 </p>
 
 </Card>

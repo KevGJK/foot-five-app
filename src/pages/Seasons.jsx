@@ -3,6 +3,8 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import BackButton from "../components/ui/BackButton";
 
+import { useLanguage } from "../i18n/useLanguage";
+
 export default function Seasons({
   goBack,
   activeSeason,
@@ -12,53 +14,67 @@ export default function Seasons({
   viewResults
 }) {
 
+const { t, language } = useLanguage();
+
+const dateLocale = {
+  fr: "fr-FR",
+  en: "en-GB",
+  es: "es-ES",
+  de: "de-DE",
+  it: "it-IT",
+  pt: "pt-PT",
+};
+
+const currentLocale =
+  dateLocale[language] || "fr-FR";
+
   return (
     <>
       <BackButton onClick={goBack}>
-        ⚙ Retour Administration
+        ⚙ {t("backToAdministration")}
       </BackButton>
 
       <Page>
 
         <h1 className="page-title">
-          🏆 Gestion des saisons
+          🏆 {t("seasonManagement")}
         </h1>
 
         <Card>
 
           <h2>
-            🏆 Saison active
+            🏆 {t("activeSeason")}
           </h2>
 
           {loadingSeason ? (
 
             <p>
-              Chargement...
+              {t("loading")}
             </p>
 
           ) : activeSeason ? (
 
             <>
               <p>
-                <b>🏷️ Nom :</b> {activeSeason.name}
+                <b>🏷️ {t("name")} :</b> {activeSeason.name}
               </p>
 
               <p style={{ marginTop: 8 }}>
-  <b>📅 Début :</b>{" "}
+  <b>📅 {t("startDate")} :</b>{" "}
   {new Date(
     activeSeason.start_date
-  ).toLocaleDateString("fr-FR")}
+  ).toLocaleDateString(currentLocale)}
 </p>
 
 <p style={{ marginTop: 8 }}>
-  🟢 <b>Statut :</b> Saison en cours
+  🟢 <b>{t("status")} :</b> {t("currentSeason")}
 </p>
             </>
 
           ) : (
 
             <p>
-              Aucune saison active.
+              {t("noActiveSeason")}
             </p>
 
           )}
@@ -68,7 +84,7 @@ export default function Seasons({
         <Card>
 
           <h2>
-            📚 Historique des saisons
+            📚 {t("seasonHistory")}
           </h2>
 
           <p
@@ -78,7 +94,7 @@ export default function Seasons({
               marginBottom: "16px"
             }}
           >
-            Toutes les saisons du club, de la plus récente à la plus ancienne.
+            {t("seasonHistoryDescription")}
           </p>
 
           {allSeasons?.map(season => (
@@ -121,21 +137,21 @@ export default function Seasons({
 >
   {season.active ? (
     <>
-      📅 Début :{" "}
+      📅 {t("startDate")} :{" "}
       {new Date(
         season.start_date
-      ).toLocaleDateString("fr-FR")}
+      ).toLocaleDateString(currentLocale)}
     </>
   ) : (
     <>
       📅{" "}
       {new Date(
         season.start_date
-      ).toLocaleDateString("fr-FR")}
+      ).toLocaleDateString(currentLocale)}
       {" → "}
       {new Date(
         season.end_date
-      ).toLocaleDateString("fr-FR")}
+      ).toLocaleDateString(currentLocale)}
     </>
   )}
 </div>
@@ -149,8 +165,8 @@ export default function Seasons({
                   }}
                 >
                   {season.active
-                    ? "🟢 Active"
-                    : "⚪ Terminée"}
+  ? t("active")
+  : t("finished")}
                 </div>
 
               </div>
@@ -165,7 +181,7 @@ export default function Seasons({
                     width: "100%"
                   }}
                 >
-                  🏆 Voir le classement final
+                  🏆 {t("viewFinalRanking")}
                 </Button>
 
               )}
@@ -185,7 +201,7 @@ export default function Seasons({
               marginTop: "20px"
             }}
           >
-            🔒 Clôturer la saison
+            🔒 {t("closeSeason")}
           </Button>
 
         )}

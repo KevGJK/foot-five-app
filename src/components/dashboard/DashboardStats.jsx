@@ -1,32 +1,35 @@
 import Section from "../ui/Section";
+import { useLanguage } from "../../i18n/useLanguage";
 
 export default function DashboardStats({
   stats,
   reliability
 }) {
 
+  const { t } = useLanguage();
+
   return (
 
-    <Section title="📈 Tableau de bord">
+    <Section title={t("dashboardStats")}>
 
       <p>
-        <b>📅 Matchs créés :</b> {stats.created}
+        <b>{t("matchesCreated")}</b> {stats.created}
       </p>
 
       <p style={{ marginTop: 8 }}>
-        <b>✅ Présences :</b> {stats.present}
+        <b>{t("presences")}</b> {stats.present}
       </p>
 
       <p style={{ marginTop: 8 }}>
-        <b>❌ Absences :</b> {stats.absent}
+        <b>{t("dashboardAbsences")}</b> {stats.absent}
       </p>
 
       <p style={{ marginTop: 8 }}>
-        <b>📊 Taux de présence :</b> {stats.rate}%
+        <b>{t("attendanceRate")}</b> {stats.rate}%
       </p>
 
       <p style={{ marginTop: 8 }}>
-        <b>🎯 Fiabilité :</b> {reliability()}
+        <b>{t("dashboardReliability")}</b> {reliability()}
       </p>
 
     </Section>

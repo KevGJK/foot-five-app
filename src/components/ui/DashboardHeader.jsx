@@ -1,4 +1,5 @@
 import Button from "./Button";
+import { useLanguage } from "../../i18n/useLanguage";
 
 export default function DashboardHeader({
   club,
@@ -9,6 +10,9 @@ export default function DashboardHeader({
   changeLogo,
   setLogoInput,
 }) {
+
+const { t } = useLanguage();
+
   return (
     <>
       {showLogo && (
@@ -92,7 +96,7 @@ export default function DashboardHeader({
     minWidth: "105px"
 }}
   >
-    ✏️ Modifier le logo
+    {t("editLogo")}
   </Button>
 </div>
         )}

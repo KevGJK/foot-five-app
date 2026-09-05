@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useLanguage } from "../i18n/useLanguage";
 
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
@@ -7,6 +8,8 @@ import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 
 export default function Login({ onSuccess }) {
+
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +59,9 @@ onSuccess();
   async function register() {
 
     if (!firstName || !lastName || !email || !password) {
-      alert("Tous les champs sont obligatoires");
+      alert(
+  t("allFieldsRequired")
+);
       return;
     }
 
@@ -110,7 +115,9 @@ onSuccess();
 
     setLoading(false);
 
-    alert("Compte créé avec succès");
+    alert(
+  t("accountCreatedSuccess")
+);
 
     if (window.location.pathname.startsWith("/join/")) {
 
@@ -172,22 +179,20 @@ margin:"0 auto 20px auto"
             lineHeight: 1.5
           }}
         >
-          Organisez vos matchs,
-          composez des équipes équilibrées
-          et suivez vos statistiques.
+          {t("loginDescription")}
         </p>
 
         {registerMode && (
           <>
 
             <Input
-              placeholder="Prénom"
+              placeholder={t("firstName")}
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
             />
 
             <Input
-              placeholder="Nom"
+              placeholder={t("lastName")}
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               style={{ marginTop: "16px" }}
@@ -197,7 +202,7 @@ margin:"0 auto 20px auto"
         )}
 
         <Input
-          placeholder="Adresse e-mail"
+          placeholder={t("emailAddress")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           style={{
@@ -207,7 +212,7 @@ margin:"0 auto 20px auto"
 
         <Input
           type="password"
-          placeholder="Mot de passe"
+          placeholder={t("password")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           style={{ marginTop: "16px" }}
@@ -233,13 +238,13 @@ margin:"0 auto 20px auto"
 
             loading
 
-              ? "Chargement..."
+  ? t("loading")
 
-              : registerMode
+  : registerMode
 
-                ? "Créer mon compte"
+    ? t("createMyAccount")
 
-                : "Se connecter"
+    : t("signIn")
 
           }
 
@@ -265,9 +270,9 @@ margin:"0 auto 20px auto"
 
             registerMode
 
-              ? "J'ai déjà un compte"
+  ? t("alreadyHaveAccount")
 
-              : "Créer un compte"
+  : t("createAccount")
 
           }
 

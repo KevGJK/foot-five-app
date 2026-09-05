@@ -5,12 +5,15 @@ import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import { useLanguage } from "../i18n/useLanguage";
 
 export default function ClubSelector({
 
 goJoin
 
 }){
+
+const { t } = useLanguage();
 
 const [clubName,setClubName]=useState("");
 
@@ -128,7 +131,7 @@ const ok=
 
 window.confirm(
 
-`Changer de club ?
+`${t("switchClubConfirm")}
 
 ${club.name}`
 
@@ -167,7 +170,7 @@ user.id
 );
 
 alert(
-"Club changé"
+t("clubChanged")
 );
 
 window.location.reload();
@@ -179,7 +182,7 @@ async function createClub(){
 if(!clubName){
 
 alert(
-"Nom du club obligatoire"
+t("clubNameRequired")
 );
 
 return;
@@ -227,7 +230,7 @@ existing.length>0
 setLoading(false);
 
 alert(
-"Ce nom de club existe déjà"
+t("clubNameAlreadyExists")
 );
 
 return;
@@ -362,7 +365,7 @@ return;
 }
 
 alert(
-"Club créé"
+t("clubCreated")
 );
 
 window.location.reload();
@@ -379,8 +382,8 @@ async function leaveClub(membership){
   ){
 
     alert(
-      "Le propriétaire ne peut pas quitter son propre club."
-    );
+t("ownerCannotLeaveClub")
+);
 
     return;
 
@@ -388,7 +391,13 @@ async function leaveClub(membership){
 
   const ok =
   window.confirm(
-    `Quitter le club "${club.name}" ?`
+    t(
+  "leaveClubConfirm",
+  {
+    clubName:
+      club.name
+  }
+)
   );
 
   if (!ok) {
@@ -508,7 +517,7 @@ if (managersError) {
     const displayName =
       profile?.display_name ||
       user.user_metadata?.display_name ||
-      "Un membre";
+      t("unknownMember");
 
 
     try {
@@ -528,10 +537,16 @@ if (managersError) {
           "member_left",
 
         title:
-          "👋 Membre parti",
+  t("memberLeftTitle"),
 
         message:
-          `${displayName} a quitté le club.`,
+  t(
+    "memberLeftMessage",
+    {
+      member:
+        displayName
+    }
+  ),
 
         action:
           null,
@@ -656,8 +671,14 @@ if (managersError) {
    */
 
   alert(
-    `Vous avez quitté le club "${club.name}".`
-  );
+  t(
+    "clubLeftSuccess",
+    {
+      clubName:
+        club.name
+    }
+  )
+);
 
   window.location.reload();
 
@@ -669,7 +690,7 @@ return(
 
 <h1 className="page-title">
 
-🏟 Clubs
+🏟 {t("clubs")}
 
 </h1>
 
@@ -682,7 +703,7 @@ marginBottom:"18px"
 }}
 >
 
-👥 Mes clubs
+👥 {t("myClubs")}
 
 </h2>
 
@@ -788,7 +809,7 @@ c.role==="owner"
 
 ?
 
-"👑 Owner"
+`👑 ${t("owner")}`
 
 :
 
@@ -796,11 +817,11 @@ c.role==="admin"
 
 ?
 
-"🛡 Admin"
+`🛡 ${t("admin")}`
 
 :
 
-"⚽ Joueur"
+`⚽ ${t("player")}`
 
 }
 
@@ -824,7 +845,7 @@ leaveClub(c);
 
 }
 
-title="Quitter le club"
+title={t("leaveClub")}
 
 style={{
 
@@ -871,13 +892,13 @@ marginBottom:"18px"
 }}
 >
 
-➕ Créer un club
+➕ {t("createClub")}
 
 </h2>
 
 <Input
 
-placeholder="Nom du club"
+placeholder={t("clubName")}
 
 value={clubName}
 
@@ -897,7 +918,7 @@ marginTop:"20px"
 
 >
 
-➕ Créer mon club
+➕ {t("createMyClub")}
 
 </Button>
 
@@ -915,7 +936,7 @@ marginTop:"20px"
 
 >
 
-🔗 Rejoindre un club
+🔗 {t("joinClub")}
 
 </Button>
 
