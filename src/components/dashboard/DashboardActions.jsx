@@ -1,10 +1,14 @@
 import MenuButton from "../ui/MenuButton";
 import Button from "../ui/Button";
 
+import { useLanguage } from "../../i18n/useLanguage";
+
 export default function DashboardActions({
   setPage,
   clubRole
 }) {
+
+const { t } = useLanguage();
 
   return (
 
@@ -20,7 +24,7 @@ export default function DashboardActions({
 
         <MenuButton
           icon="🏟"
-          title="Clubs"
+          title={t("clubs")}
           onClick={() => setPage("club")}
           style={{
             flex: 1,
@@ -30,7 +34,7 @@ export default function DashboardActions({
 
         <MenuButton
           icon="⚙"
-          title="Paramètres"
+          title={t("settings")}
           onClick={() => setPage("settings")}
           style={{
             flex: 1,
@@ -49,7 +53,7 @@ export default function DashboardActions({
       marginTop: "12px"
     }}
   >
-    👑 Administration
+    👑 {t("administration")}
   </Button>
 )}
 

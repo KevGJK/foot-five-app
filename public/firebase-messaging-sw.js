@@ -54,10 +54,10 @@ messaging.onBackgroundMessage((payload) => {
       badge: "/icon-192.png",
       data: notificationData,
       tag: data.type && data.actionId
-    ? `${data.type}-${data.actionId}`
-    : data.type || "foot-five",
+  ? `${data.type}-${data.actionId}`
+  : data.type || "foot-five",
+renotify: true,
 
-renotify: true
     }
   );
 

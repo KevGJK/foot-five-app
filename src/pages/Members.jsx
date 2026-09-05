@@ -3,8 +3,11 @@ import { supabase } from "../lib/supabase";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
+import { useLanguage } from "../i18n/useLanguage";
 
 export default function Members() {
+
+const { t } = useLanguage();
 
   const [members, setMembers] = useState([]);
 
@@ -335,9 +338,8 @@ export default function Members() {
       );
 
       alert(
-        error?.message ||
-        "Impossible de modifier le rôle."
-      );
+  t("memberManagementError")
+);
 
     }
 
@@ -355,23 +357,11 @@ export default function Members() {
     name
   ) {
 
-    const ok =
-
-      window.confirm(
-
-        `⚠️ Attention
-
-Vous êtes sur le point de retirer :
-
-${name}
-
-du club.
-
-Cette action est réversible uniquement si le joueur rejoint à nouveau le club.
-
-Confirmer la suppression ?`
-
-      );
+ const ok =
+  window.confirm(
+    t("removeMemberConfirm")
+      .replace("{name}", name)
+  );
 
 
     if (!ok) {
@@ -403,8 +393,8 @@ Confirmer la suppression ?`
 
 
       alert(
-        "✅ Membre retiré du club"
-      );
+  t("memberRemoved")
+);
 
 
       await load();
@@ -419,9 +409,8 @@ Confirmer la suppression ?`
       );
 
       alert(
-        error?.message ||
-        "Impossible de retirer ce membre du club."
-      );
+  t("memberRemoveError")
+);
 
     }
 
@@ -480,10 +469,9 @@ Confirmer la suppression ?`
         error
       );
 
-      alert(
-        error?.message ||
-        "Impossible de modifier le niveau."
-      );
+     alert(
+  t("memberLevelUpdateError")
+);
 
     }
 
@@ -623,8 +611,8 @@ Confirmer la suppression ?`
     if (!canInvite()) {
 
       alert(
-        "🔒 Seul le propriétaire ou un administrateur du club peut inviter un nouveau membre."
-      );
+  t("invitePermissionDenied")
+);
 
       return;
 
@@ -634,8 +622,8 @@ Confirmer la suppression ?`
     if (!inviteCode) {
 
       alert(
-        "❌ Code d'invitation indisponible."
-      );
+  t("inviteCodeUnavailable")
+);
 
       return;
 
@@ -648,10 +636,9 @@ Confirmer la suppression ?`
 
 
     const text =
-
-      `⚽ Rejoins mon club ${clubName} sur Foot Five
-
-${link}`;
+  t("clubInvitationText")
+    .replace("{clubName}", clubName) +
+  `\n\n${link}`;
 
 
     try {
@@ -680,8 +667,8 @@ ${link}`;
 
 
       alert(
-        "📤 Lien copié"
-      );
+  t("invitationCopied")
+);
 
     }
 
@@ -721,7 +708,7 @@ ${link}`;
 
       <h1 className="page-title">
 
-        👥 Membres
+        👥 {t("members")}
 
       </h1>
 
@@ -746,7 +733,7 @@ ${link}`;
 
             >
 
-              🔑 Code d'invitation
+              {t("invitationCodeTitle")}
 
             </h2>
 
@@ -802,7 +789,7 @@ ${link}`;
 
             >
 
-              📤 Inviter un joueur
+              {t("invitePlayer")}
 
             </Button>
 
@@ -860,9 +847,7 @@ ${link}`;
 
                     ?
 
-                    "👤 " +
-                    m.profiles?.display_name +
-                    " (Moi)"
+                    `👤 ${m.profiles?.display_name} (${t("myself")})`
 
                     :
 
@@ -906,23 +891,23 @@ ${link}`;
 
                 {
 
-                  m.role === "owner"
+                 m.role === "owner"
 
-                    ?
+  ?
 
-                    "👑 Owner"
+  t("ownerRole")
 
-                    :
+  :
 
-                    m.role === "admin"
+  m.role === "admin"
 
-                      ?
+    ?
 
-                      "🛡 Admin"
+    t("adminRole")
 
-                      :
+    :
 
-                      "⚽ Joueur"
+    t("playerRole")
 
                 }
 
@@ -975,7 +960,7 @@ ${link}`;
 
                     >
 
-                      🏅 Niveau
+                      {t("level")}
 
                     </div>
 
@@ -1043,49 +1028,49 @@ ${link}`;
 
                       <option value="">
 
-                        Non évalué
+                         {t("notRated")}
 
                       </option>
 
                       <option value="1">
 
-                        1️⃣ Débutant
+                       1️⃣ {t("levelBeginner")}
 
                       </option>
 
                       <option value="2">
 
-                        2️⃣ Loisir
+                       2️⃣ {t("levelLeisure")}
 
                       </option>
 
                       <option value="3">
 
-                        3️⃣ Intermédiaire
+                       3️⃣ {t("levelIntermediate")}
 
                       </option>
 
                       <option value="4">
 
-                        4️⃣ Confirmé
+                       4️⃣ {t("levelConfirmed")}
 
                       </option>
 
                       <option value="5">
 
-                        5️⃣ Avancé
+                       5️⃣ {t("levelAdvanced")}
 
                       </option>
 
                       <option value="6">
 
-                        6️⃣ Expert
+                       6️⃣ {t("levelExpert")}
 
                       </option>
 
                       <option value="7">
 
-                        7️⃣ Élite
+                       7️⃣ {t("levelElite")}
 
                       </option>
 
@@ -1161,7 +1146,7 @@ ${link}`;
 
                         >
 
-                          🛡 Nommer Admin
+                          {t("makeAdmin")}
 
                         </Button>
 
@@ -1191,7 +1176,7 @@ ${link}`;
 
                         >
 
-                          ↩ Retirer Admin
+                          {t("removeAdmin")}
 
                         </Button>
 
@@ -1258,7 +1243,7 @@ ${link}`;
 
                     >
 
-                      ❌ Retirer du club
+                      {t("removeFromClub")}
 
                     </Button>
 

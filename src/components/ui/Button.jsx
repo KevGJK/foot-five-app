@@ -1,3 +1,5 @@
+import { useLanguage } from "../../i18n/useLanguage";
+
 export default function Button({
   children,
   variant = "primary",
@@ -8,6 +10,8 @@ export default function Button({
   style = {},
   ...props
 }) {
+
+  const { t } = useLanguage();
 
   return (
 
@@ -22,7 +26,7 @@ export default function Button({
       {...props}
     >
 
-      {loading ? "Chargement..." : children}
+      {loading ? t("loading") : children}
 
     </button>
 

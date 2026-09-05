@@ -8,9 +8,23 @@ import "./styles/app.css";
 import App from "./App.jsx";
 import NotificationListener from "./services/NotificationListener.jsx";
 
-createRoot(document.getElementById("root")).render(
+import LanguageProvider
+from "./i18n/LanguageProvider";
+
+createRoot(
+  document.getElementById("root")
+).render(
+
   <StrictMode>
-    <NotificationListener />
-    <App />
+
+    <LanguageProvider>
+
+      <NotificationListener />
+
+      <App />
+
+    </LanguageProvider>
+
   </StrictMode>
+
 );

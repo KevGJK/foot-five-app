@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { createNotification } from "../services/notifications";
+import { useLanguage } from "../i18n/useLanguage";
+
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import BackButton from "../components/ui/BackButton";
-import { createNotification } from "../services/notifications";
 
 export default function JoinClub({
   goHome
 }) {
+
+const { t } = useLanguage();
 
   const initialCode =
     window.location.pathname
@@ -73,8 +77,8 @@ export default function JoinClub({
         setLoading(false);
 
         alert(
-          "Veuillez saisir un code d'invitation."
-        );
+  t("inviteCodeRequired")
+);
 
         return;
       }
@@ -114,8 +118,8 @@ export default function JoinClub({
         setLoading(false);
 
         alert(
-          "Impossible de rejoindre le club."
-        );
+  t("joinClubError")
+);
 
         return;
       }
@@ -206,7 +210,7 @@ export default function JoinClub({
           const displayName =
             profile?.display_name ||
             user.user_metadata?.display_name ||
-            "Un nouveau membre";
+            t("newMemberDefaultName");
 
 
           try {
@@ -230,12 +234,15 @@ export default function JoinClub({
                 "new_member",
 
               title:
-
-                "👤 Nouveau membre",
+  t("newMemberNotificationTitle"),
 
               message:
-
-                `${displayName} vient de rejoindre le club.`,
+  t(
+    "newMemberNotificationMessage",
+    {
+      member: displayName
+    }
+  ),
 
               action:
 
@@ -280,10 +287,15 @@ export default function JoinClub({
       setLoading(false);
 
       alert(
-        alreadyMember
-          ? "✅ Vous êtes déjà membre de ce club."
-          : `✅ Club "${clubName}" rejoint`
-      );
+  alreadyMember
+    ? t("alreadyClubMember")
+    : t(
+        "clubJoinedSuccess",
+        {
+          clubName
+        }
+      )
+);
 
       window.location.href = "/";
 
@@ -299,7 +311,7 @@ export default function JoinClub({
 
       const message =
         error?.message ||
-        "Impossible de rejoindre le club";
+        t("joinClubError")
 
 
       if (
@@ -309,8 +321,8 @@ export default function JoinClub({
       ) {
 
         alert(
-          "Code d'invitation invalide."
-        );
+  t("invalidInviteCode")
+);
 
       } else if (
         message.includes(
@@ -319,8 +331,8 @@ export default function JoinClub({
       ) {
 
         alert(
-          "Vous devez être connecté pour rejoindre un club."
-        );
+  t("loginRequiredToJoinClub")
+);
 
       } else {
 
@@ -347,7 +359,7 @@ export default function JoinClub({
 
         <h1 className="page-title">
 
-          ➕ Rejoindre un club
+          ➕ {t("joinClub")}
 
         </h1>
 
@@ -360,7 +372,7 @@ export default function JoinClub({
           }}
         >
 
-          Saisissez le code d'invitation communiqué par le propriétaire du club.
+          {t("joinClubDescription")}
 
         </p>
 
@@ -369,7 +381,7 @@ export default function JoinClub({
 
           <Input
 
-            placeholder="Code d'invitation"
+            placeholder={t("inviteCode")}
 
             value={code}
 
@@ -393,7 +405,7 @@ export default function JoinClub({
 
           >
 
-            🔗 Rejoindre le club
+            🔗 {t("joinClub")}
 
           </Button>
 

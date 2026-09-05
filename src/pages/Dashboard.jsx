@@ -22,8 +22,23 @@ import { useClub } from "../hooks/useClub";
 import DashboardMenu from "../components/dashboard/DashboardMenu";
 import DashboardStats from "../components/dashboard/DashboardStats";
 import DashboardActions from "../components/dashboard/DashboardActions";
+import { useLanguage } from "../i18n/useLanguage";
 
 export default function Dashboard() {
+
+const { t, language } = useLanguage();
+
+const dateLocale = {
+  fr: "fr-FR",
+  en: "en-GB",
+  es: "es-ES",
+  de: "de-DE",
+  it: "it-IT",
+  pt: "pt-PT",
+};
+
+const currentLocale =
+  dateLocale[language] || "fr-FR";
 
 const [page,setPage]=useState("loading");
 
@@ -51,7 +66,7 @@ if(
 stats.rate>=90
 ){
 
-return "🟢 Excellente";
+return t("reliabilityExcellent");
 
 }
 
@@ -59,11 +74,11 @@ if(
 stats.rate>=70
 ){
 
-return "🟡 Correcte";
+return t("reliabilityGood");
 
 }
 
-return "🔴 À relancer";
+return t("reliabilityNeedsAttention");
 
 }
 
@@ -310,7 +325,7 @@ url
 );
 
 alert(
-"✅ Logo mis à jour"
+  t("logoUpdated")
 );
 
 }
@@ -463,7 +478,7 @@ if(error){
 console.error(error);
 
 alert(
-"Impossible de charger le classement de cette saison."
+  t("seasonRankingLoadError")
 );
 
 setLoadingResults(false);
@@ -484,10 +499,12 @@ setPage("season-results");
 
 async function closeSeason(){
 
-  if(!activeSeason){
-    alert("Aucune saison active.");
-    return;
-  }
+if(!activeSeason){
+  alert(
+    t("noActiveSeason")
+  );
+  return;
+}
 
   const {
     data:{user}
@@ -513,15 +530,21 @@ if(
     member.role !== "admin"
   )
 ){
+
   alert(
-    "Seul le propriétaire ou un administrateur du club peut clôturer une saison."
-  );
+  t("seasonClosePermissionDenied")
+);
+
   return;
 }
 
   const ok = window.confirm(
-    `Clôturer définitivement la saison ${activeSeason.name} ?`
-  );
+  t("seasonCloseConfirm")
+    .replace(
+      "{seasonName}",
+      activeSeason.name
+    )
+);
 
   if(!ok){
     return;
@@ -545,17 +568,21 @@ if(
 
     const list = openMatches
       .map(m =>
-        `${m.title} (${new Date(m.match_date).toLocaleDateString("fr-FR")})`
+        `${m.title} (${new Date(m.match_date).toLocaleDateString(currentLocale)})`
       )
       .join("\n");
 
     alert(
-      `Impossible de clôturer la saison.
-
-Il reste ${openMatches.length} match(s) non terminé(s).
-
-${list}`
-    );
+  t("seasonCloseOpenMatches")
+    .replace(
+      "{count}",
+      openMatches.length
+    )
+    .replace(
+      "{matches}",
+      list
+    )
+);
 
     return;
   }
@@ -645,7 +672,7 @@ ${list}`
   for(const m of members || []){
 
     const name =
-      m.profiles?.display_name || "Joueur";
+  m.profiles?.display_name || t("player");
 
     const playerAttendances =
       (attendances || []).filter(
@@ -877,8 +904,8 @@ const {
   ){
 
     alert(
-      "Aucune saison n'a été mise à jour."
-    );
+  t("noSeasonUpdated")
+);
 
     return;
   }
@@ -922,11 +949,11 @@ const {
 
   if(createError){
 
-    alert(
-      `La saison a été clôturée mais la nouvelle saison n'a pas pu être créée.
+alert(
+  `${t("seasonCreateError")}
 
 ${createError.message}`
-    );
+);
 
     await loadSeason();
 
@@ -991,10 +1018,11 @@ ${createError.message}`
           "season_closed",
 
         title:
-          "🏁 Fin de saison",
+  `🏁 ${t("seasonClosed")}`,
 
         message:
-          `La saison ${activeSeason.name} est terminée. Consultez les résultats de la saison.`,
+  t("seasonClosedNotificationMessage")
+    .replace("{seasonName}", activeSeason.name),
 
         action:
           null,
@@ -1046,7 +1074,8 @@ ${createError.message}`
           "⚽ Nouvelle saison",
 
         message:
-          `La saison ${seasonName} est maintenant ouverte.`,
+  t("newSeasonNotificationMessage")
+    .replace("{seasonName}", seasonName),
 
         action:
           null,
@@ -1076,11 +1105,17 @@ ${createError.message}`
 
   await loadSeason();
 
-  alert(
-    `🎉 La saison ${activeSeason.name} est terminée.
-
-La saison ${seasonName} est maintenant active.`
-  );
+alert(
+  t("seasonClosedSuccess")
+    .replace(
+      "{oldSeason}",
+      activeSeason.name
+    )
+    .replace(
+      "{newSeason}",
+      seasonName
+    )
+);
 
 }
 
@@ -1239,12 +1274,11 @@ if(page==="admin"){
         <Card>
 
           <h2 className="section-title">
-            🔒 Accès réservé
+            🔒 {t("accessDenied")}
           </h2>
 
           <p>
-            Cette section est réservée au propriétaire
-            et aux administrateurs du club.
+            {t("adminAccessDenied")}
           </p>
 
         </Card>
@@ -1279,7 +1313,7 @@ return(
 onClick={()=>setPage("seasons")}
 >
 
-← Retour aux saisons
+← {t("backToSeasons")}
 
 </BackButton>
 
@@ -1287,7 +1321,7 @@ onClick={()=>setPage("seasons")}
 
 <h1 className="page-title">
 
-🏆 Classement final
+🏆 {t("finalRanking")}
 
 </h1>
 
@@ -1311,7 +1345,7 @@ marginTop:"8px"
 {selectedSeason &&
 new Date(
 selectedSeason.start_date
-).toLocaleDateString("fr-FR")
+).toLocaleDateString(currentLocale)
 }
 
 {" → "}
@@ -1319,7 +1353,7 @@ selectedSeason.start_date
 {selectedSeason &&
 new Date(
 selectedSeason.end_date
-).toLocaleDateString("fr-FR")
+).toLocaleDateString(currentLocale)
 }
 
 </p>
@@ -1332,14 +1366,14 @@ selectedSeason.end_date
 {loadingResults ? (
 
 <p>
-Chargement du classement...
+{t("loadingRanking")}
 </p>
 
 ) : seasonResults.length===0 ? (
 
 <p>
 
-Aucun résultat enregistré pour cette saison.
+{t("noSeasonResults")}
 
 </p>
 
@@ -1422,7 +1456,10 @@ seasonResults.map((player,index)=>(
         opacity:.8
       }}
     >
-      ⚽ <b>{player.played}</b> match{player.played>1 ? "s" : ""}
+      ⚽ <b>{player.played}</b>{" "}
+{player.played > 1
+  ? t("matches")
+  : t("match")}
     </div>
 
     <div
@@ -1431,7 +1468,7 @@ seasonResults.map((player,index)=>(
         opacity:.8
       }}
     >
-      🟢 <b>{player.wins}</b> victoire{player.wins>1 ? "s" : ""}
+      🟢 <b>{player.wins}</b> {t("win")}{player.wins>1 ? "s" : ""}
     </div>
 
     <div
@@ -1440,7 +1477,7 @@ seasonResults.map((player,index)=>(
         opacity:.8
       }}
     >
-      ⚪ <b>{player.draws}</b> nul{player.draws>1 ? "s" : ""}
+      ⚪ <b>{player.draws}</b> {t("draw")}{player.draws>1 ? "s" : ""}
     </div>
 
     <div
@@ -1449,7 +1486,7 @@ seasonResults.map((player,index)=>(
         opacity:.8
       }}
     >
-      🔴 <b>{player.losses}</b> défaite{player.losses>1 ? "s" : ""}
+      🔴 <b>{player.losses}</b> {t("loss")}{player.losses>1 ? "s" : ""}
     </div>
 
   </div>
@@ -1478,7 +1515,7 @@ seasonResults.map((player,index)=>(
           opacity:.8
         }}
       >
-        📅 Présence
+        📅 {t("presence")}
         <br/>
         <b>{player.present}</b>
       </div>
@@ -1489,7 +1526,7 @@ seasonResults.map((player,index)=>(
           opacity:.8
         }}
       >
-        ❌ Absences
+        ❌ {t("absences")}
         <br/>
         <b>{player.absent}</b>
       </div>
@@ -1504,7 +1541,7 @@ seasonResults.map((player,index)=>(
         opacity:.8
       }}
     >
-      🎯 Fiabilité : <b>{player.reliability}/100</b>
+      🎯 {t("reliability")} : <b>{player.reliability}/100</b>
     </div>
 
   </div>
@@ -1526,7 +1563,7 @@ seasonResults.map((player,index)=>(
         marginBottom:"8px"
       }}
     >
-      📊 Composantes du score
+      📊 {t("scoreComponents")}
     </div>
 
 
@@ -1544,7 +1581,7 @@ seasonResults.map((player,index)=>(
           opacity:.8
         }}
       >
-        ⭐ Expérience
+        ⭐ {t("experience")}
         <br/>
         <b>{player.experience}/100</b>
       </div>
@@ -1555,7 +1592,7 @@ seasonResults.map((player,index)=>(
           opacity:.8
         }}
       >
-        📈 Performance
+        📈 {t("performance")}
         <br/>
         <b>{player.performance}/100</b>
       </div>
@@ -1566,7 +1603,7 @@ seasonResults.map((player,index)=>(
           opacity:.8
         }}
       >
-        📅 Participation
+        📅 {t("participation")}
         <br/>
         <b>{player.participation}/100</b>
       </div>
@@ -1602,13 +1639,11 @@ if(page==="seasons"){
         <Card>
 
           <h2 className="section-title">
-            🔒 Accès réservé
+            🔒 {t("accessDenied")}
           </h2>
 
           <p>
-            La gestion et l'historique des saisons sont
-            réservés au propriétaire et aux administrateurs
-            du club.
+            {t("seasonAccessDenied")}
           </p>
 
         </Card>
@@ -1690,7 +1725,7 @@ padding:40
 }}
 >
 
-⚽ Chargement...
+⚽ {t("loading")}
 
 </div>
 

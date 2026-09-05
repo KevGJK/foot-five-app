@@ -5,381 +5,448 @@ import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import { useLanguage } from "../i18n/useLanguage";
 
 export default function CreateMatch() {
 
-const [title,setTitle]=useState("FOOT FIVE");
-const [location,setLocation]=useState("");
-const [date,setDate]=useState("");
-const [created,setCreated]=useState(false);
+  const { t, language } = useLanguage();
 
-async function create(){
+  const dateLocale = {
+    fr: "fr-FR",
+    en: "en-GB",
+    es: "es-ES",
+    de: "de-DE",
+    it: "it-IT",
+    pt: "pt-PT",
+  };
 
-try{
+  const currentLocale =
+    dateLocale[language] || "fr-FR";
 
-const {
-data:{user}
-}
-=
-await supabase.auth.getUser();
+  const [title, setTitle] =
+    useState(t("defaultMatchTitle"));
 
-if(!user){
+  const [location, setLocation] =
+    useState("");
 
-alert(
-"Utilisateur non connecté"
-);
+  const [date, setDate] =
+    useState("");
 
-return;
+  const [created, setCreated] =
+    useState(false);
 
-}
 
-const {
+  async function create() {
 
-data:profile,
-error:profileError
+    try {
 
-}
-=
-await supabase
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
 
-.from(
-"profiles"
-)
 
-.select(
-"active_club_id, display_name"
-)
+      if (!user) {
 
-.eq(
-"id",
-user.id
-)
+        alert(
+          t("userNotConnected")
+        );
 
-.single();
+        return;
 
-if(profileError){
+      }
 
-alert(
-profileError.message
-);
 
-return;
+      const {
+        data: profile,
+        error: profileError
+      } = await supabase
+        .from("profiles")
+        .select(
+          "active_club_id, display_name"
+        )
+        .eq(
+          "id",
+          user.id
+        )
+        .single();
 
-}
 
-if(
+      if (profileError) {
 
-!profile?.active_club_id
+        alert(
+          profileError.message
+        );
 
-){
+        return;
 
-alert(
-"Aucun club actif"
-);
+      }
 
-return;
 
-}
+      if (!profile?.active_club_id) {
 
-const {
-  data: seasons,
-  error: seasonsError
-} =
-await supabase
-.from("seasons")
-.select("*")
-.eq(
-  "club_id",
-  profile.active_club_id
-);
+        alert(
+          t("noActiveClub")
+        );
 
-if (seasonsError) {
+        return;
 
-  alert(
-    seasonsError.message
-  );
+      }
 
-  return;
 
-}
+      if (!date) {
 
-let season =
-seasons?.find(
-  s => s.active
-);
+        alert(
+          t("selectMatchDateTime")
+        );
 
-if (!date) {
+        return;
 
-  alert(
-    "Veuillez sélectionner une date et une heure"
-  );
+      }
 
-  return;
 
-}
+      const matchDate =
+        new Date(date);
 
-const matchDate =
-new Date(date);
 
-if (!season) {
+      const {
+        data: seasons,
+        error: seasonsError
+      } = await supabase
+        .from("seasons")
+        .select("*")
+        .eq(
+          "club_id",
+          profile.active_club_id
+        );
 
-  const {
-    data: newSeason,
-    error: createSeasonError
-  } =
-  await supabase
-  .from("seasons")
-  .insert({
 
-    club_id:
-    profile.active_club_id,
+      if (seasonsError) {
 
-    name:
-`Saison ${matchDate.getFullYear()}`,
+        alert(
+          seasonsError.message
+        );
 
-start_date:
-matchDate
-.toISOString()
-.split("T")[0],
+        return;
 
-    end_date:
-    "2099-12-31",
+      }
 
-    active:
-    true
 
-  })
-  .select()
-  .single();
+      let season =
+        seasons?.find(
+          s => s.active
+        );
 
-  if (createSeasonError) {
 
-    alert(
-      createSeasonError.message
-    );
+      /*
+       * Aucune saison active :
+       * création automatique d'une saison
+       * lors du premier match.
+       */
 
-    return;
+      if (!season) {
+
+        const {
+          data: newSeason,
+          error: createSeasonError
+        } = await supabase
+          .from("seasons")
+          .insert({
+
+            club_id:
+              profile.active_club_id,
+
+            name:
+              `Saison ${matchDate.getFullYear()}`,
+
+            start_date:
+              matchDate
+                .toISOString()
+                .split("T")[0],
+
+            end_date:
+              "2099-12-31",
+
+            active:
+              true
+
+          })
+          .select()
+          .single();
+
+
+        if (createSeasonError) {
+
+          alert(
+            createSeasonError.message
+          );
+
+          return;
+
+        }
+
+
+        season =
+          newSeason;
+
+      }
+
+
+      const {
+        data,
+        error
+      } = await supabase
+        .from("matches")
+        .insert({
+
+          title,
+
+          location,
+
+          match_date:
+            matchDate.toISOString(),
+
+          club_id:
+            profile.active_club_id,
+
+          season_id:
+            season.id,
+
+          organizer_id:
+            user.id,
+
+          max_players:
+            10,
+
+          status:
+            "open"
+
+        })
+        .select()
+        .single();
+
+
+      if (error) {
+
+        alert(
+          error.message
+        );
+
+        return;
+
+      }
+
+
+      const formattedDate =
+        matchDate.toLocaleDateString(
+          currentLocale
+        );
+
+
+      const formattedTime =
+        matchDate.toLocaleTimeString(
+          currentLocale,
+          {
+            hour: "2-digit",
+            minute: "2-digit"
+          }
+        );
+
+
+      await createNotification({
+
+        clubId:
+          profile.active_club_id,
+
+        createdBy:
+          user.id,
+
+        createdByName:
+          profile.display_name,
+
+        type:
+          "NEW_MATCH",
+
+        title:
+          t("newMatchNotificationTitle"),
+
+        message:
+          t("newMatchNotificationMessage")
+            .replace(
+              "{title}",
+              title
+            )
+            .replace(
+              "{date}",
+              formattedDate
+            )
+            .replace(
+              "{time}",
+              formattedTime
+            ),
+
+        action:
+          "match",
+
+        actionId:
+          data.id
+
+      });
+
+
+      setCreated(true);
+
+      setLocation("");
+
+      setDate("");
+
+    }
+    catch (e) {
+
+      console.error(e);
+
+      alert(
+        t("matchCreationError")
+      );
+
+    }
 
   }
 
-  season =
-  newSeason;
 
-}
+  return (
 
-console.log("🕐 DATE SAISIE :", date);
-console.log(
-  "🕐 DATE ISO ENVOYÉE À SUPABASE :",
-matchDate.toISOString()
-);
+    <Page>
 
-const {
+      <h1 className="page-title">
 
-data,
-error
+        {t("createMatchTitle")}
 
-}
-=
-await supabase
+      </h1>
 
-.from("matches")
 
-.insert({
+      <Card>
 
-title,
+        {created && (
 
-location,
+          <div
+            style={{
+              background: "#25D366",
+              color: "white",
+              padding: "16px",
+              borderRadius: "14px",
+              marginBottom: "20px",
+              fontWeight: "600"
+            }}
+          >
 
-match_date:
-matchDate.toISOString(),
+            {t("matchCreatedSuccess")}
 
-club_id:
-profile.active_club_id,
+          </div>
 
-season_id:
-season.id,
+        )}
 
-organizer_id:
-user.id,
 
-max_players:
-10,
+        <div className="section">
 
-status:
-"open"
+          <label className="label">
 
-})
+            {t("matchName")}
 
-.select()
+          </label>
 
-.single();
 
-if(error){
+          <Input
 
-alert(
-error.message
-);
+            value={title}
 
-return;
+            onChange={
+              (e) =>
+                setTitle(
+                  e.target.value
+                )
+            }
 
-}
+          />
 
-await createNotification({
+        </div>
 
-    clubId: profile.active_club_id,
 
-    createdBy: user.id,
+        <div className="section">
 
-    createdByName: profile.display_name,
+          <label className="label">
 
-    type: "NEW_MATCH",
+            {t("matchLocation")}
 
-    title: "Nouveau match",
+          </label>
 
-    message:
-    `Un nouveau match vient d'être créé : "${title}".\n📅 ${matchDate.toLocaleDateString("fr-FR")} à ${matchDate.toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit"
-    })}`,
 
-    action: "match",
+          <Input
 
-    actionId: data.id
+            placeholder={
+              t("matchLocationPlaceholder")
+            }
 
-});
+            value={location}
 
-setCreated(true);
+            onChange={
+              (e) =>
+                setLocation(
+                  e.target.value
+                )
+            }
 
-setLocation("");
+          />
 
-setDate("");
+        </div>
 
-}
-catch(e){
 
-console.log(e);
+        <div className="section">
 
-alert(
-"Erreur création match"
-);
+          <label className="label">
 
-}
+            {t("matchDateTime")}
 
-}
+          </label>
 
-return (
 
-<Page>
+          <Input
 
-<h1 className="page-title">
+            type="datetime-local"
 
-➕ Créer un match
+            value={date}
 
-</h1>
+            onChange={
+              (e) =>
+                setDate(
+                  e.target.value
+                )
+            }
 
-<Card>
+          />
 
-{
+        </div>
 
-created && (
 
-<div
-style={{
-background:"#25D366",
-color:"white",
-padding:"16px",
-borderRadius:"14px",
-marginBottom:"20px",
-fontWeight:"600"
-}}
->
+        <Button
 
-✅ Match créé avec succès
+          variant="primary"
 
-</div>
+          onClick={create}
 
-)
+          style={{
+            marginTop: "20px"
+          }}
 
-}
+        >
 
-<div className="section">
+          {t("createMatchButton")}
 
-<label className="label">
+        </Button>
 
-Nom du match
+      </Card>
 
-</label>
+    </Page>
 
-<Input
-
-value={title}
-
-onChange={(e)=>setTitle(e.target.value)}
-
-/>
-
-</div>
-
-<div className="section">
-
-<label className="label">
-
-Lieu
-
-</label>
-
-<Input
-
-placeholder="Ex : Urban Soccer Annecy"
-
-value={location}
-
-onChange={(e)=>setLocation(e.target.value)}
-
-/>
-
-</div>
-
-<div className="section">
-
-<label className="label">
-
-Date et heure
-
-</label>
-
-<Input
-
-type="datetime-local"
-
-value={date}
-
-onChange={(e)=>setDate(e.target.value)}
-
-/>
-
-</div>
-
-<Button
-
-variant="primary"
-
-onClick={create}
-
-style={{
-    marginTop: "20px"
-}}
-
->
-
-Créer le match
-
-</Button>
-
-</Card>
-
-</Page>
-
-);
+  );
 
 }

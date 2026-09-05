@@ -1,7 +1,51 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useLanguage } from "../i18n/useLanguage";
 
 export default function MatchVote(){
+
+const { t, language } = useLanguage();
+
+const locales = {
+  fr: "fr-FR",
+  en: "en-GB",
+  es: "es-ES",
+  de: "de-DE",
+  it: "it-IT",
+  pt: "pt-PT"
+};
+
+const locale =
+  locales[language] || "fr-FR";
+
+function formatDate(dateValue) {
+
+  return new Date(
+    dateValue
+  ).toLocaleDateString(
+    locale,
+    {
+      weekday: "long",
+      day: "numeric",
+      month: "long"
+    }
+  );
+
+}
+
+function formatTime(dateValue) {
+
+  return new Date(
+    dateValue
+  ).toLocaleTimeString(
+    locale,
+    {
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  );
+
+}
 
   const [match,setMatch] = useState(null);
   const [user,setUser] = useState(null);
@@ -51,9 +95,10 @@ export default function MatchVote(){
        * ------------------------------------------------
        */
 
-      if (
+     if (
   view === "teams" ||
-  view === "details"
+  view === "details" ||
+  view === "result"
 ) {
 
         const {
@@ -100,8 +145,6 @@ export default function MatchVote(){
         }
 
         setMatch(data);
-
-setMatch(data);
 
 if (view === "teams") {
 
@@ -232,7 +275,7 @@ setLoading(false);
     if (!user) {
 
       alert(
-        "Connecte-toi avant de voter"
+        t("connectBeforeVoting")
       );
 
       return;
@@ -273,7 +316,7 @@ setLoading(false);
     }
 
     alert(
-      "Vote enregistré"
+      t("voteRecorded")
     );
 
     window.location.href =
@@ -298,7 +341,7 @@ setLoading(false);
         }}
       >
 
-        Chargement…
+        {t("loading")}
 
       </div>
 
@@ -323,7 +366,7 @@ setLoading(false);
         }}
       >
 
-        Match introuvable
+        {t("matchNotFound")}
 
       </div>
 
@@ -353,7 +396,7 @@ setLoading(false);
       return (
         player.profiles?.display_name
         ||
-        "Joueur"
+        t("player")
       );
 
     }
@@ -386,17 +429,17 @@ setLoading(false);
 
         </p>
 
-        <p>
+<p>
 
-          🕒 {
+  📅 {formatDate(match.match_date)}
 
-            new Date(
-              match.match_date
-            ).toLocaleString()
+</p>
 
-          }
+<p>
 
-        </p>
+  🕒 {formatTime(match.match_date)}
+
+</p>
 
         <hr
           style={{
@@ -410,7 +453,7 @@ setLoading(false);
           }}
         >
 
-          🏆 Équipes constituées
+          {t("teamsComposedTitle")}
 
         </h2>
 
@@ -428,7 +471,7 @@ setLoading(false);
 
           <h2>
 
-            ⚪ Équipe BLANC
+            {t("whiteTeam")}
 
           </h2>
 
@@ -438,7 +481,9 @@ setLoading(false);
               ?
 
               <p>
-                Aucune équipe constituée.
+              
+  {t("noTeamComposed")}
+
               </p>
 
               :
@@ -492,7 +537,7 @@ setLoading(false);
 
           <h2>
 
-            ⚫ Équipe FONCÉ
+            {t("darkTeam")}
 
           </h2>
 
@@ -502,7 +547,7 @@ setLoading(false);
               ?
 
               <p>
-                Aucune équipe constituée.
+               {t("noTeamComposed")}
               </p>
 
               :
@@ -570,7 +615,7 @@ setLoading(false);
 
         >
 
-          🏠 Retour à l'accueil
+          {t("backToHome")}
 
         </button>
 
@@ -598,7 +643,7 @@ if (view === "result") {
 
     return (
       player.profiles?.display_name ||
-      "Joueur"
+      t("player")
     );
 
   }
@@ -628,7 +673,7 @@ if (view === "result") {
 
       <h1>
 
-        🏆 Résultat du match
+        {t("matchResult")}
 
       </h1>
 
@@ -643,46 +688,25 @@ if (view === "result") {
 
       </h2>
 
-      <p
-        style={{
-          textAlign:"center"
-        }}
-      >
+<p
+  style={{
+    textAlign:"center"
+  }}
+>
 
-        📅 {
-          new Date(
-            match.match_date
-          ).toLocaleDateString(
-            "fr-FR",
-            {
-              weekday:"long",
-              day:"numeric",
-              month:"long"
-            }
-          )
-        }
+  📅 {formatDate(match.match_date)}
 
-      </p>
+</p>
 
-      <p
-        style={{
-          textAlign:"center"
-        }}
-      >
+<p
+  style={{
+    textAlign:"center"
+  }}
+>
 
-        🕒 {
-          new Date(
-            match.match_date
-          ).toLocaleTimeString(
-            "fr-FR",
-            {
-              hour:"2-digit",
-              minute:"2-digit"
-            }
-          )
-        }
+  🕒 {formatTime(match.match_date)}
 
-      </p>
+</p>
 
       <hr
         style={{
@@ -728,7 +752,7 @@ if (view === "result") {
 
             ?
 
-            "🤝 Match nul"
+            `🤝 ${t("matchDraw")}`
 
             :
 
@@ -736,11 +760,11 @@ if (view === "result") {
 
               ?
 
-              "🏆 Équipe BLANCHE victorieuse"
+              `🏆 ${t("winningWhiteTeam")}`
 
               :
 
-              "🏆 Équipe FONCÉ victorieuse"
+              `🏆 ${t("winningDarkTeam")}`
         }
 
       </div>
@@ -753,7 +777,7 @@ if (view === "result") {
 
       <h2>
 
-        👥 Participants
+        {`👥 ${t("participants")}`}
 
       </h2>
 
@@ -823,7 +847,7 @@ if (view === "result") {
 
       >
 
-        🏠 Retour à l'accueil
+        {t("backToHome")}
 
       </button>
 
@@ -854,7 +878,7 @@ if (view === "result") {
 
       return (
         player.profiles?.display_name ||
-        "Joueur"
+        t("player")
       );
 
     }
@@ -899,42 +923,17 @@ if (view === "result") {
 
         </h1>
 
-        <p>
+<p>
 
-          📅 {
+  📅 {formatDate(match.match_date)}
 
-            new Date(
-              match.match_date
-            ).toLocaleDateString(
-              "fr-FR",
-              {
-                weekday:"long",
-                day:"numeric",
-                month:"long"
-              }
-            )
+</p>
 
-          }
+<p>
 
-        </p>
+  🕒 {formatTime(match.match_date)}
 
-        <p>
-
-          🕒 {
-
-            new Date(
-              match.match_date
-            ).toLocaleTimeString(
-              "fr-FR",
-              {
-                hour:"2-digit",
-                minute:"2-digit"
-              }
-            )
-
-          }
-
-        </p>
+</p>
 
         {
           match.location && (
@@ -956,7 +955,7 @@ if (view === "result") {
 
         <h2>
 
-          👥 Participants
+          {`👥 ${t("participants")}`}
           {" "}
           ({participants.length}/10)
 
@@ -968,8 +967,10 @@ if (view === "result") {
             ?
 
             <p>
-              Aucun joueur inscrit.
-            </p>
+
+  {t("noPlayerRegistered")}
+
+</p>
 
             :
 
@@ -1016,11 +1017,11 @@ if (view === "result") {
 
               <h2>
 
-                ⏳ Liste d'attente
-                {" "}
-                ({waitingPlayers.length})
+  {t("waitingListCount", {
+    count: waitingPlayers.length
+  })}
 
-              </h2>
+</h2>
 
               <ol>
 
@@ -1083,7 +1084,7 @@ if (view === "result") {
 
         >
 
-          🏠 Retour à l'accueil
+          {t("backToHome")}
 
         </button>
 
@@ -1128,17 +1129,17 @@ if (view === "result") {
 
       </p>
 
-      <p>
+<p>
 
-        🕒 {
+  📅 {formatDate(match.match_date)}
 
-          new Date(
-            match.match_date
-          ).toLocaleString()
+</p>
 
-        }
+<p>
 
-      </p>
+  🕒 {formatTime(match.match_date)}
+
+</p>
 
       <br/>
 
@@ -1162,7 +1163,7 @@ if (view === "result") {
 
       >
 
-        ✅ Je participe
+        {`✅ ${t("participate")}`}
 
       </button>
 
@@ -1185,7 +1186,7 @@ if (view === "result") {
 
       >
 
-        ❌ Je ne participe pas
+        {`❌ ${t("notParticipate")}`}
 
       </button>
 

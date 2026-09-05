@@ -4,9 +4,26 @@ import { supabase } from "../lib/supabase";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 
+import { useLanguage } from "../i18n/useLanguage";
+
+
 export default function Notifications({
   onNotificationsChange
 }) {
+
+const { t, language } = useLanguage();
+
+const dateLocale = {
+  fr: "fr-FR",
+  en: "en-GB",
+  es: "es-ES",
+  de: "de-DE",
+  it: "it-IT",
+  pt: "pt-PT"
+};
+
+const currentLocale =
+  dateLocale[language] || "fr-FR";
 
 const [notifications,setNotifications]=useState([]);
 
@@ -204,9 +221,9 @@ async function deleteNotification(
 ){
 
   const ok =
-    window.confirm(
-      "Supprimer cette notification ?"
-    );
+  window.confirm(
+    t("deleteNotificationConfirm")
+  );
 
   if (!ok) {
     return;
@@ -263,8 +280,8 @@ async function deleteNotification(
     );
 
     alert(
-      "Impossible de supprimer cette notification."
-    );
+  t("deleteNotificationError")
+);
 
     return;
 
@@ -315,9 +332,9 @@ async function deleteAllNotifications(){
 
 
   const ok =
-    window.confirm(
-      "Supprimer toutes vos notifications ? Cette action est irréversible."
-    );
+  window.confirm(
+    t("deleteAllNotificationsConfirm")
+  );
 
 
   if (!ok) {
@@ -370,8 +387,8 @@ async function deleteAllNotifications(){
     );
 
     alert(
-      "Impossible de supprimer les notifications."
-    );
+  t("deleteAllNotificationsError")
+);
 
     return;
 
@@ -396,8 +413,8 @@ async function deleteAllNotifications(){
     <Page>
 
       <h1 className="page-title">
-        🔔 Notifications
-      </h1>
+  🔔 {t("notifications")}
+</h1>
 
       <Card>
 
@@ -435,7 +452,7 @@ fontWeight:"700"
 
 >
 
-🗑️ Supprimer toutes les notifications
+🗑️ {t("deleteAllNotifications")}
 
 </button>
 
@@ -452,9 +469,7 @@ notifications.length===0
 <>
 
 <h2 className="section-title">
-
-Aucune notification
-
+  {t("noNotifications")}
 </h2>
 
 <p
@@ -464,7 +479,7 @@ lineHeight:1.7
 }}
 >
 
-Vous n'avez aucune notification.
+{t("noNotificationsDescription")}
 
 </p>
 
@@ -551,7 +566,7 @@ deleteNotification(
 
 }}
 
-title="Supprimer la notification"
+title={t("deleteNotificationTitle")}
 
 style={{
 
@@ -619,7 +634,7 @@ fontWeight:"700"
 
 >
 
-NOUVEAU
+{t("newLabel")}
 
 </span>
 
@@ -651,10 +666,10 @@ opacity:.5
 {
 
 new Date(
-
-n.notifications.created_at
-
-).toLocaleString("fr-FR")
+  n.notifications.created_at
+).toLocaleString(
+  currentLocale
+)
 
 }
 

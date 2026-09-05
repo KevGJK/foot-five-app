@@ -1,6 +1,9 @@
+import { useLanguage } from "../../i18n/useLanguage";
 import Button from "./Button";
 
-export default function BackButton({ onClick, children = "🏠 Retour à l'accueil" }) {
+export default function BackButton({ onClick, children }) {
+
+    const { t } = useLanguage();
 
     return (
 
@@ -13,7 +16,7 @@ export default function BackButton({ onClick, children = "🏠 Retour à l'accue
                 onClick={onClick}
             >
 
-                {children}
+                {children || `🏠 ${t("backToHome")}`}
 
             </Button>
 

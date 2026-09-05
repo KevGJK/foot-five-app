@@ -5,8 +5,23 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { createNotification } from "../services/notifications";
+import { useLanguage } from "../i18n/useLanguage";
 
 export default function Matches() {
+
+const { t, language } = useLanguage();
+
+const dateLocale = {
+  fr: "fr-FR",
+  en: "en-GB",
+  es: "es-ES",
+  de: "de-DE",
+  it: "it-IT",
+  pt: "pt-PT",
+};
+
+const currentLocale =
+  dateLocale[language] || "fr-FR";
 
 const [matches,setMatches]=useState([]);
 const [user,setUser]=useState(null);
@@ -25,48 +40,49 @@ const [scoreBlack,setScoreBlack]=useState({});
 
 const [resultConfirmation, setResultConfirmation] = useState(null);
 
-const levelLabels={
+const levelLabels = {
 
-1:"1️⃣ Débutant",
+  1: `1️⃣ ${t("levelBeginner")}`,
 
-2:"2️⃣ Loisir",
+  2: `2️⃣ ${t("levelLeisure")}`,
 
-3:"3️⃣ Intermédiaire",
+  3: `3️⃣ ${t("levelIntermediate")}`,
 
-4:"4️⃣ Confirmé",
+  4: `4️⃣ ${t("levelConfirmed")}`,
 
-5:"5️⃣ Avancé",
+  5: `5️⃣ ${t("levelAdvanced")}`,
 
-6:"6️⃣ Expert",
+  6: `6️⃣ ${t("levelExpert")}`,
 
-7:"7️⃣ Élite"
+  7: `7️⃣ ${t("levelElite")}`
 
 };
 
 function formatMatchDate(dateString) {
 
-    const date = new Date(dateString);
+  const date = new Date(dateString);
 
-    const dateText =
-        date.toLocaleDateString(
-            "fr-FR",
-            {
-                weekday: "long",
-                day: "numeric",
-                month: "long"
-            }
-        );
+  const dateText =
+    date.toLocaleDateString(
+      currentLocale,
+      {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+      }
+    );
 
-    const timeText =
-        date.toLocaleTimeString(
-            "fr-FR",
-            {
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        );
+  const timeText =
+    date.toLocaleTimeString(
+      currentLocale,
+      {
+        hour: "2-digit",
+        minute: "2-digit"
+      }
+    );
 
-    return `${dateText} à ${timeText}`;
+  return `${dateText} à ${timeText}`;
+
 }
 
 useEffect(() => {
@@ -582,7 +598,7 @@ try {
       const playerDisplayName =
         currentPlayer?.guest_name ||
         user.user_metadata?.display_name ||
-        "Un joueur";
+        t("unknownPlayer");
 
 const matchDate =
   formatMatchDate(
@@ -598,12 +614,14 @@ const isWaiting =
   currentPresent.length >= 10;
 
 const message =
-  `${playerDisplayName} vient de rejoindre le match du ${matchDate}.` +
+  t("joinedMatch")
+    .replace("{player}", playerDisplayName)
+    .replace("{date}", matchDate) +
   (locationText
     ? `\n${locationText}`
     : "") +
   (isWaiting
-    ? `\n⏳ Il est maintenant en liste d'attente.`
+    ? `\n${t("waitingList")}`
     : "");
 
       await createNotification({
@@ -622,7 +640,7 @@ const message =
           "PLAYER_JOINED",
 
         title:
-          "👤 Nouveau joueur",
+  t("playerJoined"),
 
         message:
   message,
@@ -663,7 +681,7 @@ const message =
       const playerDisplayName =
         currentPlayer?.guest_name ||
         user.user_metadata?.display_name ||
-        "Un joueur";
+        t("unknownPlayer");
 
       await createNotification({
 
@@ -681,10 +699,20 @@ const message =
           "PLAYER_LEFT",
 
         title:
-          "👋 Désistement",
+          t("playerLeft"),
 
         message:
-  `${playerDisplayName} s'est désisté du match du ${formatMatchDate(currentMatch.match_date)}.` +
+  t("leftMatch")
+    .replace(
+      "{player}",
+      playerDisplayName
+    )
+    .replace(
+      "{date}",
+      formatMatchDate(
+        currentMatch.match_date
+      )
+    ) +
   (
     getMatchLocationText(currentMatch)
       ? `\n${getMatchLocationText(currentMatch)}`
@@ -692,9 +720,15 @@ const message =
   ) +
   (
     wasParticipant && promotedPlayer
-      ? `\n🎉 ${promotedPlayer.guest_name || promotedPlayer.profiles?.display_name || "Un joueur"} a été automatiquement promu.`
+      ? `\n${t("automaticallyPromoted")
+          .replace(
+            "{player}",
+            promotedPlayer.guest_name ||
+              promotedPlayer.profiles?.display_name ||
+              t("unknownPlayer")
+          )}`
       : wasParticipant
-        ? `\n🟢 1 place est maintenant disponible.`
+        ? `\n${t("placeAvailable")}`
         : ""
   ),
 
@@ -785,16 +819,22 @@ catch (notificationError) {
             "player_promoted",
 
           title:
-            "🎉 Tu es maintenant inscrit !",
+  t("playerPromoted"),
 
           message:
-  `Une place vient de se libérer pour le match du ${formatMatchDate(currentMatch.match_date)}.` +
+  t("placeFreed")
+    .replace(
+      "{date}",
+      formatMatchDate(
+        currentMatch.match_date
+      )
+    ) +
   (
     getMatchLocationText(currentMatch)
       ? `\n${getMatchLocationText(currentMatch)}`
       : ""
   ) +
-  `\nTu es maintenant dans les 10 participants. ⚽`,
+  `\n${t("nowParticipant")}`,
 
           action:
             "match",
@@ -848,8 +888,8 @@ async function addGuest(matchId){
   if(!isManager()){
 
     alert(
-      "🔒 Seul le propriétaire ou un administrateur du club peut ajouter un invité."
-    );
+  t("guestAddPermissionDenied")
+);
 
     return;
 
@@ -861,8 +901,8 @@ const name =
 if(!name){
 
   alert(
-    "Nom obligatoire"
-  );
+  t("guestNameRequired")
+);
 
   return;
 
@@ -925,8 +965,8 @@ async function saveGuest(){
   if(!isManager()){
 
     alert(
-      "🔒 Seul le propriétaire ou un administrateur du club peut modifier un invité."
-    );
+  t("guestEditPermissionDenied")
+);
 
     return;
 
@@ -957,17 +997,15 @@ async function removeGuest(attendanceId){
   if(!isManager()){
 
     alert(
-      "🔒 Seul le propriétaire ou un administrateur du club peut supprimer un invité."
-    );
+  t("guestRemovePermissionDenied")
+);
 
     return;
 
   }
 
-  const ok=window.confirm(
-
-"Retirer cet invité du match ?"
-
+  const ok = window.confirm(
+  t("guestRemoveConfirm")
 );
 
 if(!ok){
@@ -996,12 +1034,21 @@ async function removeMatch(id){
 
     if(!matchToDelete || !canManageMatch(matchToDelete)){
 
-        alert(
-            "🔒 Vous n'avez pas l'autorisation de supprimer ce match."
-        );
+    alert(
+        `🔒 ${t("deleteMatchPermissionDenied")}`
+    );
 
-        return;
+    return;
+
 }
+
+    const confirmDelete = window.confirm(
+        t("deleteMatchConfirm")
+    );
+
+    if (!confirmDelete) {
+        return;
+    }
 
     const {
         data: match,
@@ -1088,8 +1135,8 @@ async function removeMatch(id){
     if(!user){
 
         alert(
-            "Utilisateur non connecté."
-        );
+    t("userNotConnected")
+);
 
         return;
 
@@ -1144,10 +1191,18 @@ async function removeMatch(id){
                     "match_cancelled",
 
                 title:
-                    "❌ Match annulé",
+    `❌ ${t("matchCancelled")}`,
 
                 message:
-    `Le match "${match.title}" a été annulé.\n📅 ${formatMatchDate(match.match_date)}`,
+    t("matchCancelledMessage")
+        .replace(
+            "{title}",
+            match.title
+        )
+        .replace(
+            "{date}",
+            formatMatchDate(match.match_date)
+        ),
 
                 action:
                     "home",
@@ -1244,66 +1299,69 @@ a.response==="absent"
 
 function myAnswer(list){
 
-const me=
+  const me=
 
-list.find(
+    list.find(
 
-a=>
+      a=>
 
-a.profile_id
-===
+        a.profile_id
+        ===
+        user?.id
 
-user?.id
+    );
 
-);
+  if(
+    !me
+  ){
 
-if(
-!me
-){
+    return t("notAnsweredYet");
 
-return "Pas encore repondu";
+  }
 
-}
+  if(
+    me.response==="present"
+  ){
 
-if(
-me.response==="present"
-){
+    return t("present");
 
-return "Present";
+  }
 
-}
-
-return "Absent";
+  return t("absent");
 
 }
 
 function placesLeft(list){
 
-const count=
+  const count=
 
-participants(
-list
-).length;
+    participants(
+      list
+    ).length;
 
-if(
-count<10
-){
+  if(
+    count<10
+  ){
 
-return `${10-count} place(s) restante(s)`;
+    return t("placesLeft")
+      .replace(
+        "{count}",
+        10-count
+      );
 
-}
+  }
 
-if(
-waiting(
-list
-).length>0
-){
+  if(
+    waiting(
+      list
+    ).length>0
+  ){
 
-return "Liste attente active";
+    return t("waitingListActive");
 
-}
+  }
 
-return "COMPLET";
+  return t("full");
 
 }
 
@@ -1352,8 +1410,8 @@ const match = matches.find(
 if(!match || !canManageMatch(match)){
 
   alert(
-    "🔒 Vous n'avez pas l'autorisation de gérer ce match."
-  );
+  `🔒 ${t("manageMatchPermissionDenied")}`
+);
 
   return;
 
@@ -1632,17 +1690,17 @@ try {
         createdBy: user.id,
 
             createdByName:
-                user.user_metadata?.display_name
-                || "Foot Five",
+  user.user_metadata?.display_name
+  || t("footFive"),
 
             type:
                 "teams_ready",
 
             title:
-                "👕 Équipes constituées",
+  t("teamsComposedTitle"),
 
-            message:
-                "Les équipes de ton prochain match sont prêtes.",
+message:
+  t("teamsComposedMessage"),
 
             action:
                 "match",
@@ -1700,7 +1758,7 @@ function askResultConfirmation(matchId) {
   ) {
 
     alert(
-      "🔒 Vous n'avez pas l'autorisation de valider ce résultat."
+      `🔒 ${t("validateResultPermissionDenied")}`
     );
 
     return;
@@ -1723,7 +1781,7 @@ function askResultConfirmation(matchId) {
   ) {
 
     alert(
-      "Saisir un score"
+      t("enterScore")
     );
 
     return;
@@ -1747,8 +1805,8 @@ const matchToManage = matches.find(
 if(!matchToManage || !canManageMatch(matchToManage)){
 
     alert(
-        "🔒 Vous n'avez pas l'autorisation de valider ce résultat."
-    );
+    `🔒 ${t("validateResultPermissionDenied")}`
+);
 
     return;
 
@@ -1764,7 +1822,9 @@ if(!matchToManage || !canManageMatch(matchToManage)){
         white === 0 &&
         black === 0
     ) {
-        alert("Saisir un score");
+        alert(
+    t("enterScore")
+);
         return;
     }
 
@@ -1839,8 +1899,8 @@ if(!matchToManage || !canManageMatch(matchToManage)){
         );
 
         alert(
-            "Résultat enregistré, mais impossible de créer la notification."
-        );
+    t("resultSavedNotificationFailed")
+);
 
         setReload(v => !v);
 
@@ -1885,8 +1945,8 @@ if (attendancesError) {
     );
 
     alert(
-        "Résultat enregistré, mais impossible de récupérer les participants."
-    );
+    t("resultSavedParticipantsFailed")
+);
 
     setReload(
         v => !v
@@ -1949,8 +2009,8 @@ try {
     if (!user) {
 
         throw new Error(
-            "Utilisateur non connecté lors de la création de la notification."
-        );
+    t("userNotConnectedNotification")
+);
 
     }
 
@@ -1960,8 +2020,8 @@ try {
     ) {
 
         throw new Error(
-            "Aucun participant détecté pour ce match."
-        );
+    t("noParticipantDetected")
+);
 
     }
 
@@ -1989,8 +2049,8 @@ try {
         ) {
 
             throw new Error(
-                "Aucun destinataire valide pour le match nul."
-            );
+    t("noValidDrawRecipient")
+);
 
         }
 
@@ -2004,19 +2064,29 @@ try {
                 user.id,
 
             createdByName:
-                user.user_metadata?.display_name ||
-                "Foot Five",
+    user.user_metadata?.display_name ||
+    t("footFive"),
 
             type:
                 "match_result",
 
             title:
-                "🤝 Match nul",
+    t("matchDrawTitle"),
 
-            message:
-                `Le match "${match.title}" est terminé.\n` +
-                `⚪ ${white} - ${black} ⚫\n` +
-                `🤝 Les deux équipes se quittent sur un match nul.`,
+message:
+    t("matchDrawMessage")
+        .replace(
+            "{title}",
+            match.title
+        )
+        .replace(
+            "{white}",
+            white
+        )
+        .replace(
+            "{black}",
+            black
+        ),
 
             action:
                 "match",
@@ -2099,18 +2169,25 @@ try {
                     user.id,
 
                 createdByName:
-                    user.user_metadata?.display_name ||
-                    "Foot Five",
+    user.user_metadata?.display_name ||
+    t("footFive"),
 
                 type:
                     "match_result",
 
                 title:
-                    "🏆 VICTOIRE !",
+    t("victoryTitle"),
 
-                message:
-                    `Ton équipe s'impose ${white} - ${black} !\n` +
-                    `🔥 Bravo à toute l'équipe !`,
+message:
+    t("victoryMessage")
+        .replace(
+            "{white}",
+            white
+        )
+        .replace(
+            "{black}",
+            black
+        ),
 
                 action:
                     "match",
@@ -2150,18 +2227,25 @@ try {
                     user.id,
 
                 createdByName:
-                    user.user_metadata?.display_name ||
-                    "Foot Five",
+    user.user_metadata?.display_name ||
+    t("footFive"),
 
                 type:
                     "match_result",
 
                 title:
-                    "😔 Défaite",
+    t("defeatTitle"),
 
-                message:
-                    `Ton équipe s'incline ${white} - ${black}.\n` +
-                    `💪 On fera mieux au prochain match !`,
+message:
+    t("defeatMessage")
+        .replace(
+            "{white}",
+            white
+        )
+        .replace(
+            "{black}",
+            black
+        ),
 
                 action:
                     "match",
@@ -2192,8 +2276,8 @@ try {
         ) {
 
             throw new Error(
-                "Aucun destinataire valide trouvé dans les équipes."
-            );
+    t("noValidTeamRecipient")
+);
 
         }
 
@@ -2209,12 +2293,13 @@ catch (notificationError) {
     );
 
     alert(
-        "Le résultat a été enregistré, mais la notification n'a pas pu être créée.\n\n" +
-        (
-            notificationError?.message ||
-            "Erreur inconnue"
-        )
-    );
+    `${t("resultNotificationFailed")}
+
+${
+    notificationError?.message ||
+    t("unknownError")
+}`
+);
 
 }
 
@@ -2240,7 +2325,7 @@ function myResult(match){
 
   if(!me){
 
-    return "⚪ Non joué";
+    return `⚪ ${t("notPlayed")}`;
 
   }
 
@@ -2248,7 +2333,7 @@ function myResult(match){
     match.winner === "draw"
   ){
 
-    return "🟡 Match nul";
+    return `🟡 ${t("matchDraw")}`;
 
   }
 
@@ -2256,11 +2341,11 @@ function myResult(match){
     me.team === match.winner
   ){
 
-    return "🟢 Victoire";
+    return `🟢 ${t("victory")}`;
 
   }
 
-  return "🔴 Défaite";
+  return `🔴 ${t("defeat")}`;
 
 }
 
@@ -2274,7 +2359,7 @@ async function reopenMatch(matchId){
   if(!match){
 
     alert(
-      "❌ Match introuvable."
+      `❌ ${t("matchNotFound")}`
     );
 
     return;
@@ -2291,7 +2376,7 @@ async function reopenMatch(matchId){
   if(seasonLocked(match)){
 
     alert(
-      "🔒 Cette saison est clôturée. Le match ne peut plus être réouvert."
+      `🔒 ${t("reopenMatchSeasonLocked")}`
     );
 
     return;
@@ -2308,7 +2393,7 @@ async function reopenMatch(matchId){
   if(!isManager()){
 
     alert(
-      "🔒 Seul le propriétaire ou un administrateur du club peut réouvrir un match."
+      `🔒 ${t("reopenMatchPermissionDenied")}`
     );
 
     return;
@@ -2324,19 +2409,7 @@ async function reopenMatch(matchId){
 
   const ok =
     window.confirm(
-
-`⚠️ Réouvrir ce match ?
-
-Le résultat sera annulé.
-
-Le score et le vainqueur seront supprimés.
-
-Le classement et les statistiques seront recalculés en tenant compte de cette annulation.
-
-Vous pourrez ensuite saisir et valider un nouveau résultat.
-
-Confirmer la réouverture du match ?`
-
+      t("reopenMatchConfirm")
     );
 
 
@@ -2442,7 +2515,7 @@ Confirmer la réouverture du match ?`
    */
 
   alert(
-    "🔓 Match réouvert avec succès."
+    `🔓 ${t("matchReopenedSuccess")}`
   );
 
 
@@ -2508,7 +2581,7 @@ return(
 
 <h1 className="page-title">
 
-📅 Matchs
+📅 {t("matches")}
 
 </h1>
 
@@ -2534,13 +2607,13 @@ fontSize:"28px"
 
 <p style={{marginBottom:"8px"}}>
 
-<b>📍 Lieu :</b> {m.location}
+<b>📍 {t("matchLocation")} :</b> {m.location}
 
 </p>
 
 <p style={{marginBottom:"8px"}}>
 
-    <b>🕒 Date :</b>{" "}
+    <b>🕒 {t("date")} :</b>{" "}
 
     {formatMatchDate(m.match_date)}
 
@@ -2548,7 +2621,7 @@ fontSize:"28px"
 
 <p style={{marginBottom:"18px"}}>
 
-<b>🙋 Mon statut :</b>{" "}
+<b>🙋 {t("myStatus")} :</b>{" "}
 
 {myAnswer(m.attendances||[])}
 
@@ -2565,7 +2638,7 @@ onClick={()=>answer(m.id,"present")}
 
 >
 
-✅ Présent
+✅ {t("present")}
 
 </Button>
 
@@ -2583,7 +2656,7 @@ marginTop:"10px"
 
 >
 
-❌ Absent
+❌ {t("absent")}
 
 </Button>
 
@@ -2596,7 +2669,7 @@ marginBottom:"10px"
 }}
 >
 
-👥 Participants ({participants(m.attendances||[]).length}/10)
+👥 {t("participants")} ({participants(m.attendances||[]).length}/10)
 
 </h3>
 
@@ -2841,7 +2914,7 @@ onClick={saveGuest}
 
 >
 
-💾 Enregistrer
+💾 {t("save")}
 
 </Button>
 
@@ -2857,7 +2930,7 @@ onClick={()=>setEditingGuest(null)}
 
 >
 
-Annuler
+{t("cancel")}
 
 </Button>
 
@@ -2898,7 +2971,7 @@ Annuler
 
             const ok=window.confirm(
 
-              "Les équipes actuelles seront remplacées. Continuer ?"
+              t("replaceTeamsConfirm")
 
             );
 
@@ -2928,11 +3001,11 @@ Annuler
 
           ?
 
-          "🔄 Recomposer les équipes"
+          `🔄 ${t("recomposeTeams")}`
 
           :
 
-          "⚽ Composer les équipes"
+          `⚽ ${t("composeTeams")}`
 
         }
 
@@ -2953,7 +3026,7 @@ isManager() && (
 
 <Input
 
-placeholder="Nom de l'invité"
+placeholder={t("guestNamePlaceholder")}
 
 value={guestName[m.id] || ""}
 
@@ -3049,7 +3122,7 @@ onClick={()=>addGuest(m.id)}
 
 >
 
-➕ Ajouter un invité
+➕ {t("addGuest")}
 
 </Button>
 
@@ -3068,7 +3141,7 @@ marginBottom:"10px"
 }}
 >
 
-❌ Absents
+❌ {t("absentPlayers")}
 
 (
 {
@@ -3142,7 +3215,7 @@ marginBottom:"10px"
 }}
 >
 
-⏳ Liste d'attente
+⏳ {t("waitingList")}
 
 (
 {
@@ -3226,7 +3299,7 @@ marginBottom:"12px"
 }}
 >
 
-⚪ Équipe Blanche ({teams[m.id].scoreA})
+⚪ {t("whiteTeam")} ({teams[m.id].scoreA})
 
 </h3>
 
@@ -3271,7 +3344,7 @@ marginBottom:"12px"
 }}
 >
 
-⚫ Équipe Foncée ({teams[m.id].scoreB})
+⚫ {t("darkTeam")} ({teams[m.id].scoreB})
 
 </h3>
 
@@ -3324,7 +3397,7 @@ marginBottom:"14px"
 }}
 >
 
-🏆 Résultat du match
+🏆 {t("matchResult")}
 
 </h3>
 
@@ -3332,7 +3405,7 @@ marginBottom:"14px"
 
 type="number"
 
-placeholder="Score Équipe Blanche"
+placeholder={t("whiteTeamScore")}
 
 value={scoreWhite[m.id] || ""}
 
@@ -3354,7 +3427,7 @@ setScoreWhite({
 
 type="number"
 
-placeholder="Score Équipe Foncée"
+placeholder={t("darkTeamScore")}
 
 value={scoreBlack[m.id] || ""}
 
@@ -3390,7 +3463,7 @@ marginTop:"12px"
 
 >
 
-🏆 Valider le résultat
+🏆 {t("validateResult")}
 
 </Button>
 
@@ -3423,7 +3496,7 @@ marginTop:"12px"
 
     >
 
-      🗑 Supprimer le match
+      🗑 {t("deleteMatch")}
 
     </Button>
 
@@ -3447,7 +3520,7 @@ marginBottom:"18px"
 }}
 >
 
-🏁 Matchs terminés
+🏁 {t("finishedMatches")}
 
 </h2>
 
@@ -3598,7 +3671,7 @@ m.winner==="white"
 
 ?
 
-"Victoire Équipe Blanche"
+t("whiteTeamVictory")
 
 :
 
@@ -3606,11 +3679,11 @@ m.winner==="black"
 
 ?
 
-"Victoire Équipe Foncée"
+t("darkTeamVictory")
 
 :
 
-"Match nul"
+t("matchDraw")
 
 }
 
@@ -3645,7 +3718,7 @@ marginTop:"16px"
 
 >
 
-🔓 Réouvrir le match
+🔓 {t("reopenMatch")}
 
 </Button>
 
@@ -3729,7 +3802,7 @@ marginTop:"16px"
           }}
         >
 
-          ⚠️ Confirmer le résultat
+          ⚠️ {t("confirmResult")}
 
         </h2>
 
@@ -3746,9 +3819,7 @@ marginTop:"16px"
           }}
         >
 
-          Vous êtes sur le point
-          d'enregistrer
-          le résultat du match.
+          {t("confirmResultDescription")}
 
         </p>
 
@@ -3795,7 +3866,7 @@ marginTop:"16px"
               }}
             >
 
-              ⚪ Équipe Blanche
+              ⚪ {t("whiteTeam")}
 
             </div>
 
@@ -3857,7 +3928,7 @@ marginTop:"16px"
               }}
             >
 
-              ⚫ Équipe Foncée
+              ⚫ {t("darkTeam")}
 
             </div>
 
@@ -3896,7 +3967,7 @@ marginTop:"16px"
           }}
         >
 
-          Confirmez-vous ce résultat ?
+          {t("confirmResultQuestion")}
 
         </p>
 
@@ -3931,7 +4002,7 @@ marginTop:"16px"
 
           >
 
-            Annuler
+            {t("cancel")}
 
           </Button>
 
@@ -3961,7 +4032,7 @@ marginTop:"16px"
 
           >
 
-            ✅ Confirmer
+            ✅ {t("confirm")}
 
           </Button>
 

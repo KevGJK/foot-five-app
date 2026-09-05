@@ -1,12 +1,26 @@
+import {
+  useLanguage
+} from "../i18n/useLanguage";
 import { supabase } from "../lib/supabase";
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Switch from "../components/ui/Switch";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback
+} from "react";
 import { registerDevice } from "../services/registerDevice";
 
 export default function Settings() {
+
+const {
+  language,
+  setLanguage,
+  t
+} = useLanguage();
+
   const [pushEnabled, setPushEnabled] = useState(false);
 
   const [pushSupported, setPushSupported] = useState(false);
@@ -25,6 +39,49 @@ export default function Settings() {
   });
 
   const [profile, setProfile] = useState(null);
+
+  const loadSettings = useCallback(async (profileId) => {
+    let { data } = await supabase
+      .from("user_settings")
+      .select("*")
+      .eq("profile_id", profileId)
+      .single();
+
+if (!data) {
+  const { data: created } = await supabase
+    .from("user_settings")
+    .insert({
+      profile_id: profileId,
+      language: language,
+    })
+    .select()
+    .single();
+
+  data = created;
+}
+
+if (!data) return;
+
+setPushEnabled(data.push_enabled);
+
+if (data.language) {
+  setLanguage(
+    data.language
+  );
+}
+
+setNotifications({
+      newMatch: data.new_match,
+      matchCancelled: data.match_cancelled,
+      teamsReady: data.teams_ready,
+      matchReminder: data.match_reminder,
+      newMember: data.new_member,
+      newSeason: data.new_season,
+      seasonClosed: data.season_closed,
+      results: data.results,
+    });
+
+}, [language, setLanguage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +115,7 @@ export default function Settings() {
     return () => {
       cancelled = true;
     };
-  }, []);
+ }, [loadSettings]);
 
   async function loadProfile(profileId) {
     const {
@@ -74,41 +131,6 @@ export default function Settings() {
       .single();
 
     setProfile(data);
-  }
-
-  async function loadSettings(profileId) {
-    let { data } = await supabase
-      .from("user_settings")
-      .select("*")
-      .eq("profile_id", profileId)
-      .single();
-
-    if (!data) {
-      const { data: created } = await supabase
-        .from("user_settings")
-        .insert({
-          profile_id: profileId,
-        })
-        .select()
-        .single();
-
-      data = created;
-    }
-
-    if (!data) return;
-
-    setPushEnabled(data.push_enabled);
-
-    setNotifications({
-      newMatch: data.new_match,
-      matchCancelled: data.match_cancelled,
-      teamsReady: data.teams_ready,
-      matchReminder: data.match_reminder,
-      newMember: data.new_member,
-      newSeason: data.new_season,
-      seasonClosed: data.season_closed,
-      results: data.results,
-    });
   }
 
   async function checkPush() {
@@ -164,6 +186,8 @@ export default function Settings() {
       .upsert({
         profile_id: user.id,
 
+        language: language,
+
         push_enabled: pushEnabled,
 
         new_match: notifications.newMatch,
@@ -189,20 +213,20 @@ export default function Settings() {
 
     if (error) {
       console.error("Erreur sauvegarde paramètres :", error);
-      alert("❌ Impossible d'enregistrer les paramètres.");
+      alert(t("settingsSaveError"));
     }
   }
 
   return (
     <Page>
-      <h1 className="page-title">
-        ⚙ Paramètres
-      </h1>
+<h1 className="page-title">
+  ⚙ {t("settings")}
+</h1>
 
       <Card>
         <h2 className="section-title">
-          👤 Mon profil
-        </h2>
+  👤 {t("profile")}
+</h2>
 
         <div
           style={{
@@ -230,17 +254,17 @@ export default function Settings() {
             window.location.reload();
           }}
         >
-          🚪 Déconnexion
+          🚪 {t("logout")}
         </Button>
       </Card>
 
       <Card>
         <h2 className="section-title">
-          🔔 Notifications
-        </h2>
+  🔔 {t("notifications")}
+</h2>
 
         <Switch
-          label="Activer les notifications"
+          label={t("enableNotifications")}
           checked={pushEnabled}
           onChange={async (value) => {
             setPushEnabled(value);
@@ -252,17 +276,15 @@ export default function Settings() {
         />
 
         <div
-          style={{
-            opacity: 0.65,
-            fontSize: "14px",
-            marginTop: "8px",
-            lineHeight: "1.5",
-          }}
-        >
-          Active ou désactive globalement les notifications Push.
-          Les préférences ci-dessous permettent ensuite de choisir
-          les types de notifications que tu souhaites recevoir.
-        </div>
+  style={{
+    opacity: 0.65,
+    fontSize: "14px",
+    marginTop: "8px",
+    lineHeight: "1.5",
+  }}
+>
+  {t("notificationsDescription")}
+</div>
 
         <hr
           style={{
@@ -273,13 +295,13 @@ export default function Settings() {
         />
 
         <Switch
-          label="Nouveau match"
+          label={t("newMatch")}
           checked={notifications.newMatch}
           onChange={(value) => updateNotification("newMatch", value)}
         />
 
         <Switch
-          label="Match annulé"
+          label={t("matchCancelled")}
           checked={notifications.matchCancelled}
           onChange={(value) =>
             updateNotification("matchCancelled", value)
@@ -287,7 +309,7 @@ export default function Settings() {
         />
 
         <Switch
-          label="Composition des équipes"
+          label={t("teamsReady")}
           checked={notifications.teamsReady}
           onChange={(value) =>
             updateNotification("teamsReady", value)
@@ -295,7 +317,7 @@ export default function Settings() {
         />
 
         <Switch
-          label="Rappel avant le match"
+          label={t("matchReminder")}
           checked={notifications.matchReminder}
           onChange={(value) =>
             updateNotification("matchReminder", value)
@@ -303,7 +325,7 @@ export default function Settings() {
         />
 
         <Switch
-          label="Nouveau membre"
+          label={t("newMember")}
           checked={notifications.newMember}
           onChange={(value) =>
             updateNotification("newMember", value)
@@ -311,7 +333,7 @@ export default function Settings() {
         />
 
         <Switch
-          label="Nouvelle saison"
+          label={t("newSeason")}
           checked={notifications.newSeason}
           onChange={(value) =>
             updateNotification("newSeason", value)
@@ -319,7 +341,7 @@ export default function Settings() {
         />
 
         <Switch
-          label="Fin de saison"
+          label={t("seasonClosed")}
           checked={notifications.seasonClosed}
           onChange={(value) =>
             updateNotification("seasonClosed", value)
@@ -327,7 +349,7 @@ export default function Settings() {
         />
 
         <Switch
-          label="Résultats"
+          label={t("results")}
           checked={notifications.results}
           onChange={(value) =>
             updateNotification("results", value)
@@ -337,21 +359,21 @@ export default function Settings() {
 
       <Card>
         <h2 className="section-title">
-          📲 Notifications Push
+          📲 {t("pushNotifications")}
         </h2>
 
         <div style={{ marginBottom: "10px" }}>
-          <b>Compatibilité :</b>{" "}
-          {pushSupported ? "✅ Oui" : "❌ Non"}
+          <b>{t("compatibility")} :</b>{" "}
+{pushSupported ? `✅ ${t("yes")}` : `❌ ${t("no")}`}
         </div>
 
         <div style={{ marginBottom: "20px" }}>
-          <b>Autorisation :</b>{" "}
-          {pushPermission === "granted"
-            ? "✅ Accordée"
-            : pushPermission === "denied"
-            ? "❌ Refusée"
-            : "⏳ Non demandée"}
+          <b>{t("authorization")} :</b>{" "}
+{pushPermission === "granted"
+  ? `✅ ${t("granted")}`
+  : pushPermission === "denied"
+  ? `❌ ${t("denied")}`
+  : `⏳ ${t("notRequested")}`}
         </div>
 
         <Button
@@ -361,7 +383,7 @@ export default function Settings() {
 
               setPushPermission(Notification.permission);
 
-              alert("✅ Notifications Push activées");
+              alert(`✅ ${t("pushActivated")}`);
             } catch (e) {
               console.error(e);
               alert(e.message);
@@ -369,13 +391,139 @@ export default function Settings() {
           }}
           disabled={!pushSupported}
         >
-          🔔 Autoriser les notifications Push
+          🔔 {t("authorizePush")}
         </Button>
       </Card>
 
+<Card>
+
+  <h2 className="section-title">
+    🌍 {t("language")}
+  </h2>
+
+  <div
+    style={{
+      marginBottom: "10px",
+      opacity: 0.75
+    }}
+  >
+    {t("languageDescription")}
+  </div>
+
+  <select
+
+    value={language}
+
+    onChange={async (e) => {
+
+      const newLanguage =
+        e.target.value;
+
+      setLanguage(
+        newLanguage
+      );
+
+      await saveSettings({
+        language:
+          newLanguage
+      });
+
+    }}
+
+    style={{
+
+      width: "100%",
+
+      padding: "14px",
+
+      borderRadius: "12px",
+
+      border:
+        "1px solid rgba(255,255,255,.15)",
+
+      background:
+        "rgba(255,255,255,.05)",
+
+      color:
+        "white",
+
+      fontSize:
+        "16px",
+
+      cursor:
+        "pointer"
+
+    }}
+
+  >
+
+<option
+  value="fr"
+  style={{
+    color: "black",
+    background: "white"
+  }}
+>
+  🇫🇷 Français
+</option>
+
+<option
+  value="en"
+  style={{
+    color: "black",
+    background: "white"
+  }}
+>
+  🇬🇧 English
+</option>
+
+<option
+  value="es"
+  style={{
+    color: "black",
+    background: "white"
+  }}
+>
+  🇪🇸 Español
+</option>
+
+<option
+  value="de"
+  style={{
+    color: "black",
+    background: "white"
+  }}
+>
+  🇩🇪 Deutsch
+</option>
+
+<option
+  value="it"
+  style={{
+    color: "black",
+    background: "white"
+  }}
+>
+  🇮🇹 Italiano
+</option>
+
+<option
+  value="pt"
+  style={{
+    color: "black",
+    background: "white"
+  }}
+>
+  🇵🇹 Português
+</option>
+
+  </select>
+
+</Card>
+
       <Card>
         <h2 className="section-title">
-          📱 Application
+          📱 {t("application")}
         </h2>
 
         <div
@@ -385,7 +533,7 @@ export default function Settings() {
             marginBottom: "12px",
           }}
         >
-          <span>Version</span>
+          <span>{t("version")}</span>
           <b>1.0.0</b>
         </div>
 
@@ -395,14 +543,14 @@ export default function Settings() {
             justifyContent: "space-between",
           }}
         >
-          <span>Plateforme</span>
+          <span>{t("platform")}</span>
           <b>PWA</b>
         </div>
       </Card>
 
       <Card>
         <h2 className="section-title">
-          ℹ️ À propos
+          ℹ️ {t("about")}
         </h2>
 
         <div
@@ -414,11 +562,11 @@ export default function Settings() {
 
           <br />
 
-          Développé par Kevin Gajecki
+                    {t("developedBy")}
 
           <br />
 
-          Version 1.0.0
+                    {t("version")} 1.0.0
         </div>
       </Card>
     </Page>

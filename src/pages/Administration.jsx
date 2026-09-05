@@ -1,10 +1,7 @@
+import { useLanguage } from "../i18n/useLanguage";
 import Page from "../components/ui/Page";
 import BackButton from "../components/ui/BackButton";
 import Button from "../components/ui/Button";
-import Card from "../components/ui/Card";
-import { testBackend } from "../services/functions";
-
-import { useState } from "react";
 
 export default function Administration({
 
@@ -14,50 +11,14 @@ goSeasons
 
 }){
 
-const [backendResult,setBackendResult]=useState(null);
-
-const [backendError,setBackendError]=useState(null);
-
-const [loading,setLoading]=useState(false);
-
-async function runBackendTest(){
-
-    setLoading(true);
-
-    setBackendError(null);
-
-    setBackendResult(null);
-
-    try{
-
-        const result = await testBackend();
-
-        setBackendResult(result);
-
-    }
-
-    catch(e){
-
-        console.error(e);
-
-        setBackendError(e.message);
-
-    }
-
-    finally{
-
-        setLoading(false);
-
-    }
-
-}
+const { t } = useLanguage();
 
 return(
 
 <>
 
 <BackButton onClick={goHome}>
-🏠 Retour à l'accueil
+🏠 {t("backToHome")}
 </BackButton>
 
 <Page
@@ -74,7 +35,7 @@ style={{
 }}
 >
 
-⚙ Administration
+⚙ {t("administration")}
 
 </h1>
 
@@ -92,84 +53,11 @@ marginTop:0
 }}
 >
 
-🏆 Gestion des saisons
+🏆 {t("seasonManagement")}
 
 </Button>
 
 </div>
-
-
-<Card>
-
-<h2 className="section-title">
-
-🧪 Outils développeur
-
-</h2>
-
-<Button
-onClick={runBackendTest}
->
-
-{
-
-loading
-
-?
-
-"Test en cours..."
-
-:
-
-"Tester le backend"
-
-}
-
-</Button>
-
-{
-
-backendResult &&
-
-<pre
-style={{
-
-marginTop:"20px",
-
-fontSize:"13px",
-
-whiteSpace:"pre-wrap"
-
-}}
->
-
-{JSON.stringify(backendResult,null,2)}
-
-</pre>
-
-}
-
-{
-
-backendError &&
-
-<div
-style={{
-
-marginTop:"20px",
-
-color:"#ef4444"
-
-}}
->
-
-{backendError}
-
-</div>
-
-}
-
-</Card>
 
 </Page>
 
