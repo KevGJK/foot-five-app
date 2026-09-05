@@ -363,6 +363,12 @@ newSeasonNotificationMessage:
   "La saison {seasonName} est maintenant ouverte.",
 settingsSaveError:
   "❌ Impossible d'enregistrer les paramètres.",
+legalNotice: "Mentions légales",
+termsOfUse: "Conditions générales d'utilisation",
+privacyPolicy: "Politique de confidentialité",
+consentManagement: "Gestion des consentements",
+legalAcceptance: "J'accepte les conditions générales d'utilisation.",
+legalAcceptanceRequired: "Vous devez accepter les conditions générales d'utilisation pour créer un compte.",
 
   },
 
@@ -702,6 +708,12 @@ newSeasonNotificationMessage:
   "The {seasonName} season is now open.",
 settingsSaveError:
   "❌ Unable to save the settings.",
+legalNotice: "Legal notice",
+termsOfUse: "Terms of use",
+privacyPolicy: "Privacy policy",
+consentManagement: "Consent management",
+legalAcceptance: "I accept the Terms of Use.",
+legalAcceptanceRequired: "You must accept the Terms of Use to create an account.",
 
   },
 
@@ -1041,6 +1053,12 @@ newSeasonNotificationMessage:
   "La temporada {seasonName} ya está abierta.",
 settingsSaveError:
   "❌ No se pueden guardar los ajustes.",
+legalNotice: "Aviso legal",
+termsOfUse: "Condiciones de uso",
+privacyPolicy: "Política de privacidad",
+consentManagement: "Gestión de consentimientos",
+legalAcceptance: "Acepto las condiciones de uso.",
+legalAcceptanceRequired: "Debes aceptar las condiciones de uso para crear una cuenta.",
 
   },
 
@@ -1380,6 +1398,12 @@ newSeasonNotificationMessage:
   "Die Saison {seasonName} ist jetzt geöffnet.",
 settingsSaveError:
   "❌ Die Einstellungen konnten nicht gespeichert werden.",
+legalNotice: "Impressum",
+termsOfUse: "Nutzungsbedingungen",
+privacyPolicy: "Datenschutzerklärung",
+consentManagement: "Einwilligungsverwaltung",
+legalAcceptance: "Ich akzeptiere die Nutzungsbedingungen.",
+legalAcceptanceRequired: "Du musst die Nutzungsbedingungen akzeptieren, um ein Konto zu erstellen.",
 
   },
 
@@ -1719,7 +1743,12 @@ newSeasonNotificationMessage:
   "La stagione {seasonName} è ora aperta.",
 settingsSaveError:
   "❌ Impossibile salvare le impostazioni.",
-
+legalNotice: "Note legali",
+termsOfUse: "Condizioni d'uso",
+privacyPolicy: "Informativa sulla privacy",
+consentManagement: "Gestione dei consensi",
+legalAcceptance: "Accetto le condizioni d'uso.",
+legalAcceptanceRequired: "Devi accettare le condizioni d'uso per creare un account.",
   },
 
 
@@ -2058,7 +2087,13 @@ newSeasonNotificationMessage:
   "A temporada {seasonName} está agora aberta.",
 settingsSaveError:
   "❌ Não foi possível guardar as definições.",
-  
+legalNotice: "Informações legais",
+termsOfUse: "Condições de utilização",
+privacyPolicy: "Política de privacidade",
+consentManagement: "Gestão de consentimentos",
+legalAcceptance: "Aceito as condições de utilização.",
+legalAcceptanceRequired: "Tem de aceitar as condições de utilização para criar uma conta.",
+
   }
 
 };
