@@ -7,11 +7,19 @@ import MatchVote from "./pages/MatchVote";
 import JoinClub from "./pages/JoinClub";
 import PlayerProfile from "./pages/PlayerProfile";
 
+import LegalNotice from "./pages/LegalNotice";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import ConsentManagement from "./pages/ConsentManagement";
+
 export default function App() {
 
   const [connected, setConnected] =
     useState(null);
 
+
+  const path =
+    window.location.pathname;
 
   /*
    * =====================================================
@@ -122,6 +130,28 @@ export default function App() {
    * =====================================================
    */
 
+  /*
+   * =====================================================
+   * PAGES JURIDIQUES PUBLIQUES
+   * =====================================================
+   */
+
+  if (path === "/legal-notice") {
+    return <LegalNotice />;
+  }
+
+  if (path === "/terms") {
+    return <Terms />;
+  }
+
+  if (path === "/privacy") {
+    return <Privacy />;
+  }
+
+  if (path === "/consent-management") {
+    return <ConsentManagement />;
+  }
+
   if (!connected) {
 
     return (
@@ -163,9 +193,6 @@ export default function App() {
    * À partir d'ici, la session Supabase est disponible.
    *
    */
-
-  const path =
-    window.location.pathname;
 
 
 

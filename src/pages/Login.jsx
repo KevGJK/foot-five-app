@@ -17,9 +17,11 @@ export default function Login({ onSuccess }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  const [registerMode, setRegisterMode] = useState(false);
+const [registerMode, setRegisterMode] = useState(false);
 
-  const [loading, setLoading] = useState(false);
+const [termsAccepted, setTermsAccepted] = useState(false);
+
+const [loading, setLoading] = useState(false);
 
   async function login() {
 
@@ -58,12 +60,19 @@ onSuccess();
 
   async function register() {
 
-    if (!firstName || !lastName || !email || !password) {
-      alert(
-  t("allFieldsRequired")
-);
-      return;
-    }
+if (!firstName || !lastName || !email || !password) {
+  alert(
+    t("allFieldsRequired")
+  );
+  return;
+}
+
+if (!termsAccepted) {
+  alert(
+    t("legalAcceptanceRequired")
+  );
+  return;
+}
 
     setLoading(true);
 
@@ -76,11 +85,13 @@ onSuccess();
         email,
         password,
 
-        options: {
-          data: {
-            display_name: generatedName
-          }
-        }
+options: {
+  data: {
+    display_name: generatedName,
+    legal_terms_version: "1.0",
+    legal_privacy_version: "1.0"
+  }
+}
 
       });
 
@@ -198,6 +209,39 @@ margin:"0 auto 20px auto"
               style={{ marginTop: "16px" }}
             />
 
+<div
+  style={{
+    marginTop: "18px",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "10px",
+    fontSize: "14px",
+    lineHeight: 1.5
+  }}
+>
+  <input
+    type="checkbox"
+    checked={termsAccepted}
+    onChange={(e) =>
+      setTermsAccepted(e.target.checked)
+    }
+    style={{
+      marginTop: "3px"
+    }}
+  />
+
+  <span>
+    {t("legalAcceptance")}{" "}
+    <a
+      href="/terms"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {t("termsOfUse")}
+    </a>
+  </span>
+</div>
+
           </>
         )}
 
@@ -256,9 +300,10 @@ margin:"0 auto 20px auto"
 
           disabled={loading}
 
-          onClick={() =>
-            setRegisterMode(!registerMode)
-          }
+        onClick={() => {
+  setRegisterMode(!registerMode);
+  setTermsAccepted(false);
+}}
 
           style={{
             marginTop: "12px"
