@@ -569,6 +569,32 @@ setNotifications({
                     {t("version")} 1.0.0
         </div>
       </Card>
+
+<Card>
+  <h2 className="section-title">
+    ⚖️ Informations légales
+  </h2>
+
+  <a
+    href="/consent-management"
+    style={{
+      display: "block",
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "14px",
+      borderRadius: "12px",
+      border: "1px solid rgba(255,255,255,.15)",
+      background: "rgba(255,255,255,.05)",
+      color: "white",
+      fontSize: "16px",
+      textAlign: "center",
+      textDecoration: "none",
+    }}
+  >
+    Gestion des consentements
+  </a>
+</Card>
+
     </Page>
   );
 }

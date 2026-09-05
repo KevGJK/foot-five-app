@@ -23,6 +23,7 @@ import DashboardMenu from "../components/dashboard/DashboardMenu";
 import DashboardStats from "../components/dashboard/DashboardStats";
 import DashboardActions from "../components/dashboard/DashboardActions";
 import { useLanguage } from "../i18n/useLanguage";
+import LegalFooter from "../components/LegalFooter";
 
 export default function Dashboard() {
 
@@ -1708,6 +1709,8 @@ return(
 />
 
 </Page>
+
+<LegalFooter />
 
 </>
 

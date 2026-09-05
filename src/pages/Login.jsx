@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useLanguage } from "../i18n/useLanguage";
-
 import Page from "../components/ui/Page";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
+import LegalFooter from "../components/LegalFooter";
 
 export default function Login({ onSuccess }) {
 
@@ -324,6 +324,8 @@ margin:"0 auto 20px auto"
         </Button>
 
       </Card>
+
+      <LegalFooter />
 
     </Page>
 
