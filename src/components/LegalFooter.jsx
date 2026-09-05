@@ -21,7 +21,7 @@ export default function LegalFooter() {
           alignItems: "center",
           flexWrap: "wrap",
           columnGap: "28px",
-          rowGap: "12px",
+          rowGap: "6px",
           fontSize: "14px",
           lineHeight: 1.5,
         }}
