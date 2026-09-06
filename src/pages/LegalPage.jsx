@@ -82,8 +82,8 @@ return (
 
               <div
                 style={{
-                  fontSize: "16px",
-                  lineHeight: 1.7,
+                  fontSize: "13px",
+                  lineHeight: 1.5,
                 }}
               >
                 {section.paragraphs.map(
@@ -94,7 +94,7 @@ return (
                         margin:
                           paragraphIndex === 0
                             ? "0 0 18px"
-                            : "18px 0",
+                            : "5px 0",
                       }}
                     >
                       {paragraph}
