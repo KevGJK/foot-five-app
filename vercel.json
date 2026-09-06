@@ -11,6 +11,22 @@
     {
       "source": "/match/(.*)",
       "destination": "/index.html"
+    },
+    {
+      "source": "/mentions-legales",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/cgu",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/confidentialite",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/gestion-consentements",
+      "destination": "/index.html"
     }
   ]
 }
