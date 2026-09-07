@@ -1,5 +1,5 @@
 import Seasons from "./Seasons";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import BackButton from "../components/ui/BackButton";
 import Members from "./Members";
@@ -41,7 +41,47 @@ const dateLocale = {
 const currentLocale =
   dateLocale[language] || "fr-FR";
 
-const [page,setPage]=useState("loading");
+const [page,setPageState]=useState("loading");
+const firstPageSet = useRef(true);
+
+function setPage(nextPage) {
+
+  setPageState(nextPage);
+
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const currentState = window.history.state || {};
+
+  if (firstPageSet.current) {
+
+    firstPageSet.current = false;
+
+    window.history.replaceState(
+      {
+        ...currentState,
+        footFive: true,
+        dashboardPage: nextPage
+      },
+      "",
+      window.location.href
+    );
+
+    return;
+  }
+
+  window.history.pushState(
+    {
+      ...currentState,
+      footFive: true,
+      dashboardPage: nextPage
+    },
+    "",
+    window.location.href
+  );
+
+}
 
 const {stats,loadStats} = useStatistics();
 const {club,setClub,logoUrl,setLogoUrl} = useClub();
@@ -1147,6 +1187,41 @@ useEffect(() => {
   }
 
 }, [page]);
+
+useEffect(() => {
+
+  function handlePopState(event) {
+
+    const previousPage =
+      event.state?.dashboardPage;
+
+    if (previousPage) {
+
+      setPageState(previousPage);
+
+      return;
+
+    }
+
+    setPageState("home");
+
+  }
+
+  window.addEventListener(
+    "popstate",
+    handlePopState
+  );
+
+  return () => {
+
+    window.removeEventListener(
+      "popstate",
+      handlePopState
+    );
+
+  };
+
+}, []);
 
 async function goHome(){
 
