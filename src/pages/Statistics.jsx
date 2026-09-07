@@ -291,15 +291,15 @@ export default function Statistics() {
               </h3>
 
               <p>
-                <b>📅 {t("matchesCreated")} :</b> {p.created}
+                <b> {t("matchesCreated")} :</b> {p.created}
               </p>
 
               <p style={{ marginTop: "8px" }}>
-                <b>✅ {t("presences")} :</b> {p.present}
+                <b> {t("presences")} :</b> {p.present}
               </p>
 
               <p style={{ marginTop: "8px" }}>
-                <b>❌ {t("dashboardAbsences")} :</b>{p.absent}
+                <b> {t("dashboardAbsences")} :</b>{p.absent}
               </p>
 
               <div
