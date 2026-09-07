@@ -3209,21 +3209,19 @@ opacity:.7
 
 
 <h3
-style={{
-marginTop:"24px",
-marginBottom:"10px"
-}}
+  style={{
+    marginTop:"24px",
+    marginBottom:"10px"
+  }}
 >
 
-⏳ {t("waitingList")}
-
-(
-{
-waiting(
-m.attendances||[]
-).length
-}
-)
+  ⏳ {t("waitingListCount")
+    .replace(
+      "{count}",
+      waiting(
+        m.attendances || []
+      ).length
+    )}
 
 </h3>
 
