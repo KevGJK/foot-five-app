@@ -117,6 +117,13 @@ setNotifications({
     };
  }, [loadSettings]);
 
+ useEffect(() => {
+  window.scrollTo({
+    top: 0,
+    behavior: "auto"
+  });
+}, []);
+
   async function loadProfile(profileId) {
     const {
       data: { user },
