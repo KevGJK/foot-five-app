@@ -6,8 +6,11 @@ import Button from "../components/ui/Button";
 export default function Administration({
 
 goHome,
-
-goSeasons
+goSeasons,
+logoInput,
+setLogoInput,
+changeLogo,
+club
 
 }){
 
@@ -58,6 +61,38 @@ marginTop:0
 </Button>
 
 </div>
+
+{club?.role === "owner" && (
+
+<div
+style={{
+marginBottom:"16px"
+}}
+>
+
+<Button
+variant="secondary"
+onClick={() => logoInput?.click()}
+style={{
+marginTop:0
+}}
+>
+
+{t("editLogo")}
+
+</Button>
+
+<input
+ref={(el) => setLogoInput(el)}
+type="file"
+accept="image/*"
+onChange={changeLogo}
+style={{ display:"none" }}
+/>
+
+</div>
+
+)}
 
 </Page>
 

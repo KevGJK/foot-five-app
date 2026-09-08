@@ -1,17 +1,9 @@
-import Button from "./Button";
-import { useLanguage } from "../../i18n/useLanguage";
-
 export default function DashboardHeader({
   club,
   logoUrl,
   showLogo,
   setShowLogo,
-  logoInput,
-  changeLogo,
-  setLogoInput,
 }) {
-
-const { t } = useLanguage();
 
   return (
     <>
@@ -52,7 +44,7 @@ const { t } = useLanguage();
           style={{
             width: 145,
             height: 145,
-            margin: "0 auto 16px",
+            margin: "0 auto 1px",
             borderRadius: "50%",
             overflow: "hidden",
             background: "#161616",
@@ -76,46 +68,14 @@ const { t } = useLanguage();
           )}
         </div>
 
-        {club?.role === "owner" && (
-     <div
-  style={{
-    display: "flex",
-    justifyContent: "center",
-    marginTop: "-12px",
-    marginBottom: "8px"
-  }}
->
-  <Button
-    variant="secondary"
-    fullWidth={false}
-    onClick={() => logoInput?.click()}
-    style={{
-    height: "28px",
-    fontSize: "10px",
-    padding: "0 10px",
-    minWidth: "105px"
-}}
-  >
-    {t("editLogo")}
-  </Button>
-</div>
-        )}
-
-        <input
-          ref={(el) => setLogoInput(el)}
-          type="file"
-          accept="image/*"
-          onChange={changeLogo}
-          style={{ display: "none" }}
-        />
-
         <h1
     className="page-title"
     style={{
-        fontSize: "26px",
-        marginBottom: "6px",
-        lineHeight: "1.2"
-    }}
+    fontSize: "26px",
+    marginTop: "0px",
+    marginBottom: "6px",
+    lineHeight: "1.2"
+}}
 >
     {club?.clubs?.name}
 </h1>

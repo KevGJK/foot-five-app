@@ -1365,15 +1365,23 @@ if(page==="admin"){
 
   }
 
-  return(
+return(
 
-    <Administration
+<Administration
 
-      goHome={goHome}
+  goHome={goHome}
 
-      goSeasons={()=>setPage("seasons")}
+  goSeasons={()=>setPage("seasons")}
 
-    />
+  logoInput={logoInput}
+
+  setLogoInput={setLogoInput}
+
+  changeLogo={changeLogo}
+
+  club={club}
+
+/>
 
   );
 
@@ -1763,9 +1771,6 @@ return(
     logoUrl={logoUrl}
     showLogo={showLogo}
     setShowLogo={setShowLogo}
-    logoInput={logoInput}
-    setLogoInput={setLogoInput}
-    changeLogo={changeLogo}
 />
 
 <DashboardMenu
