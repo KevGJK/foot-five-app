@@ -1,7 +1,31 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/join/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/player/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/match/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/legal-notice",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/consent-management",
       "destination": "/index.html"
     }
   ]
