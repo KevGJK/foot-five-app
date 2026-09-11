@@ -79,8 +79,7 @@ if (!termsAccepted) {
     const generatedName =
       firstName + " " + lastName.charAt(0).toUpperCase();
 
-    const { data, error } =
-      await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
 
         email,
         password,
@@ -103,30 +102,9 @@ options: {
 
     }
 
-    if (data?.user) {
+setLoading(false);
 
-      const { error: profileError } =
-        await supabase
-          .from("profiles")
-          .upsert({
-            id: data.user.id,
-            display_name: generatedName,
-            email
-          });
-
-      if (profileError) {
-
-        setLoading(false);
-        alert(profileError.message);
-        return;
-
-      }
-
-    }
-
-    setLoading(false);
-
-    alert(
+alert(
   t("accountCreatedSuccess")
 );
 
@@ -230,16 +208,25 @@ margin:"0 auto 20px auto"
     }}
   />
 
-  <span>
-    {t("legalAcceptance")}{" "}
-    <a
-      href="/terms"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      {t("termsOfUse")}
-    </a>
-  </span>
+<span>
+  {t("legalAcceptance")}{" "}
+  <a
+    href="/terms"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    {t("termsOfUse")}
+  </a>
+  {" · "}
+  <a
+    href="/privacy"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    {t("privacyPolicy")}
+  </a>
+</span>
+
 </div>
 
           </>
