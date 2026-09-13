@@ -10,13 +10,13 @@ export default function Badge({
 
     const colors = {
 
-        primary:"#3DDC84",
+        primary:"var(--primary)",
 
-        warning:"#F5A524",
+        warning:"var(--warning)",
 
-        danger:"#E5484D",
+        danger:"var(--danger)",
 
-        neutral:"#394055"
+        neutral:"var(--secondary)"
 
     };
 

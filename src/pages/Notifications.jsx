@@ -620,7 +620,7 @@ marginLeft:"10px",
 
 fontSize:"12px",
 
-background:"#4ade80",
+background:"var(--success)",
 
 color:"#111",
 

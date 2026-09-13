@@ -729,7 +729,7 @@ c.clubs.id===activeClub
 
 ?
 
-"2px solid #43d98c"
+"2px solid var(--primary)"
 
 :
 
@@ -743,7 +743,7 @@ c.clubs.id===activeClub
 
 ?
 
-"rgba(67,217,140,.08)"
+"rgba(61,220,132,.08)"
 
 :
 

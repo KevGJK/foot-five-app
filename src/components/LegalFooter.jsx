@@ -71,7 +71,7 @@ export default function LegalFooter() {
           opacity: 0.6,
         }}
       >
-        Foot Five Manager • v1.0.0
+        Foot Five Manager • v1.0.1
       </div>
     </footer>
   );
