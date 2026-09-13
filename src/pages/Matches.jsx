@@ -33,8 +33,10 @@ const [editGuestLevel,setEditGuestLevel]=useState(3);
 const [guestLevel,setGuestLevel]=useState({});
 const [memberLevels,setMemberLevels]=useState({});
 const [reload,setReload]=useState(false);
+
 const [teams,setTeams]=useState({});
 const [expanded,setExpanded]=useState(null);
+
 const [scoreWhite,setScoreWhite]=useState({});
 const [scoreBlack,setScoreBlack]=useState({});
 
@@ -561,6 +563,29 @@ async function answer(matchId, response) {
     return;
   }
 
+  /*
+   * Une modification de participation invalide
+   * toute composition précédemment validée.
+   */
+  const {
+    error: validationResetError
+  } = await supabase
+    .from("matches")
+    .update({
+      teams_validated: false
+    })
+    .eq(
+      "id",
+      matchId
+    );
+
+  if (validationResetError) {
+    console.error(
+      "❌ Erreur réinitialisation validation équipes :",
+      validationResetError
+    );
+  }
+
 /*
  * =====================================================
  * NOTIFICATION ORGANISATEUR / ADMINISTRATEURS
@@ -908,25 +933,50 @@ if(!name){
 
 }
 
-await supabase
+const {
+  error: guestInsertError
+} = await supabase
+  .from("attendances")
+  .insert({
+    match_id: matchId,
+    guest_name: name,
+    guest_level: Number(
+      guestLevel[matchId] || 3
+    ),
+    response: "present"
+  });
 
-.from(
-"attendances"
-)
+if (guestInsertError) {
+  console.error(
+    "❌ Erreur ajout invité :",
+    guestInsertError
+  );
 
-.insert({
+  alert(
+    guestInsertError.message
+  );
 
-match_id:matchId,
+  return;
+}
 
-guest_name:name,
+const {
+  error: validationResetError
+} = await supabase
+  .from("matches")
+  .update({
+    teams_validated: false
+  })
+  .eq(
+    "id",
+    matchId
+  );
 
-guest_level:Number(
-guestLevel[matchId]||3
-),
-
-response:"present"
-
-});
+if (validationResetError) {
+  console.error(
+    "❌ Erreur réinitialisation validation équipes :",
+    validationResetError
+  );
+}
 
 setGuestName({
 
@@ -965,31 +1015,64 @@ async function saveGuest(){
   if(!isManager()){
 
     alert(
-  t("guestEditPermissionDenied")
-);
+      t("guestEditPermissionDenied")
+    );
 
     return;
-
   }
 
-  await supabase
+  const {
+    data: guestAttendance,
+    error: guestUpdateError
+  } = await supabase
+    .from("attendances")
+    .update({
+      guest_name: editGuestName,
+      guest_level: Number(editGuestLevel)
+    })
+    .eq(
+      "id",
+      editingGuest
+    )
+    .select("match_id")
+    .single();
 
-  .from("attendances")
+  if (guestUpdateError || !guestAttendance) {
+    console.error(
+      "❌ Erreur modification invité :",
+      guestUpdateError
+    );
 
-  .update({
+    if (guestUpdateError) {
+      alert(
+        guestUpdateError.message
+      );
+    }
 
-guest_name:editGuestName,
+    return;
+  }
 
-guest_level:Number(editGuestLevel)
+  const {
+    error: validationResetError
+  } = await supabase
+    .from("matches")
+    .update({
+      teams_validated: false
+    })
+    .eq(
+      "id",
+      guestAttendance.match_id
+    );
 
-})
+  if (validationResetError) {
+    console.error(
+      "❌ Erreur réinitialisation validation équipes :",
+      validationResetError
+    );
+  }
 
-.eq("id",editingGuest);
-
-setEditingGuest(null);
-
-setReload(v=>!v);
-
+  setEditingGuest(null);
+  setReload(v=>!v);
 }
 
 async function removeGuest(attendanceId){
@@ -1014,13 +1097,68 @@ return;
 
 }
 
-await supabase
+const {
+  data: guestAttendance,
+  error: guestFetchError
+} = await supabase
+  .from("attendances")
+  .select("match_id")
+  .eq(
+    "id",
+    attendanceId
+  )
+  .single();
 
-.from("attendances")
+if (guestFetchError || !guestAttendance) {
+  console.error(
+    "❌ Erreur récupération invité :",
+    guestFetchError
+  );
 
-.delete()
+  return;
+}
 
-.eq("id",attendanceId);
+const {
+  error: guestDeleteError
+} = await supabase
+  .from("attendances")
+  .delete()
+  .eq(
+    "id",
+    attendanceId
+  );
+
+if (guestDeleteError) {
+  console.error(
+    "❌ Erreur suppression invité :",
+    guestDeleteError
+  );
+
+  alert(
+    guestDeleteError.message
+  );
+
+  return;
+}
+
+const {
+  error: validationResetError
+} = await supabase
+  .from("matches")
+  .update({
+    teams_validated: false
+  })
+  .eq(
+    "id",
+    guestAttendance.match_id
+  );
+
+if (validationResetError) {
+  console.error(
+    "❌ Erreur réinitialisation validation équipes :",
+    validationResetError
+  );
+}
 
 setReload(v=>!v);
 
@@ -1449,14 +1587,17 @@ p
 
 }
 
-players.sort(
+/*
+ * Lors d'une recomposition, on mélange les joueurs
+ * de même niveau afin de proposer une nouvelle répartition.
+ */
+players.sort((a, b) => {
+  if (b.level !== a.level) {
+    return b.level - a.level;
+  }
 
-(a,b)=>
-
-b.level-
-a.level
-
-);
+  return Math.random() - 0.5;
+});
 
 const A=[];
 
@@ -1662,66 +1803,28 @@ return;
 
 }
 
-try {
-
-    const recipientIds = participants(list)
-        .map(p => p.profile_id)
-        .filter(Boolean);
-
-   if (recipientIds.length > 0 && user) {
-
     const {
-        data: matchData,
-        error: matchError
+      error: validationResetError
     } = await supabase
-        .from("matches")
-        .select("club_id")
-        .eq("id", matchId)
-        .single();
+      .from("matches")
+      .update({
+        teams_validated: false
+      })
+      .eq(
+        "id",
+        matchId
+      );
 
-    if (matchError) {
-        throw matchError;
+    if(validationResetError){
+      console.error(
+        "❌ Erreur réinitialisation validation équipes :",
+        validationResetError
+      );
+      alert(
+        validationResetError.message
+      );
+      return;
     }
-
-    await createNotification({
-
-        clubId: matchData.club_id,
-
-        createdBy: user.id,
-
-            createdByName:
-  user.user_metadata?.display_name
-  || t("footFive"),
-
-            type:
-                "teams_ready",
-
-            title:
-  t("teamsComposedTitle"),
-
-message:
-  t("teamsComposedMessage"),
-
-            action:
-                "match",
-
-            actionId:
-                matchId,
-
-            recipientIds
-
-        });
-
-    }
-
-} catch (notificationError) {
-
-    console.error(
-        "❌ Erreur notification équipes :",
-        notificationError
-    );
-
-}
 
 setTeams(
 
@@ -1742,6 +1845,289 @@ scoreB
 
 );
 
+
+}
+
+async function validateTeams(matchId) {
+
+  const match =
+    matches.find(
+      m => m.id === matchId
+    );
+
+  if (
+    !match ||
+    !canManageMatch(match)
+  ) {
+
+    alert(
+      `🔒 ${t("manageMatchPermissionDenied")}`
+    );
+
+    return;
+  }
+
+  if (!teams[matchId]) {
+    return;
+  }
+
+  /*
+   * -----------------------------------------------------
+   * CONFIRMATION UTILISATEUR
+   * -----------------------------------------------------
+   */
+
+  const ok =
+    window.confirm(
+      t("confirmTeamsValidation")
+    );
+
+  if (!ok) {
+    return;
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * RELECTURE DES PARTICIPANTS EN BASE
+   * -----------------------------------------------------
+   *
+   * On ne se fie pas aux données éventuellement
+   * présentes dans le state React.
+   */
+
+  const {
+    data: attendancesData,
+    error: attendancesError
+  } = await supabase
+
+    .from("attendances")
+
+    .select(`
+      id,
+      profile_id,
+      response,
+      team,
+      created_at
+    `)
+
+    .eq(
+      "match_id",
+      matchId
+    );
+
+
+  if (attendancesError) {
+
+    console.error(
+      "❌ Erreur récupération participants pour validation :",
+      attendancesError
+    );
+
+    alert(
+      attendancesError.message
+    );
+
+    return;
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * PARTICIPANTS ACTUELS
+   * -----------------------------------------------------
+   *
+   * Même logique que dans le reste de l'application :
+   * uniquement les présents, dans l'ordre d'inscription,
+   * avec les 10 premiers.
+   */
+
+  const participantsList =
+    (attendancesData || [])
+
+      .filter(
+        attendance =>
+          attendance.response === "present"
+      )
+
+      .sort(
+        (a, b) =>
+          new Date(a.created_at) -
+          new Date(b.created_at)
+      )
+
+      .slice(
+        0,
+        10
+      );
+
+
+  /*
+   * -----------------------------------------------------
+   * VÉRIFICATION DE LA COMPOSITION
+   * -----------------------------------------------------
+   */
+
+  const unassignedPlayers =
+    participantsList.filter(
+      player =>
+        player.team !== "white" &&
+        player.team !== "black"
+    );
+
+
+  if (
+    participantsList.length < 10 ||
+    unassignedPlayers.length > 0
+  ) {
+
+    alert(
+      t("noTeamNotificationRecipient")
+    );
+
+    return;
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * DESTINATAIRES
+   * -----------------------------------------------------
+   *
+   * Les invités n'ont pas de profile_id :
+   * ils ne peuvent donc pas recevoir de notification.
+   */
+
+  const recipientIds =
+    participantsList
+
+      .map(
+        player =>
+          player.profile_id
+      )
+
+      .filter(Boolean);
+
+
+  if (
+    recipientIds.length === 0
+  ) {
+
+    alert(
+      t("noTeamNotificationRecipient")
+    );
+
+    return;
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * NOTIFICATION
+   * -----------------------------------------------------
+   *
+   * La composition n'est considérée comme validée
+   * qu'après création réussie de la notification.
+   */
+
+  try {
+
+    await createNotification({
+
+      clubId:
+        match.club_id,
+
+      createdBy:
+        user.id,
+
+      createdByName:
+        user.user_metadata?.display_name
+        || t("footFive"),
+
+      type:
+        "teams_ready",
+
+      title:
+        t("teamsComposedTitle"),
+
+      message:
+        t("teamsComposedMessage"),
+
+      action:
+        "match",
+
+      actionId:
+        matchId,
+
+      recipientIds
+
+    });
+
+  } catch (notificationError) {
+
+    console.error(
+      "❌ Erreur notification équipes :",
+      notificationError
+    );
+
+    alert(
+      t("resultNotificationFailed")
+    );
+
+    return;
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * VALIDATION EN BASE
+   * -----------------------------------------------------
+   *
+   * La notification ayant été créée avec succès,
+   * la composition peut maintenant être considérée
+   * comme validée.
+   */
+
+  const {
+    error: validationError
+  } = await supabase
+
+    .from("matches")
+
+    .update({
+      teams_validated: true
+    })
+
+    .eq(
+      "id",
+      matchId
+    );
+
+
+  if (validationError) {
+
+    console.error(
+      "❌ Erreur validation composition :",
+      validationError
+    );
+
+    alert(
+      validationError.message
+    );
+
+    return;
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * RAFRAÎCHISSEMENT
+   * -----------------------------------------------------
+   */
+
+  setReload(
+    v => !v
+  );
 
 }
 
@@ -2784,7 +3170,7 @@ borderRadius:"50%",
 
 border:"none",
 
-background:"#394055",
+background:"var(--secondary)",
 
 color:"white",
 
@@ -2820,7 +3206,7 @@ borderRadius:"50%",
 
 border:"none",
 
-background:"#E84545",
+background:"var(--danger)",
 
 color:"white",
 
@@ -2947,72 +3333,92 @@ onClick={()=>setEditingGuest(null)}
 
 {
   canManageMatch(m) && (
-
     <div
       style={{
         display:"flex",
         gap:10,
-        marginBottom:10
+        marginBottom:10,
+        flexWrap:"wrap"
       }}
     >
 
       <Button
-
         variant="secondary"
-
         disabled={
           !!m.winner ||
           seasonLocked(m)
         }
-
         onClick={async()=>{
 
           if(teams[m.id]){
 
             const ok=window.confirm(
-
               t("replaceTeamsConfirm")
-
             );
 
             if(!ok){
-
               return;
-
             }
 
           }
 
           await compose(
-
             m.id,
-
             m.attendances
-
           );
 
         }}
-
       >
-
         {
-
           teams[m.id]
-
           ?
-
           `🔄 ${t("recomposeTeams")}`
-
           :
-
           `⚽ ${t("composeTeams")}`
-
         }
-
       </Button>
 
-    </div>
+      {
+        teams[m.id] &&
+        !m.teams_validated &&
+        (
+          <Button
+            variant="success"
+            disabled={
+              !!m.winner ||
+              seasonLocked(m)
+            }
+            onClick={() =>
+              validateTeams(m.id)
+            }
+          >
+            ✅ {t("validateTeams")}
+          </Button>
+        )
+      }
 
+      {
+        teams[m.id] &&
+        m.teams_validated &&
+        (
+          <div
+            style={{
+              width:"100%",
+              marginTop:"4px",
+              padding:"10px 14px",
+              borderRadius:"10px",
+              background:"rgba(61,220,132,.10)",
+              border:"1px solid rgba(61,220,132,.25)",
+              textAlign:"center",
+              fontWeight:"600"
+            }}
+          >
+            ✅ {t("teamsValidated")}
+          </div>
+        )
+      }
+
+    </div>
   )
 }
 
@@ -3073,11 +3479,11 @@ borderRadius:"12px",
 
 fontSize:"15px",
 
-background:"#2a2a2a",
+background:"var(--surface-light)",
 
-color:"#ffffff",
+color:"var(--text)",
 
-border:"1px solid rgba(255,255,255,.12)",
+border:"1px solid var(--border)",
 
 marginTop:"10px",
 
