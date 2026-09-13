@@ -5,6 +5,7 @@ export default function LegalFooter() {
 
   return (
     <footer
+      className="legal-footer"
       style={{
         width: "100%",
         boxSizing: "border-box",
