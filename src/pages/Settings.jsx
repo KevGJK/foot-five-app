@@ -12,6 +12,9 @@ import {
   useCallback
 } from "react";
 import { registerDevice } from "../services/registerDevice";
+import {
+  useTheme
+} from "../theme/useTheme";
 
 export default function Settings() {
 
@@ -20,6 +23,11 @@ const {
   setLanguage,
   t
 } = useLanguage();
+
+const {
+  theme,
+  setTheme
+} = useTheme();
 
   const [pushEnabled, setPushEnabled] = useState(false);
 
@@ -401,6 +409,82 @@ setNotifications({
           🔔 {t("authorizePush")}
         </Button>
       </Card>
+
+<Card>
+
+  <h2 className="section-title">
+    🎨 {t("theme")}
+  </h2>
+
+  <div
+    style={{
+      marginBottom: "10px",
+      opacity: 0.75
+    }}
+  >
+    {t("themeDescription")}
+  </div>
+
+  <select
+    value={theme}
+    onChange={(e) => {
+      setTheme(e.target.value);
+    }}
+    style={{
+      width: "100%",
+      padding: "14px",
+      borderRadius: "12px",
+      border: "1px solid rgba(255,255,255,.15)",
+      background: "rgba(255,255,255,.05)",
+      color: "white",
+      fontSize: "16px",
+      cursor: "pointer"
+    }}
+  >
+
+    <option
+      value="foot-five"
+      style={{
+        color: "black",
+        background: "white"
+      }}
+    >
+      🟢 {t("themeFootFive")}
+    </option>
+
+    <option
+      value="ocean"
+      style={{
+        color: "black",
+        background: "white"
+      }}
+    >
+      🔵 {t("themeOcean")}
+    </option>
+
+    <option
+      value="energy"
+      style={{
+        color: "black",
+        background: "white"
+      }}
+    >
+      🟠 {t("themeEnergy")}
+    </option>
+
+    <option
+      value="violet"
+      style={{
+        color: "black",
+        background: "white"
+      }}
+    >
+      🟣 {t("themeViolet")}
+    </option>
+
+  </select>
+
+</Card>
 
 <Card>
 

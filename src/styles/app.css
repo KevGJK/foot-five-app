@@ -175,7 +175,7 @@ body{
 
 .btn-secondary{
 
-    background:#394055;
+    background:var(--secondary);
 
     color:white;
 
@@ -183,13 +183,13 @@ body{
 
 .btn-secondary:hover{
 
-    background:#474f68;
+    background:var(--secondary-hover);
 
 }
 
 .btn-success{
 
-    background:#3DDC84;
+    background:var(--success);
 
     color:#111;
 
@@ -197,7 +197,7 @@ body{
 
 .btn-success:hover{
 
-    background:#34c676;
+    background:var(--success-hover);
 
 }
 

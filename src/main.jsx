@@ -11,19 +11,27 @@ import NotificationListener from "./services/NotificationListener.jsx";
 import LanguageProvider
 from "./i18n/LanguageProvider";
 
+import {
+  ThemeProvider
+} from "./theme/ThemeProvider";
+
 createRoot(
   document.getElementById("root")
 ).render(
 
   <StrictMode>
 
-    <LanguageProvider>
+<LanguageProvider>
 
-      <NotificationListener />
+  <ThemeProvider>
 
-      <App />
+    <NotificationListener />
 
-    </LanguageProvider>
+    <App />
+
+  </ThemeProvider>
+
+</LanguageProvider>
 
   </StrictMode>
 

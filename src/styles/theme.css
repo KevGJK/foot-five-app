@@ -9,6 +9,12 @@
   --primary: #3DDC84;
   --primary-hover: #33C975;
 
+  --secondary: #394055;
+  --secondary-hover: #474F68;
+
+  --success: #3DDC84;
+  --success-hover: #34C676;
+
   --danger: #E5484D;
   --warning: #F5A524;
 
@@ -46,4 +52,82 @@
 
   --transition:0.2s ease;
 
+}
+
+/* =========================================================
+   THÈMES DE COULEURS
+   ========================================================= */
+
+[data-theme="ocean"] {
+
+  --bg: #111923;
+  --surface: #192634;
+  --surface-light: #223447;
+
+  --primary: #38BDF8;
+  --primary-hover: #0EA5E9;
+
+  --secondary: #334155;
+  --secondary-hover: #475569;
+
+  --success: #38BDF8;
+  --success-hover: #0EA5E9;
+
+  --danger: #F05252;
+  --warning: #F59E0B;
+
+  --text: #FFFFFF;
+  --text-secondary: #B8C7D9;
+
+  --border: #34475B;
+}
+
+
+[data-theme="energy"] {
+
+  --bg: #1B1713;
+  --surface: #272019;
+  --surface-light: #33291F;
+
+  --primary: #FF9F43;
+  --primary-hover: #F59E0B;
+
+  --secondary: #493C30;
+  --secondary-hover: #5A4A3A;
+
+  --success: #FF9F43;
+  --success-hover: #F59E0B;
+
+  --danger: #EF5350;
+  --warning: #FBBF24;
+
+  --text: #FFFFFF;
+  --text-secondary: #D1C2B2;
+
+  --border: #4A3B2D;
+}
+
+
+[data-theme="violet"] {
+
+  --bg: #171421;
+  --surface: #211C30;
+  --surface-light: #2B2440;
+
+  --primary: #A78BFA;
+  --primary-hover: #8B5CF6;
+
+  --secondary: #3E3654;
+  --secondary-hover: #504567;
+
+  --success: #A78BFA;
+  --success-hover: #8B5CF6;
+
+  --danger: #F05252;
+  --warning: #FBBF24;
+
+  --text: #FFFFFF;
+  --text-secondary: #C7BEDB;
+
+  --border: #44395A;
 }
