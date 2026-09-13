@@ -69,25 +69,36 @@ export default function LanguageProvider({
   }
 
 
-  function t(key) {
+function t(key, params = {}) {
 
-    return (
+  let text =
+    translations[
+      language
+    ]?.[key]
 
-      translations[
-        language
-      ]?.[key]
+    ||
 
-      ||
+    translations.fr[key]
 
-      translations.fr[key]
+    ||
 
-      ||
+    key;
 
-      key
 
-    );
+  Object.entries(params).forEach(
+    ([param, value]) => {
 
-  }
+      text = text
+        .split(`{${param}}`)
+        .join(String(value ?? ""));
+
+    }
+  );
+
+
+  return text;
+
+}
 
 
   return (
