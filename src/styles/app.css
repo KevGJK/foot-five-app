@@ -217,3 +217,14 @@ h5,
 h6 {
     color: var(--text);
 }
+
+.legal-footer a,
+.legal-footer a:visited {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.legal-footer a:hover {
+    color: var(--text);
+    text-decoration: underline;
+}
