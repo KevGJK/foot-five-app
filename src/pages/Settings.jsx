@@ -625,7 +625,7 @@ setNotifications({
           }}
         >
           <span>{t("version")}</span>
-          <b>1.0.0</b>
+          <b>1.0.1</b>
         </div>
 
         <div
@@ -657,7 +657,7 @@ setNotifications({
 
           <br />
 
-                    {t("version")} 1.0.0
+                    {t("version")} 1.0.1
         </div>
       </Card>
 
