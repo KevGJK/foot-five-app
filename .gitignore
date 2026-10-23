@@ -38,3 +38,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+# Secrets Firebase locaux
+firebase-admin.env
+firebase-secrets.mjs
