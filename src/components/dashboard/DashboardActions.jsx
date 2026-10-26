@@ -47,16 +47,22 @@ const { t } = useLanguage();
 
 {(clubRole === "owner" || clubRole === "admin") && (
 
-  <Button
-    variant="secondary"
-    fullWidth
-    onClick={() => setPage("admin")}
-    style={{
-      marginTop: "12px"
-    }}
-  >
-    👑 {t("administration")}
-  </Button>
+<Button
+  variant="secondary"
+  fullWidth
+  onClick={() => setPage("admin")}
+  style={{
+    marginTop: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px",
+  }}
+>
+  <span style={{ fontSize: "22px" }}>👑</span>
+  <span>{t("administration")}</span>
+</Button>
+
 )}
 
     </>
