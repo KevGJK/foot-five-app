@@ -5,8 +5,10 @@ export default function Input({
   type = "text",
   style = {},
   className = "",
+  eyeOffsetY = 0,
   ...props
 }) {
+
   const [showPassword, setShowPassword] = useState(false);
 
   if (type !== "password") {
@@ -55,7 +57,7 @@ export default function Input({
           position: "absolute",
           right: "12px",
           top: "50%",
-          transform: "translateY(-50%)",
+          transform: `translateY(calc(-50% + ${eyeOffsetY}px))`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

@@ -46,18 +46,6 @@ const {
     results: true,
   });
 
-  const [profile, setProfile] = useState(null);
-
-  const [ownedClubs, setOwnedClubs] = useState([]);
-  const [clubMembers, setClubMembers] = useState({});
-  const [selectedOwners, setSelectedOwners] = useState({});
-  const [loadingOwnedClubs, setLoadingOwnedClubs] = useState(false);
-  const [transferringClubId, setTransferringClubId] = useState(null);
-  const [transferError, setTransferError] = useState("");
-  const [transferSuccess, setTransferSuccess] = useState("");
-  const [deletingAccount, setDeletingAccount] = useState(false);
-  const [deleteAccountError, setDeleteAccountError] = useState("");
-
   const loadSettings = useCallback(async (profileId) => {
     let { data } = await supabase
       .from("user_settings")
@@ -101,98 +89,33 @@ setNotifications({
 
 }, [language, setLanguage]);
 
-  const loadOwnedClubs = useCallback(async (profileId) => {
-    setLoadingOwnedClubs(true);
-    setTransferError("");
-
-    try {
-      const { data: clubs, error: clubsError } = await supabase
-        .from("clubs")
-        .select("id, name, owner_id")
-        .eq("owner_id", profileId)
-        .order("name");
-
-      if (clubsError) {
-        throw clubsError;
-      }
-
-      const owned = clubs || [];
-      setOwnedClubs(owned);
-
-      const membersByClub = {};
-
-      for (const club of owned) {
-        const { data: members, error: membersError } = await supabase
-          .from("club_members")
-          .select(`
-            profile_id,
-            role,
-            profiles(
-              id,
-              display_name,
-              email
-            )
-          `)
-          .eq("club_id", club.id)
-          .neq("profile_id", profileId)
-          .order("role");
-
-        if (membersError) {
-          throw membersError;
-        }
-
-        membersByClub[club.id] = members || [];
-      }
-
-      setClubMembers(membersByClub);
-    } catch (error) {
-      console.error("Erreur de chargement des clubs propriétaires :", error);
-      setTransferError(
-        t("clubOwnershipLoadError")
-      );
-      } finally {
-      setLoadingOwnedClubs(false);
-    }
-  }, [t]);
-
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+async function load() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-      if (!user || cancelled) {
-        return;
-      }
+  if (!user || cancelled) {
+    return;
+  }
 
-      await loadProfile(user.id);
+  await loadSettings(user.id);
 
-      if (cancelled) {
-        return;
-      }
-      await loadSettings(user.id);
+  if (cancelled) {
+    return;
+  }
 
-      if (cancelled) {
-        return;
-      }
-
-      await loadOwnedClubs(user.id);
-
-      if (cancelled) {
-        return;
-      }
-
-      await checkPush();
-    }
+  await checkPush();
+}
 
     load();
 
     return () => {
       cancelled = true;
     };
- }, [loadSettings, loadOwnedClubs]);
+}, [loadSettings]);
 
  useEffect(() => {
   window.scrollTo({
@@ -200,157 +123,6 @@ setNotifications({
     behavior: "auto"
   });
 }, []);
-
-
-  async function transferClubOwnership(clubId) {
-    const newOwnerId = selectedOwners[clubId];
-
-    if (!newOwnerId) {
-      setTransferError(t("clubOwnershipSelectOwner"));
-      return;
-    }
-
-    const club = ownedClubs.find((item) => item.id === clubId);
-    const selectedMember = (clubMembers[clubId] || []).find(
-      (member) => member.profile_id === newOwnerId
-    );
-
-    if (!club || !selectedMember) {
-      setTransferError(t("clubOwnershipMemberNotFound"));
-      return;
-    }
-
-    const memberName =
-      selectedMember.profiles?.display_name ||
-      selectedMember.profiles?.email ||
-      t("unknownMember");
-
-const confirmed = window.confirm(
-  t("clubOwnershipConfirm", {
-    clubName: club.name,
-    memberName,
-  })
-);
-
-if (!confirmed) return;
-
-    setTransferringClubId(clubId);
-    setTransferError("");
-    setTransferSuccess("");
-
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "transfer-club-ownership",
-        {
-          body: {
-            club_id: clubId,
-            new_owner_id: newOwnerId,
-          },
-        }
-      );
-
-      if (error || !data?.success) {
-        throw new Error(
-          data?.error || error?.message || t("clubOwnershipTransferFailed")
-        );
-      }
-
-      setTransferSuccess(
-  t("clubOwnershipTransferSuccess", {
-    clubName: club.name,
-    memberName,
-  })
-);
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        await loadOwnedClubs(user.id);
-      }
-    } catch (error) {
-      console.error("Erreur de transfert de propriété :", error);
-      setTransferError(
-        error.message || t("clubOwnershipTransferError")
-      );
-    } finally {
-      setTransferringClubId(null);
-    }
-  }
-
-
-  async function deleteAccount() {
-    if (loadingOwnedClubs || ownedClubs.length > 0) {
-      setDeleteAccountError(
-        t("accountDeletionTransferRequiredError")
-      );
-      return;
-    }
-
-const confirmation = window.confirm(
-  t("accountDeletionConfirm")
-);
-
-if (!confirmation) return;
-
-const finalConfirmation = window.prompt(
-  t("accountDeletionTypeConfirm")
-);
-
-if (
-  finalConfirmation !==
-  t("accountDeletionConfirmationWord")
-) {
-  setDeleteAccountError(t("accountDeletionCancelled"));
-  return;
-}
-
-    setDeletingAccount(true);
-    setDeleteAccountError("");
-
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "delete-account",
-        { body: {} }
-      );
-
-      if (error || !data?.success) {
-        throw new Error(
-          data?.error || error?.message ||
-          t("accountDeletionError")
-        );
-      }
-
-      await supabase.auth.signOut();
-      window.location.replace("/");
-
-    } catch (error) {
-      console.error("Erreur de suppression du compte :", error);
-      setDeleteAccountError(
-        error.message || t("accountDeletionError")
-      );
-    } finally {
-      setDeletingAccount(false);
-    }
-  }
-
-
-  async function loadProfile(profileId) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("profiles")
-      .select("display_name,email")
-      .eq("id", profileId)
-      .single();
-
-    setProfile(data);
-  }
 
   async function checkPush() {
     const supported = "Notification" in window;
@@ -441,185 +213,6 @@ if (
 <h1 className="page-title">
   ⚙ {t("settings")}
 </h1>
-
-      <Card>
-        <h2 className="section-title">
-  👤 {t("profile")}
-</h2>
-
-        <div
-          style={{
-            fontSize: "22px",
-            fontWeight: "700",
-          }}
-        >
-          {profile?.display_name || "..."}
-        </div>
-
-        <div
-          style={{
-            opacity: 0.7,
-            marginTop: "6px",
-            marginBottom: "24px",
-          }}
-        >
-          {profile?.email || ""}
-        </div>
-
-        <Button
-          variant="danger"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            window.location.reload();
-          }}
-        >
-          🚪 {t("logout")}
-        </Button>
-      </Card>
-
-      <Card>
-        <h2 className="section-title">
-          {t("clubOwnershipTransferTitle")}
-        </h2>
-
-        <p>
-          {t("clubOwnershipTransferDescription")}
-        </p>
-
-        {loadingOwnedClubs ? (
-          <p>{t("clubOwnershipLoading")}</p>
-        ) : ownedClubs.length === 0 ? (
-          <p>{t("clubOwnershipNoClubs")}</p>
-        ) : (
-          ownedClubs.map((club) => {
-            const members = clubMembers[club.id] || [];
-
-            return (
-              <div
-                key={club.id}
-                style={{
-                  padding: "14px",
-                  marginTop: "12px",
-                  border: "1px solid rgba(255,255,255,.15)",
-                  borderRadius: "12px",
-                }}
-              >
-                <h3 style={{ marginTop: 0 }}>{club.name}</h3>
-
-                {members.length === 0 ? (
-                  <p>{t("clubOwnershipNoMembers")}</p>
-                ) : (
-                  <>
-                    <label
-                      htmlFor={`new-owner-${club.id}`}
-                      style={{
-                        display: "block",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      {t("clubOwnershipNewOwner")}
-                    </label>
-
-                    <select
-                      id={`new-owner-${club.id}`}
-                      value={selectedOwners[club.id] || ""}
-                      onChange={(event) =>
-                        setSelectedOwners((previous) => ({
-                          ...previous,
-                          [club.id]: event.target.value,
-                        }))
-                      }
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        borderRadius: "10px",
-                        marginBottom: "12px",
-                      }}
-                    >
-                      <option value="">{t("clubOwnershipChooseMember")}</option>
-
-                      {members.map((member) => (
-                        <option
-                          key={member.profile_id}
-                          value={member.profile_id}
-                        >
-                          {member.profiles?.display_name ||
-                            member.profiles?.email ||
-                            member.profile_id}
-                          {member.role === "admin" ? ` (${t("admin")})` : ""}
-                        </option>
-                      ))}
-                    </select>
-
-                    <Button
-                      variant="danger"
-                      disabled={transferringClubId === club.id}
-                      onClick={() => transferClubOwnership(club.id)}
-                    >
-                      {transferringClubId === club.id
-                      ? t("clubOwnershipTransferring")
-                      : t("clubOwnershipTransferButton")}
-                    </Button>
-                  </>
-                )}
-              </div>
-            );
-          })
-        )}
-
-        {transferError && (
-          <p style={{ color: "#ff6b6b", marginTop: "12px" }}>
-            {transferError}
-          </p>
-        )}
-
-        {transferSuccess && (
-          <p style={{ color: "#4ade80", marginTop: "12px" }}>
-            {transferSuccess}
-          </p>
-        )}
-      </Card>
-
-
-<Card>
-  <h2 className="section-title">
-    {t("accountDeletionTitle")}
-  </h2>
-
-  <p>
-    {t("accountDeletionDescription")}
-  </p>
-
-  {loadingOwnedClubs ? (
-    <p>{t("accountDeletionCheckingClubs")}</p>
-  ) : ownedClubs.length > 0 ? (
-    <p>
-  {t("accountDeletionTransferRequired").replace(
-    "{count}",
-    String(ownedClubs.length)
-  )}
-</p>
-  ) : (
-    <p>{t("accountDeletionNoOwnedClubs")}</p>
-  )}
-
-  {deleteAccountError && (
-    <p style={{ color: "#ff6b6b" }}>
-      {deleteAccountError}
-    </p>
-  )}
-
-  <Button
-    variant="danger"
-    disabled={loadingOwnedClubs || ownedClubs.length > 0 || deletingAccount}
-    onClick={deleteAccount}
-  >
-    {deletingAccount
-  ? t("accountDeletionDeleting")
-  : t("accountDeletionButton")}
-  </Button>
-</Card>
-
 
       <Card>
         <h2 className="section-title">
@@ -748,9 +341,9 @@ if (
 
               alert(`✅ ${t("pushActivated")}`);
             } catch (e) {
-              console.error(e);
-              alert(e.message);
-            }
+  console.error(e);
+  alert(t("pushActivationError"));
+}
           }}
           disabled={!pushSupported}
         >

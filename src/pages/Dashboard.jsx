@@ -11,6 +11,7 @@ import Ranking from "./Ranking";
 import ClubSelector from "./ClubSelector";
 import Administration from "./Administration";
 import Settings from "./Settings";
+import Account from "./Account";
 import Notifications from "./Notifications";
 import DashboardHeader from "../components/ui/DashboardHeader";
 import { useStatistics } from "../hooks/useStatistics";
@@ -1325,6 +1326,14 @@ if(page==="settings"){
 
   return renderWithBack(
     <Settings/>
+  );
+
+}
+
+if(page==="account"){
+
+  return renderWithBack(
+    <Account/>
   );
 
 }

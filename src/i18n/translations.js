@@ -420,6 +420,14 @@ accountDeletionTransferRequiredError: "Transfère d'abord la propriété de tous
 clubOwnershipLoadError: "Impossible de charger les clubs dont tu es propriétaire.",
 clubOwnershipMemberNotFound: "Le club ou le membre sélectionné est introuvable.",
 clubOwnershipTransferFailed: "Le transfert a échoué.",
+myAccount: "Mon compte",
+changePasswordTitle: "Changer mon mot de passe",
+changePasswordButton: "Modifier mon mot de passe",
+changingPassword: "Modification en cours...",
+passwordMinLengthError: "Le mot de passe doit contenir au moins 6 caractères.",
+passwordChangeSuccess: "Ton mot de passe a été modifié avec succès.",
+passwordChangeError: "Impossible de modifier le mot de passe.",
+pushActivationError: "Impossible d’activer les notifications Push.",
 
   },
 
@@ -816,6 +824,14 @@ accountDeletionTransferRequiredError: "Transfer ownership of all your clubs firs
 clubOwnershipLoadError: "Unable to load the clubs you own.",
 clubOwnershipMemberNotFound: "The club or selected member could not be found.",
 clubOwnershipTransferFailed: "The transfer failed.",
+myAccount: "My account",
+changePasswordTitle: "Change my password",
+changePasswordButton: "Change my password",
+changingPassword: "Changing...",
+passwordMinLengthError: "The password must contain at least 6 characters.",
+passwordChangeSuccess: "Your password has been changed successfully.",
+passwordChangeError: "Unable to change the password.",
+pushActivationError: "Unable to enable push notifications.",
 
   },
 
@@ -1212,6 +1228,14 @@ accountDeletionTransferRequiredError: "Primero transfiere la propiedad de todos 
 clubOwnershipLoadError: "No se pudieron cargar los clubes de los que eres propietario.",
 clubOwnershipMemberNotFound: "No se encuentra el club o el miembro seleccionado.",
 clubOwnershipTransferFailed: "La transferencia ha fallado.",
+myAccount: "Mi cuenta",
+changePasswordTitle: "Cambiar mi contraseña",
+changePasswordButton: "Cambiar mi contraseña",
+changingPassword: "Modificando...",
+passwordMinLengthError: "La contraseña debe contener al menos 6 caracteres.",
+passwordChangeSuccess: "Tu contraseña se ha cambiado correctamente.",
+passwordChangeError: "No se ha podido cambiar la contraseña.",
+pushActivationError: "No se han podido activar las notificaciones push.",
 
   },
 
@@ -1608,6 +1632,14 @@ accountDeletionTransferRequiredError: "Übertrage zuerst das Eigentum an allen d
 clubOwnershipLoadError: "Deine Clubs konnten nicht geladen werden.",
 clubOwnershipMemberNotFound: "Der Club oder das ausgewählte Mitglied wurde nicht gefunden.",
 clubOwnershipTransferFailed: "Die Übertragung ist fehlgeschlagen.",
+myAccount: "Mein Konto",
+changePasswordTitle: "Mein Passwort ändern",
+changePasswordButton: "Passwort ändern",
+changingPassword: "Wird geändert...",
+passwordMinLengthError: "Das Passwort muss mindestens 6 Zeichen enthalten.",
+passwordChangeSuccess: "Dein Passwort wurde erfolgreich geändert.",
+passwordChangeError: "Das Passwort konnte nicht geändert werden.",
+pushActivationError: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
 
   },
 
@@ -2004,6 +2036,14 @@ accountDeletionTransferRequiredError: "Trasferisci prima la proprietà di tutti 
 clubOwnershipLoadError: "Impossibile caricare i club di cui sei proprietario.",
 clubOwnershipMemberNotFound: "Il club o il membro selezionato non è stato trovato.",
 clubOwnershipTransferFailed: "Il trasferimento non è riuscito.",
+myAccount: "Il mio account",
+changePasswordTitle: "Modifica la mia password",
+changePasswordButton: "Modifica la password",
+changingPassword: "Modifica in corso...",
+passwordMinLengthError: "La password deve contenere almeno 6 caratteri.",
+passwordChangeSuccess: "La password è stata modificata correttamente.",
+passwordChangeError: "Impossibile modificare la password.",
+pushActivationError: "Impossibile attivare le notifiche push.",
 
   },
 
@@ -2400,6 +2440,14 @@ accountDeletionTransferRequiredError: "Transfere primeiro a propriedade de todos
 clubOwnershipLoadError: "Não foi possível carregar os clubes de que és proprietário.",
 clubOwnershipMemberNotFound: "O clube ou o membro selecionado não foi encontrado.",
 clubOwnershipTransferFailed: "A transferência falhou.",
+myAccount: "A minha conta",
+changePasswordTitle: "Alterar a minha palavra-passe",
+changePasswordButton: "Alterar a palavra-passe",
+changingPassword: "A alterar...",
+passwordMinLengthError: "A palavra-passe deve conter pelo menos 6 caracteres.",
+passwordChangeSuccess: "A tua palavra-passe foi alterada com sucesso.",
+passwordChangeError: "Não foi possível alterar a palavra-passe.",
+pushActivationError: "Não foi possível ativar as notificações push.",
 
   }
 
