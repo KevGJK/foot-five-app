@@ -41,3 +41,18 @@ Thumbs.db
 # Secrets Firebase locaux
 firebase-admin.env
 firebase-secrets.mjs
+
+# Sauvegardes locales de la base Supabase
+supabase/migrations_backup_*/
+supabase_schema_backup_*.sql
+supabase_schema_reference_*.sql
+supabase_remote_schema_backup_*.sql
+supabase_data_backup_*.sql
+
+# Fichiers temporaires de la CLI Supabase
+supabase/.temp/
+
+# Exports de diagnostic npm
+licenses.csv
+licenses.json
+npm-tree.json

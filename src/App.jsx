@@ -6,7 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import MatchVote from "./pages/MatchVote";
 import JoinClub from "./pages/JoinClub";
 import PlayerProfile from "./pages/PlayerProfile";
-
+import ResetPassword from "./pages/ResetPassword";
 import LegalNotice from "./pages/LegalNotice";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
@@ -17,6 +17,8 @@ export default function App() {
   const [connected, setConnected] =
     useState(null);
 
+const [recoveryMode, setRecoveryMode] =
+  useState(false);
 
   const path =
     window.location.pathname;
@@ -53,21 +55,25 @@ export default function App() {
     initializeAuth();
 
 
-    const {
-      data: listener
-    } = supabase.auth.onAuthStateChange(
-      (_, session) => {
+const {
+  data: listener
+} = supabase.auth.onAuthStateChange(
+  (event, session) => {
 
-        if (mounted) {
+    if (!mounted) return;
 
-          setConnected(
-            !!session
-          );
+    if (event === "PASSWORD_RECOVERY") {
+      setRecoveryMode(true);
+    }
 
-        }
+    if (event === "SIGNED_OUT") {
+      setRecoveryMode(false);
+    }
 
-      }
-    );
+    setConnected(!!session);
+
+  }
+);
 
 
     return () => {
@@ -151,6 +157,12 @@ export default function App() {
   if (path === "/consent-management") {
     return <ConsentManagement />;
   }
+
+if (path === "/reset-password") {
+  return (
+    <ResetPassword recoveryValid={recoveryMode} />
+  );
+}
 
   if (!connected) {
 

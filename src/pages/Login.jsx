@@ -16,6 +16,7 @@ export default function Login({ onSuccess }) {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
 
 const [registerMode, setRegisterMode] = useState(false);
 
@@ -58,12 +59,58 @@ onSuccess();
 
   }
 
+
+async function sendPasswordReset() {
+  if (!email.trim()) {
+    alert(t("allFieldsRequired"));
+    return;
+  }
+
+  setLoading(true);
+
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    email.trim(),
+    {
+      redirectTo: `${window.location.origin}/reset-password`
+    }
+  );
+
+  setLoading(false);
+
+  if (error) {
+    alert(t("passwordResetError"));
+    return;
+  }
+
+  alert(t("passwordResetEmailSent"));
+}
+
+
   async function register() {
 
-if (!firstName || !lastName || !email || !password) {
+if (
+  !firstName.trim() ||
+  !lastName.trim() ||
+  !phone.trim() ||
+  !email.trim() ||
+  !password
+) {
   alert(
     t("allFieldsRequired")
   );
+  return;
+}
+
+
+const passwordIsValid =
+  password.length >= 10 &&
+  /[a-z]/.test(password) &&
+  /[A-Z]/.test(password) &&
+  /[0-9]/.test(password) &&
+  /[^A-Za-z0-9]/.test(password);
+
+if (!passwordIsValid) {
+  alert(t("passwordRequirements"));
   return;
 }
 
@@ -87,6 +134,7 @@ if (!termsAccepted) {
 options: {
   data: {
     display_name: generatedName,
+    phone: phone.trim(),
     legal_terms_version: "1.0",
     legal_privacy_version: "1.0"
   }
@@ -187,47 +235,14 @@ margin:"0 auto 20px auto"
               style={{ marginTop: "16px" }}
             />
 
-<div
-  style={{
-    marginTop: "18px",
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "10px",
-    fontSize: "14px",
-    lineHeight: 1.5
-  }}
->
-  <input
-    type="checkbox"
-    checked={termsAccepted}
-    onChange={(e) =>
-      setTermsAccepted(e.target.checked)
-    }
-    style={{
-      marginTop: "3px"
-    }}
-  />
+<Input
+  type="tel"
+  placeholder={t("phoneNumber")}
+  value={phone}
+  onChange={(e) => setPhone(e.target.value)}
+  style={{ marginTop: "16px" }}
+/>
 
-<span>
-  {t("legalAcceptance")}{" "}
-  <a
-    href="/terms"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    {t("termsOfUse")}
-  </a>
-  {" · "}
-  <a
-    href="/privacy"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    {t("privacyPolicy")}
-  </a>
-</span>
-
-</div>
 
           </>
         )}
@@ -248,6 +263,76 @@ margin:"0 auto 20px auto"
           onChange={(e) => setPassword(e.target.value)}
           style={{ marginTop: "16px" }}
         />
+
+{!registerMode && (
+  <div
+    style={{
+      marginTop: "10px",
+      textAlign: "right",
+      fontSize: "14px"
+    }}
+  >
+    <button
+      type="button"
+      onClick={sendPasswordReset}
+      disabled={loading}
+      style={{
+        background: "none",
+        border: "none",
+        padding: 0,
+        color: "#38bdf8",
+        cursor: "pointer",
+        font: "inherit"
+      }}
+    >
+      {t("forgotPassword")}
+    </button>
+  </div>
+)}
+
+{registerMode && (
+  <div
+    style={{
+      marginTop: "18px",
+      display: "flex",
+      alignItems: "flex-start",
+      gap: "10px",
+      fontSize: "14px",
+      lineHeight: 1.5
+    }}
+  >
+    <input
+      type="checkbox"
+      checked={termsAccepted}
+      onChange={(e) =>
+        setTermsAccepted(e.target.checked)
+      }
+      style={{
+        marginTop: "3px"
+      }}
+    />
+
+    <span>
+      {t("legalAcceptance")}{" "}
+      <a
+        href="/terms"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {t("termsOfUse")}
+      </a>
+      {" · "}
+      <a
+        href="/privacy"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {t("privacyPolicy")}
+      </a>
+    </span>
+  </div>
+)}
+
 
         <Button
 
